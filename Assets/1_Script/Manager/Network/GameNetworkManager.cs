@@ -29,6 +29,14 @@ namespace MPGame.Manager
 			}
 		}
 
+		private void Update()
+		{
+			if (Input.GetKeyDown(KeyCode.R))
+			{
+				NetworkTransmission.instance.DisconnectAllClientRPC();
+			}
+		}
+
 		private void Start()
 		{
 			transport = GetComponent<FacepunchTransport>();
@@ -40,6 +48,7 @@ namespace MPGame.Manager
 			SteamMatchmaking.OnLobbyInvite += SteamMatchMaking_OnLobbyInvite;
 			SteamMatchmaking.OnLobbyGameCreated += SteamMatchmaking_OnLobbyGameCreated;
 			SteamFriends.OnGameLobbyJoinRequested += SteamFriends_OnGameLobbyJoinRequested;
+
 		}
 
 		private void OnDestroy()
@@ -94,8 +103,6 @@ namespace MPGame.Manager
 			Debug.Log("member leave");
 			GameManagerEx.Instance.SendMessageToChat($"{friend.Name} has left", friend.Id, true);
 			NetworkTransmission.instance.RemoveMeFromDictionaryServerRPC(friend.Id);
-
-			Debug.Log("HOST! : " + NetworkManager.Singleton.ConnectedHostname);
 		}
 
 		private void SteamMatchMaking_OnLobbyInvite(Friend friend, Lobby lobby)
@@ -147,10 +154,8 @@ namespace MPGame.Manager
 
 		public void Disconnected()
 		{
-			Debug.Log("DISCONNECT TRY");
-
 			if (NetworkManager.Singleton.IsHost)
-				NetworkTransmission.instance.DisconnectAllServerRPC();
+				NetworkTransmission.instance.DisconnectAllClientRPC();
 
 			currentLobby?.Leave();
 			if (NetworkManager.Singleton == null) return;
