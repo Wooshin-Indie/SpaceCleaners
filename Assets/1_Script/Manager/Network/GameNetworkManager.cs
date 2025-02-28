@@ -94,7 +94,10 @@ namespace MPGame.Manager
 			Debug.Log("member leave");
 			GameManagerEx.Instance.SendMessageToChat($"{friend.Name} has left", friend.Id, true);
 			NetworkTransmission.instance.RemoveMeFromDictionaryServerRPC(friend.Id);
+
+			Debug.Log("HOST! : " + NetworkManager.Singleton.ConnectedHostname);
 		}
+
 		private void SteamMatchMaking_OnLobbyInvite(Friend friend, Lobby lobby)
 		{
 			Debug.Log($"Invite from {friend.Name}");
@@ -144,13 +147,17 @@ namespace MPGame.Manager
 
 		public void Disconnected()
 		{
+			Debug.Log("DISCONNECT TRY");
+
+			if (NetworkManager.Singleton.IsHost)
+				NetworkTransmission.instance.DisconnectAllServerRPC();
+
 			currentLobby?.Leave();
 			if (NetworkManager.Singleton == null) return;
 
 			if (NetworkManager.Singleton.IsHost)
 			{
 				NetworkManager.Singleton.OnServerStarted -= Singleton_OnServerStarted;
-				NetworkTransmission.instance.DisconnectAllClientRPC();	// È£½ºÆ®°¡ ²÷±â¸é ´Ù ²÷±â
 			}
 			else
 			{
@@ -158,7 +165,6 @@ namespace MPGame.Manager
 			}
 			NetworkManager.Singleton.Shutdown(true);
 			GameManagerEx.Instance.Disconnected();
-			Debug.Log("disconnected");
 		}
 
 

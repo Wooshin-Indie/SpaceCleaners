@@ -1,6 +1,7 @@
 using MPGame.Manager;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class NetworkTransmission : NetworkBehaviour
 {
@@ -70,12 +71,18 @@ public class NetworkTransmission : NetworkBehaviour
 		GameManagerEx.Instance.UpdatePlayerIsReady(ready, clientId);
 	}
 
+	[ServerRpc(RequireOwnership = false)]
+	public void DisconnectAllServerRPC()
+	{
+		DisconnectAllClientRPC();
+	}
+
 	[ClientRpc]
 	public void DisconnectAllClientRPC()
 	{
+		Debug.Log("DISCONNTEC RPC : " + IsHost);
 		if (IsHost)
 		{
-			Debug.Log("??????");
 			return;
 		}
 		GameNetworkManager.Instance.Disconnected();
