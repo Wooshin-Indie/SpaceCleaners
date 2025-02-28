@@ -3,6 +3,7 @@ using Unity.Netcode;
 using Steamworks;
 using Steamworks.Data;
 using Netcode.Transports.Facepunch;
+using System.Threading.Tasks;
 
 namespace MPGame.Manager
 {
@@ -29,13 +30,6 @@ namespace MPGame.Manager
 			}
 		}
 
-		private void Update()
-		{
-			if (Input.GetKeyDown(KeyCode.R))
-			{
-				NetworkTransmission.instance.DisconnectAllClientRPC();
-			}
-		}
 
 		private void Start()
 		{
@@ -152,10 +146,20 @@ namespace MPGame.Manager
 			}
 		}
 
-		public void Disconnected()
+		private void Update()
+		{
+			if (Input.GetKeyDown(KeyCode.R))
+			{
+				NetworkTransmission.instance.DisconnectAllClientRPC();
+			}
+		}
+		public async void Disconnected()
 		{
 			if (NetworkManager.Singleton.IsHost)
+			{
 				NetworkTransmission.instance.DisconnectAllClientRPC();
+				await Task.Delay(500);
+			}
 
 			currentLobby?.Leave();
 			if (NetworkManager.Singleton == null) return;
