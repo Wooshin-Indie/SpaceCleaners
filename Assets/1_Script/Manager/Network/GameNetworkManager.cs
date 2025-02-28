@@ -80,6 +80,7 @@ namespace MPGame.Manager
 			Debug.Log($"Lobby created : {lobby.Owner.Name}");
 
 			NetworkTransmission.instance.AddMeToDictionayServerRPC(SteamClient.SteamId, SteamClient.Name, NetworkManager.Singleton.LocalClientId);
+			PlayerSpawner.Instance.SpawnPlayerServerRPC(NetworkManager.Singleton.LocalClientId);
 		}
 
 		private void SteamMatchmaking_OnLobbyEntered(Lobby lobby)
@@ -187,7 +188,9 @@ namespace MPGame.Manager
 		}
 		private void Singleton_OnClientConnectedCallback(ulong clientId)
 		{
-			NetworkTransmission.instance.AddMeToDictionayServerRPC(SteamClient.SteamId, SteamClient.Name, clientId);
+			NetworkTransmission.instance.AddMeToDictionayServerRPC(SteamClient.SteamId, SteamClient.Name, clientId); 
+			PlayerSpawner.Instance.SpawnPlayerServerRPC(clientId);
+
 			GameManagerEx.Instance.MyClientId = clientId;
 			NetworkTransmission.instance.IsTheClientReadyServerRPC(false, clientId);
 			Debug.Log($"Client has connected : {clientId}");

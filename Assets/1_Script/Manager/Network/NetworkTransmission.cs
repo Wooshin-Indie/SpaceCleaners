@@ -1,4 +1,3 @@
-using MPGame.Manager;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -75,7 +74,6 @@ namespace MPGame.Manager
 		[ClientRpc]
 		public void DisconnectAllClientRPC()
 		{
-			Debug.Log("DISCONNTEC RPC : " + IsHost);
 			if (IsHost)
 			{
 				return;

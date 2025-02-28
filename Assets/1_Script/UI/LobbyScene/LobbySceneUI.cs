@@ -56,6 +56,11 @@ namespace MPGame.UI.LobbyScene
 			notreadyButton.onClick.AddListener(() => {
 				NetworkTransmission.instance.IsTheClientReadyServerRPC(false, GameManagerEx.Instance.MyClientId);
 			});
+
+			startButton.onClick.AddListener(() =>
+			{
+
+			});
 		}
 
 		private void OnDestroy()
