@@ -91,6 +91,8 @@ namespace MPGame.Controller
 		[ServerRpc(RequireOwnership = false)]
 		private void RotateCameraServerRPC(float vertRot, float horzRot)
 		{
+			transform.rotation = Quaternion.Euler(0f, horzRot, 0f);
+			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
 			UpdateMovementClientRPC(transform.rotation, cameraTransform.rotation);
 		}
 
