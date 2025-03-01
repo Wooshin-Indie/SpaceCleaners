@@ -25,7 +25,7 @@ namespace MPGame.Manager
 		[SerializeField] private GameObject playerPrefab;
 		private Dictionary<ulong, GameObject> players = new Dictionary<ulong, GameObject>();
 
-		[ServerRpc]
+		[ServerRpc(RequireOwnership = false)]
 		public void SpawnPlayerServerRPC(ulong clientId)
 		{
 			GameObject go = Instantiate(playerPrefab, new Vector3(0, 1f, 0), Quaternion.identity);
@@ -39,7 +39,7 @@ namespace MPGame.Manager
 			players.Add(clientId, go);
 		}
 
-		[ServerRpc]
+		[ServerRpc(RequireOwnership = false)]
 		public void DespawnPlayerServerRPC(ulong clientId)
 		{
 			foreach (var entry in players)

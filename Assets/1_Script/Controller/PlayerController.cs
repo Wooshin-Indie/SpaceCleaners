@@ -1,7 +1,7 @@
 using MPGame.Controller.StateMachine;
 using MPGame.Utils;
-using Unity.Collections;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 
@@ -58,6 +58,8 @@ namespace MPGame.Controller
 
 		private void Update()
 		{
+			if (!IsOwner) return;
+
 			stateMachine.CurState.HandleInput();
 
 			stateMachine.CurState.LogicUpdate();
@@ -65,49 +67,59 @@ namespace MPGame.Controller
 
 		private void FixedUpdate()
 		{
+			if (!IsOwner) return;
+
 			stateMachine.CurState.PhysicsUpdate();
 		}
 
 
-		#region Set Funcs
-
-		public void SetPlayerPosition(Vector3 position)
-		{
-			transform.position = position;
-		}
-
-		public void SetPlayerRotation(Quaternion rotation)
-		{
-			transform.rotation = rotation;
-		}
-		#endregion
-
-
 		#region Logic Control Funcs
 
-		private float horzRot = 0f;
-		private float vertRot = 0f;
+		[SerializeField] private float horzRot = 0f;
+		[SerializeField] private float vertRot = 0f;
 		public void RotateWithMouse(float mouseX, float mouseY)
 		{
 			horzRot += mouseX * horzRotSpeed;
 			vertRot -= mouseY * vertRotSpeed;
-
-
 			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
 
+			RotateCameraServerRPC(vertRot, horzRot);
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		private void RotateCameraServerRPC(float vertRot, float horzRot)
+		{
 			transform.rotation = Quaternion.Euler(0f, horzRot, 0f);
-			cameraTransform.rotation = Quaternion.Euler(vertRot, horzRot, 0f);
+			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
+			UpdateMovementClientRPC(cameraTransform.rotation);
+		}
+
+		[ClientRpc]
+		private void UpdateMovementClientRPC(Quaternion camQuat)
+		{
+			cameraTransform.rotation = camQuat;
 		}
 		#endregion
 
 
 		#region Physics Control Funcs
-		
+
 		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
 		{
 			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw);
-
 			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		private void PlayerWalkServerRPC(Vector3 moveDir, float diag)
+		{
+			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
+		}
+
+		[ClientRpc]
+		private void FixedUpdateMovementClientRPC()
+		{
+
 		}
 
 		private bool isDetectInteractable = false; 
