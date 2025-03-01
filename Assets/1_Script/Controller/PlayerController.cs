@@ -83,20 +83,22 @@ namespace MPGame.Controller
 			vertRot -= mouseY * vertRotSpeed;
 			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
 
+			transform.rotation = Quaternion.Euler(0f, horzRot, 0f);
+			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
 			RotateCameraServerRPC(vertRot, horzRot);
 		}
 
 		[ServerRpc(RequireOwnership = false)]
 		private void RotateCameraServerRPC(float vertRot, float horzRot)
 		{
-			transform.rotation = Quaternion.Euler(0f, horzRot, 0f);
-			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
-			UpdateMovementClientRPC(cameraTransform.rotation);
+			UpdateMovementClientRPC(transform.rotation, cameraTransform.rotation);
 		}
 
 		[ClientRpc]
-		private void UpdateMovementClientRPC(Quaternion camQuat)
+		private void UpdateMovementClientRPC(Quaternion playerQuat, Quaternion camQuat)
 		{
+			if (IsOwner) return;
+			transform.rotation = playerQuat;
 			cameraTransform.rotation = camQuat;
 		}
 		#endregion
@@ -107,19 +109,22 @@ namespace MPGame.Controller
 		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
 		{
 			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw);
+
 			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
+			PlayerWalkServerRPC(moveDir, diag);
 		}
 
 		[ServerRpc(RequireOwnership = false)]
 		private void PlayerWalkServerRPC(Vector3 moveDir, float diag)
 		{
-			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
+			FixedUpdateMovementClientRPC(moveDir, diag);
 		}
 
 		[ClientRpc]
-		private void FixedUpdateMovementClientRPC()
+		private void FixedUpdateMovementClientRPC(Vector3 moveDir, float diag)
 		{
-
+			if (IsOwner) return;
+			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
 		}
 
 		private bool isDetectInteractable = false; 
