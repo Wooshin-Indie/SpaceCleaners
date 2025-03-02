@@ -122,7 +122,10 @@ namespace MPGame.Manager
 					key = player.Key;
 				}
 			}
-			
+			if (key != 100)
+			{
+				playerInfo.Remove(key);
+			}
 			OnRemovePlayerAction?.Invoke(value);
 		}
 

@@ -96,6 +96,10 @@ namespace MPGame.Manager
 		private void SteamMatchmaking_OnLobbyLeaved(Lobby lobby, Friend friend)
 		{
 			Debug.Log("member leave");
+			if(friend.Id == lobby.Owner.Id)
+			{
+				Debug.Log("HOST LEAVED");
+			}
 			GameManagerEx.Instance.SendMessageToChat($"{friend.Name} has left", friend.Id, true);
 			NetworkTransmission.instance.RemoveMeFromDictionaryServerRPC(friend.Id);
 		}
@@ -147,15 +151,9 @@ namespace MPGame.Manager
 			}
 		}
 
-		private void Update()
-		{
-			if (Input.GetKeyDown(KeyCode.R))
-			{
-				NetworkTransmission.instance.DisconnectAllClientRPC();
-			}
-		}
 		public async void Disconnected()
 		{
+			PlayerSpawner.Instance.DespawnPlayerServerRPC(NetworkManager.Singleton.LocalClientId);
 			if (NetworkManager.Singleton.IsHost)
 			{
 				NetworkTransmission.instance.DisconnectAllClientRPC();

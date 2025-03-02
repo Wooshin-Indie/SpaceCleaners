@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
 
 namespace MPGame.Manager
 {
@@ -42,16 +43,20 @@ namespace MPGame.Manager
 		[ServerRpc(RequireOwnership = false)]
 		public void DespawnPlayerServerRPC(ulong clientId)
 		{
+			ulong key = 100;
 			foreach (var entry in players)
 			{
 				if(entry.Key == clientId)
 				{
-					GameObject go = entry.Value;
-					players.Remove(clientId);
-					go.GetComponent<NetworkObject>().Despawn();
-					Destroy(go);
+					key = entry.Key;
+					break;
 				}
 			}
+
+			GameObject go = players[key];
+			players.Remove(key);
+			go.GetComponent<NetworkObject>().Despawn();
+			Destroy(go);
 		}
 
 	}
