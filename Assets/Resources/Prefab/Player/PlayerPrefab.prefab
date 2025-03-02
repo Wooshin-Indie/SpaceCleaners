@@ -4102,15 +4102,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b351cad6627b6fd42800828dffea4bb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 5
-  horzRotSpeed: 5
-  vertRotSpeed: 5
+  walkSpeed: 4
+  horzRotSpeed: 4
+  vertRotSpeed: 4
   maxVertRot: 43.8
   minVertRot: -45
   jumpForce: 5
   groundedOffset: -0.04
-  groundRectSize: {x: 0.6, y: 0.4, z: 0.6}
-  slopeRayLength: 0.3
+  groundRectSize: {x: 0.5, y: 0.17, z: 0.5}
+  slopeRayLength: 0.6
   slopeLimit: 50
   playerPM: {fileID: 13400000, guid: dc11ef00556ac82418c30d537f2fe21a, type: 2}
   slopePM: {fileID: 13400000, guid: 08abb98db5f74cc4a928cedffa38c045, type: 2}

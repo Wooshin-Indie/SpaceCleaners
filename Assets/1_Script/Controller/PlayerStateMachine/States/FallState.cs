@@ -17,7 +17,6 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.Enter();
 			vertInputRaw = horzInputRaw = 0f;
-
 			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);
 		}
 
@@ -33,6 +32,7 @@ namespace MPGame.Controller.StateMachine
 		public override void HandleInput()
 		{
 			base.HandleInput();
+
 
 			GetMovementInput(out vertInput, out horzInput);
 			GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
@@ -60,8 +60,11 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.PhysicsUpdate();
 
-			//diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
-			//controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
+			if(!controller.OnSlope())
+			{
+				diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
+				controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
+			}
 		}
 	}
 }

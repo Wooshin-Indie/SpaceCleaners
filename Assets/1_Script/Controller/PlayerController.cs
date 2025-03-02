@@ -188,7 +188,7 @@ namespace MPGame.Controller
 
 		public void DetectIsFallingWhileJump()
 		{
-			if (rigid.linearVelocity.y <= 0f)
+			if (rigid.linearVelocity.y < 0f)
 			{
 				stateMachine.ChangeState(fallState);
 			}
@@ -196,7 +196,7 @@ namespace MPGame.Controller
 
 		public bool OnSlope()
 		{
-			Debug.DrawRay(transform.position * slopeRayLength, Vector3.down, Color.red);
+			Debug.DrawRay(transform.position, Vector3.down* slopeRayLength, Color.red);
 			if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, slopeRayLength))
 			{
 				float angle = Vector3.Angle(hit.normal, Vector3.up);
