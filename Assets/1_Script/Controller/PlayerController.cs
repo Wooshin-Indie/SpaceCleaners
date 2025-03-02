@@ -1,7 +1,6 @@
 using MPGame.Controller.StateMachine;
 using MPGame.Utils;
 using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
 
 
@@ -183,11 +182,6 @@ namespace MPGame.Controller
 		public void DetectIsFalling()
 		{
 			if (isGrounded) return;
-			DetectIsFallingWhileJump();
-		}
-
-		public void DetectIsFallingWhileJump()
-		{
 			if (rigid.linearVelocity.y < 0f)
 			{
 				stateMachine.ChangeState(fallState);
@@ -214,7 +208,7 @@ namespace MPGame.Controller
 			rigid.AddForce(new Vector3(0f, jumpForce, 0f), ForceMode.Impulse);
 			stateMachine.ChangeState(jumpState);
 		}
-
+		
 		#endregion
 
 

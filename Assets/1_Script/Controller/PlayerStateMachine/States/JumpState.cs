@@ -39,7 +39,7 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.LogicUpdate();
 
-			controller.DetectIsFallingWhileJump();
+			controller.DetectIsFalling();
 
 			controller.RotateWithMouse(mouseX, mouseY);
 		}
