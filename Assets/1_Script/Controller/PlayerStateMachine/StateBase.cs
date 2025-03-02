@@ -16,6 +16,7 @@ namespace MPGame.Controller.StateMachine
         protected float mouseY = 0f;
 
         protected bool isESCPressed = false;
+        protected bool isJumpPrssed = false;
 
         public StateBase(PlayerController controller, PlayerStateMachine stateMachine)
         {
@@ -25,7 +26,10 @@ namespace MPGame.Controller.StateMachine
 
         public virtual void Enter() { }             // Run once when Enter State
         public virtual void HandleInput() { }       // Manage Input in particular state
-        public virtual void LogicUpdate() { }       // Logic Update       
+        public virtual void LogicUpdate()           // Logic Update  
+		{
+            controller.GroundedCheck();
+		}           
         public virtual void PhysicsUpdate() { }     // Only Physics Update
         public virtual void Exit() { }              // Run once when Exit State
 
@@ -56,6 +60,11 @@ namespace MPGame.Controller.StateMachine
             {
                 // TODO - Handle Interactable Object
             }
+        }
+
+        protected void GetJumpInput(out bool isPressed)
+        {
+            isPressed = Input.GetKeyDown(KeyCode.Space);
         }
 
         #endregion

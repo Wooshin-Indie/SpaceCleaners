@@ -39,7 +39,8 @@ namespace MPGame.Controller.StateMachine
             GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
             GetMouseInput(out mouseX, out mouseY);
             GetInteractableInput();
-        }
+            GetJumpInput(out isJumpPrssed);
+		}
 
 
         public override void LogicUpdate()
@@ -53,8 +54,16 @@ namespace MPGame.Controller.StateMachine
                 stateMachine.ChangeState(controller.idleState);
             }
 
+            controller.DetectIsFalling();
+
+            if (controller.OnSlope())
+            {
+                controller.StateMachine.ChangeState(controller.fallState);
+            }
+
             controller.RotateWithMouse(mouseX, mouseY);
-        }
+            controller.Jump(isJumpPrssed);
+		}
 
         public override void PhysicsUpdate()
         {

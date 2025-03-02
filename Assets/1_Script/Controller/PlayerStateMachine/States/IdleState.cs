@@ -19,7 +19,8 @@ namespace MPGame.Controller.StateMachine
         public override void Exit()
         {
             base.Exit();
-        }
+			controller.Rigidbody.AddForce(0f, 0f, 0f);
+		}
 
 
         public override void HandleInput()
@@ -29,6 +30,7 @@ namespace MPGame.Controller.StateMachine
             GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
             GetMouseInput(out mouseX, out mouseY);
             GetInteractableInput();
+            GetJumpInput(out isJumpPrssed);
         }
 
         public override void LogicUpdate()
@@ -40,13 +42,18 @@ namespace MPGame.Controller.StateMachine
                 stateMachine.ChangeState(controller.walkState);
             }
 
-            controller.RotateWithMouse(mouseX, mouseY);
-        }
+			controller.DetectIsFalling();
+
+			controller.RotateWithMouse(mouseX, mouseY);
+            controller.Jump(isJumpPrssed);
+
+		}
 
         public override void PhysicsUpdate()
         {
             base.PhysicsUpdate();
             controller.RaycastInteractableObject();
-        }
+			controller.WalkWithArrow(0f, 0f, 0f);
+		}
     }
 }
