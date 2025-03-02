@@ -1,6 +1,7 @@
 using MPGame.Controller.StateMachine;
 using MPGame.Utils;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 
@@ -86,7 +87,6 @@ namespace MPGame.Controller
 			animIdGrounded = Animator.StringToHash("Grounded");
 			animIdFreeFall = Animator.StringToHash("FreeFall");
 
-			ChangeAnimatorParam(animIDMotionSpeed, 1f);
 		}
 
 		float currentSpeed = 0f;
@@ -100,6 +100,8 @@ namespace MPGame.Controller
 		{
 			base.OnNetworkSpawn();
 			cameraTransform.gameObject.SetActive(IsOwner);
+			rigid.isKinematic = !IsOwner;
+			ChangeAnimatorParam(animIDMotionSpeed, 1f);
 		}
 
 		private void Update()
@@ -108,6 +110,7 @@ namespace MPGame.Controller
 
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
+			UpdatePlayerTransformServerRPC(transform.position, transform.rotation, cameraTransform.localRotation);
 		}
 
 		private void FixedUpdate()
@@ -117,6 +120,24 @@ namespace MPGame.Controller
 			stateMachine.CurState.PhysicsUpdate();
 		}
 
+		#region Transform Synchronization
+
+		[ServerRpc(RequireOwnership = false)]
+		private void UpdatePlayerTransformServerRPC(Vector3 playerPosition, Quaternion playerQuat, Quaternion camQuat)
+		{
+			UpdatePlayerTransformClientRPC(playerPosition, playerQuat, camQuat);
+		}
+
+		[ClientRpc]
+		private void UpdatePlayerTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat, Quaternion camQuat)
+		{
+			if (IsOwner) return;
+			transform.position = playerPosition;
+			transform.rotation = playerQuat;
+			cameraTransform.localRotation = camQuat;
+		}
+
+		#endregion
 
 		#region Logic Control Funcs
 
@@ -130,20 +151,6 @@ namespace MPGame.Controller
 
 			transform.rotation = Quaternion.Euler(0f, horzRot, 0f);
 			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
-			PlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		private void PlayerRotateServerRPC(Quaternion playerQuat, Quaternion camQuat)
-		{
-			UpdatePlayerRotateClientRPC(playerQuat, camQuat);
-		}
-		[ClientRpc]
-		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat)
-		{
-			if (IsOwner) return;
-			transform.rotation = playerQuat;
-			cameraTransform.rotation = camQuat;
 		}
 
 		public void GroundedCheck()
@@ -220,20 +227,8 @@ namespace MPGame.Controller
 
 			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
 			ChangeAnimatorParam(animIDSpeed, currentSpeed);
-			PlayerWalkServerRPC(transform.position);
 		}
 
-		[ServerRpc(RequireOwnership = false)]
-		private void PlayerWalkServerRPC(Vector3 position)
-		{
-			UpdatePlayerWalkClientRPC(position);
-		}
-		[ClientRpc]
-		private void UpdatePlayerWalkClientRPC(Vector3 position)
-		{
-			if (IsOwner) return;
-			transform.position = position;
-		}
 		public void RaycastInteractableObject()
 		{
 			RaycastHit hit;
@@ -270,10 +265,12 @@ namespace MPGame.Controller
 		public void ChangeAnimatorParam(int id, bool param)
 		{
 			animator.SetBool(id, param);
+			ChangeAnimatorParamServerRPC(id, param);
 		}
 		public void ChangeAnimatorParam(int id, float param)
 		{
 			animator.SetFloat(id, param);
+			ChangeAnimatorParamServerRPC(id, param);
 		}
 
 		[ServerRpc(RequireOwnership = false)]
@@ -290,11 +287,13 @@ namespace MPGame.Controller
 		[ClientRpc]
 		public void ChangeAnimatorParamClientRPC(int id, bool param)
 		{
+			if (IsOwner) return;
 			animator.SetBool(id, param);
 		}
 		[ClientRpc]
 		public void ChangeAnimatorParamClientRPC(int id, float param)
 		{
+			if (IsOwner) return;
 			animator.SetFloat(id, param);
 		}
 		#endregion
