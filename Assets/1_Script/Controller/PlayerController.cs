@@ -1,8 +1,6 @@
 using MPGame.Controller.StateMachine;
 using MPGame.Utils;
-using Steamworks;
 using Unity.Netcode;
-using UnityEditor.Build;
 using UnityEngine;
 
 
@@ -88,7 +86,7 @@ namespace MPGame.Controller
 			animIdGrounded = Animator.StringToHash("Grounded");
 			animIdFreeFall = Animator.StringToHash("FreeFall");
 
-			animator.SetFloat(animIDMotionSpeed, 1f);
+			ChangeAnimatorParam(animIDMotionSpeed, 1f);
 		}
 
 		float currentSpeed = 0f;
@@ -107,7 +105,7 @@ namespace MPGame.Controller
 		private void Update()
 		{
 			if (!IsOwner) return;
-			
+
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 		}
@@ -138,7 +136,7 @@ namespace MPGame.Controller
 		[ServerRpc(RequireOwnership = false)]
 		private void PlayerRotateServerRPC(Quaternion playerQuat, Quaternion camQuat)
 		{
-			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.rotation);
+			UpdatePlayerRotateClientRPC(playerQuat, camQuat);
 		}
 		[ClientRpc]
 		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat)
@@ -156,7 +154,7 @@ namespace MPGame.Controller
 				Constants.LAYER_GROUND,
 				QueryTriggerInteraction.Ignore);
 
-			animator.SetBool(animIdGrounded, isGrounded);
+			ChangeAnimatorParam(animIdGrounded, isGrounded);
 		}
 
 		private void OnDrawGizmos()
@@ -170,7 +168,7 @@ namespace MPGame.Controller
 		{
 			if (isGrounded)
 			{
-				animator.SetBool(animIdGrounded, true);
+				ChangeAnimatorParam(animIdGrounded, true);
 				stateMachine.ChangeState(idleState);
 			}
 		}
@@ -195,7 +193,6 @@ namespace MPGame.Controller
 			if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, slopeRayLength))
 			{
 				float angle = Vector3.Angle(hit.normal, Vector3.up);
-				Debug.Log("ANGLE : " + angle);
 				return angle > slopeLimit;
 			}
 
@@ -222,20 +219,20 @@ namespace MPGame.Controller
 			currentSpeed = moveDir.magnitude * walkSpeed * diag;
 
 			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
-			animator.SetFloat(animIDSpeed, currentSpeed);
-			PlayerWalkServerRPC(moveDir, diag);
+			ChangeAnimatorParam(animIDSpeed, currentSpeed);
+			PlayerWalkServerRPC(transform.position);
 		}
 
 		[ServerRpc(RequireOwnership = false)]
-		private void PlayerWalkServerRPC(Vector3 moveDir, float diag)
+		private void PlayerWalkServerRPC(Vector3 position)
 		{
-			UpdatePlayerWalkClientRPC(moveDir, diag);
+			UpdatePlayerWalkClientRPC(position);
 		}
 		[ClientRpc]
-		private void UpdatePlayerWalkClientRPC(Vector3 moveDir, float diag)
+		private void UpdatePlayerWalkClientRPC(Vector3 position)
 		{
 			if (IsOwner) return;
-			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
+			transform.position = position;
 		}
 		public void RaycastInteractableObject()
 		{
@@ -270,6 +267,36 @@ namespace MPGame.Controller
 
 		#region Animation Synchronization
 
+		public void ChangeAnimatorParam(int id, bool param)
+		{
+			animator.SetBool(id, param);
+		}
+		public void ChangeAnimatorParam(int id, float param)
+		{
+			animator.SetFloat(id, param);
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		public void ChangeAnimatorParamServerRPC(int id, bool param)
+		{
+			ChangeAnimatorParamClientRPC(id, param);
+		}
+		[ServerRpc(RequireOwnership = false)]
+		public void ChangeAnimatorParamServerRPC(int id, float param)
+		{
+			ChangeAnimatorParamClientRPC(id, param);
+		}
+
+		[ClientRpc]
+		public void ChangeAnimatorParamClientRPC(int id, bool param)
+		{
+			animator.SetBool(id, param);
+		}
+		[ClientRpc]
+		public void ChangeAnimatorParamClientRPC(int id, float param)
+		{
+			animator.SetFloat(id, param);
+		}
 		#endregion
 
 		#region Animation Event

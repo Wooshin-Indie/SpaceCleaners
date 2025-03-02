@@ -16,13 +16,13 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.Enter();
 			vertInputRaw = horzInputRaw = 0f;
-			controller.Animator.SetBool(controller.animIDJump, true);
+			controller.ChangeAnimatorParam(controller.animIDJump, true);
 		}
 
 		public override void Exit()
 		{
 			base.Exit();
-			controller.Animator.SetBool(controller.animIDJump, false);
+			controller.ChangeAnimatorParam(controller.animIDJump, false);
 		}
 
 

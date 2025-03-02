@@ -18,7 +18,7 @@ namespace MPGame.Controller.StateMachine
 			base.Enter();
 			vertInputRaw = horzInputRaw = 0f;
 
-			controller.Animator.SetBool(controller.animIdFreeFall, true);
+			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);
 		}
 
 		public override void Exit()
@@ -26,7 +26,7 @@ namespace MPGame.Controller.StateMachine
 			base.Exit();
 			
 				controller.TurnPlayerPM();
-			controller.Animator.SetBool(controller.animIdFreeFall, false);
+			controller.ChangeAnimatorParam(controller.animIdFreeFall, false);
 		}
 
 
