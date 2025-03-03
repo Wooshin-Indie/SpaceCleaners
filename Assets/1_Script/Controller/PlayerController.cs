@@ -1,7 +1,7 @@
 using MPGame.Controller.StateMachine;
+using MPGame.Manager;
 using MPGame.Props;
 using MPGame.Utils;
-using NUnit.Framework.Constraints;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -118,6 +118,9 @@ namespace MPGame.Controller
 			cameraTransform.gameObject.SetActive(IsOwner);
 			rigid.isKinematic = !IsOwner;
 			ChangeAnimatorParam(animIDMotionSpeed, 1f);
+
+			if (IsHost)
+				PlayerSpawner.Instance.SpawnEnvironments();
 		}
 
 		private void Update()
@@ -175,9 +178,16 @@ namespace MPGame.Controller
 
 			if (!IsGrounded) return;
 
+			transform.parent = hitObjects[0].transform.parent;		// 감지하면 Parent로 설정
+
 			GroundBase gb = hitObjects[0].GetComponentInParent<GroundBase>();
 			gravityType = gb.GravityType;
 			gravityVector = gb.GetGravityVector();
+		}
+
+		public void UnsetParent()
+		{
+			transform.parent = null;
 		}
 
 		private void OnDrawGizmos()
@@ -235,7 +245,7 @@ namespace MPGame.Controller
 		{
 			if (!isJumpPressed) return;
 
-			rigid.AddForce(new Vector3(0f, jumpForce, 0f), ForceMode.Impulse);
+			rigid.AddForce(transform.up * jumpForce, ForceMode.Impulse);
 			stateMachine.ChangeState(jumpState);
 		}
 

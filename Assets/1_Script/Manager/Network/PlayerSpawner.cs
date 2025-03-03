@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Netcode;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 namespace MPGame.Manager
@@ -24,6 +25,18 @@ namespace MPGame.Manager
 
 		[SerializeField] private GameObject playerPrefab;
 		private Dictionary<ulong, GameObject> players = new Dictionary<ulong, GameObject>();
+
+		[SerializeField] private List<GameObject> environments =new List<GameObject>();
+
+		public void SpawnEnvironments()
+		{
+			for (int i = 0; i < environments.Count; i++)
+			{
+				GameObject go = Instantiate(environments[i]);
+				NetworkObject no = go.GetComponent<NetworkObject>();
+				no?.Spawn();
+			}
+		}
 
 		[ServerRpc(RequireOwnership = false)]
 		public void SpawnPlayerServerRPC(ulong clientId)

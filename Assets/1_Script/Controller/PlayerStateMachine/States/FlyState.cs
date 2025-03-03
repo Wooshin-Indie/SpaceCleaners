@@ -18,6 +18,7 @@ namespace MPGame.Controller.StateMachine
             controller.Rigidbody.linearDamping = 0f;
             controller.UseGravity = false;
             controller.TurnFlyPM();
+            controller.UnsetParent();       // 날기 시작하면 Parent 없앰
         }
 
         public override void Exit()
