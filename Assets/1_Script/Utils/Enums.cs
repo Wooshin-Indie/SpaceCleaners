@@ -8,4 +8,11 @@ namespace MPGame.Utils
         Lobby,
         Game
     }
+
+    public enum GravityType
+    {
+        None = -1,
+        Point,
+        Direction
+    }
 }

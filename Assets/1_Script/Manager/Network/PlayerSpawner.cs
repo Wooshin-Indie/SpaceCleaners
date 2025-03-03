@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using static UnityEngine.EventSystems.EventTrigger;
 
 namespace MPGame.Manager
 {
@@ -31,7 +30,7 @@ namespace MPGame.Manager
 		{
 			GameObject go = Instantiate(playerPrefab, new Vector3(0, 1f, 0), Quaternion.identity);
 			NetworkObject no = go.GetComponent<NetworkObject>();
-			
+
 			if (no != null)
 			{
 				no.SpawnAsPlayerObject(clientId);

@@ -19,7 +19,6 @@ namespace MPGame.Controller.StateMachine
         public override void Exit()
         {
             base.Exit();
-			controller.Rigidbody.AddForce(0f, 0f, 0f);
 		}
 
 

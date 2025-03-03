@@ -94,7 +94,6 @@ namespace MPGame.Manager
 				PlayerInfo pi = new PlayerInfo(steamName, steamId);
 				playerInfo.Add(clientId, pi);
 				OnAddPlayerAction?.Invoke(pi);
-
 			}
 		}
 

@@ -1,3 +1,5 @@
+using Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
@@ -14,9 +16,13 @@ namespace MPGame.Controller.StateMachine
         protected float horzInputRaw = 0f;
         protected float mouseX = 0f;
         protected float mouseY = 0f;
+        protected float roll = 0f;
 
         protected bool isESCPressed = false;
         protected bool isJumpPrssed = false;
+
+        protected bool isUpPressed = false;
+        protected bool isDownPressed = false;
 
         public StateBase(PlayerController controller, PlayerStateMachine stateMachine)
         {
@@ -28,9 +34,12 @@ namespace MPGame.Controller.StateMachine
         public virtual void HandleInput() { }       // Manage Input in particular state
         public virtual void LogicUpdate()           // Logic Update  
 		{
-            controller.GroundedCheck();
 		}           
-        public virtual void PhysicsUpdate() { }     // Only Physics Update
+        public virtual void PhysicsUpdate()         // Only Physics Update
+		{
+			controller.GroundedCheck();
+			controller.ApplyGravity();
+		}     
         public virtual void Exit() { }              // Run once when Exit State
 
 
@@ -42,7 +51,16 @@ namespace MPGame.Controller.StateMachine
             mouseY = Input.GetAxis("Mouse Y");
         }
 
-        protected void GetMovementInputRaw(out float vert, out float horz)
+        protected void GetRollInput(out float roll)
+        {
+            bool left = Input.GetKey(KeyCode.Q);
+            bool right = Input.GetKey(KeyCode.E);
+            if (left == right) roll = 0f;
+            else roll = right ? 1f : -1f;
+        }
+
+
+		protected void GetMovementInputRaw(out float vert, out float horz)
         {
             vert = Input.GetAxisRaw("Vertical");
             horz = Input.GetAxisRaw("Horizontal");
@@ -52,6 +70,12 @@ namespace MPGame.Controller.StateMachine
         {
             vert = Input.GetAxis("Vertical");
             horz = Input.GetAxis("Horizontal");
+        }
+
+        protected void GetUpDownInput(out bool isUpPressed, out bool isDownPressed)
+        {
+            isUpPressed = Input.GetKey(KeyCode.Space);
+            isDownPressed = Input.GetKey(KeyCode.LeftControl);
         }
 
         protected void GetInteractableInput()
