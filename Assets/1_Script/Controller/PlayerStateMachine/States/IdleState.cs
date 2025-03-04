@@ -13,8 +13,10 @@ namespace MPGame.Controller.StateMachine
         public override void Enter()
         {
             base.Enter();
-            vertInputRaw = horzInputRaw = 0f;        
-        }
+            vertInputRaw = horzInputRaw = 0f;
+			controller.Rigidbody.linearDamping = 3f;
+            controller.TurnIdlePM();
+		}
 
         public override void Exit()
         {

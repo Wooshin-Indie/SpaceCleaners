@@ -16,7 +16,9 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.Enter();
 			vertInputRaw = horzInputRaw = 0f;
+			controller.Rigidbody.linearDamping = 3f;
 			controller.ChangeAnimatorParam(controller.animIDJump, true);
+			controller.TurnPlayerPM();
 		}
 
 		public override void Exit()
@@ -50,6 +52,7 @@ namespace MPGame.Controller.StateMachine
 
 			diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
 			controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
+
 		}
 	}
 }

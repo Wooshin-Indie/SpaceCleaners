@@ -26,7 +26,6 @@ namespace MPGame.Controller.StateMachine
             base.Exit();
             controller.Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX
                 | RigidbodyConstraints.FreezeRotationZ;
-			controller.Rigidbody.linearDamping = 1f;
 			controller.UseGravity = true;
 			controller.TurnPlayerPM();
 		}

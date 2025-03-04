@@ -2,6 +2,7 @@ using MPGame.Controller.StateMachine;
 using MPGame.Manager;
 using MPGame.Props;
 using MPGame.Utils;
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -37,6 +38,7 @@ namespace MPGame.Controller
 		[SerializeField] private Vector3 groundRectSize;
 		[SerializeField] private float slopeRayLength;
 		[SerializeField] private float slopeLimit;
+		[SerializeField] private PhysicsMaterial idlePM;
 		[SerializeField] private PhysicsMaterial playerPM;
 		[SerializeField] private PhysicsMaterial slopePM;
 		[SerializeField] private PhysicsMaterial flyPM;
@@ -84,6 +86,8 @@ namespace MPGame.Controller
 		private Vector3 gravityVector = new Vector3(0f, 0f, 0f);
 		private GravityType gravityType = GravityType.None;
 
+		Vector3 projectedForward = Vector3.zero;
+
 		private void Awake()
 		{
 			rigid = GetComponent<Rigidbody>();
@@ -103,6 +107,7 @@ namespace MPGame.Controller
 			animIdGrounded = Animator.StringToHash("Grounded");
 			animIdFreeFall = Animator.StringToHash("FreeFall");
 
+			rigid.maxLinearVelocity = 10f;
 		}
 
 		float currentSpeed = 0f;
@@ -221,24 +226,29 @@ namespace MPGame.Controller
 			}
 		}
 
-		public bool OnSlope(bool isFlying = false)
+		private bool isOnSlope = false;
+		private bool isOnSlopeWhileFlying = false;
+		private float slopeAngle = 0f;
+
+		private Vector3 normalVector = Vector3.zero;
+
+		public void SlopeCheck()
 		{
 			Debug.DrawRay(transform.position, -transform.up * slopeRayLength, Color.red);
 			if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeRayLength))
 			{
-				float angle = Vector3.Angle(hit.normal, -GetGravityDirection());
-				if (!isFlying)
-				{
-					return angle > slopeLimit;
-				}
-				else
-				{
-					float landAngle = Vector3.Angle(hit.normal, transform.up);
-					return angle > slopeLimit || landAngle > enableToLandAngle;
-				}
-			}
+				normalVector = hit.normal;
+				slopeAngle = Vector3.Angle(hit.normal, -GetGravityDirection());
 
-			return false;
+				float landAngle = Vector3.Angle(hit.normal, transform.up);
+				isOnSlope = slopeAngle > slopeLimit;
+				isOnSlopeWhileFlying = slopeAngle > slopeLimit || landAngle > enableToLandAngle;
+			}
+		}
+
+		public bool OnSlope(bool isFlying = false)
+		{
+			return isFlying ? isOnSlopeWhileFlying : isOnSlope;
 		}
 
 		public void Jump(bool isJumpPressed)
@@ -281,7 +291,7 @@ namespace MPGame.Controller
 
 			Vector3 downDir = GetGravityDirection(); 
 			
-			Vector3 projectedForward = Vector3.ProjectOnPlane(transform.forward, downDir).normalized;
+			projectedForward = Vector3.ProjectOnPlane(transform.forward, downDir).normalized;
 			Quaternion targetRotation = Quaternion.LookRotation(projectedForward, -downDir);
 
 			rigid.MoveRotation(targetRotation);
@@ -290,10 +300,10 @@ namespace MPGame.Controller
 
 		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
 		{
-			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw);
+			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw) * diag * walkSpeed;
+			
 			currentSpeed = moveDir.magnitude * walkSpeed * diag;
-
-			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
+			rigid.AddForce(Vector3.ProjectOnPlane(moveDir, normalVector) * Time.fixedDeltaTime, ForceMode.VelocityChange);
 			ChangeAnimatorParam(animIDSpeed, currentSpeed);
 		}
 
@@ -316,6 +326,10 @@ namespace MPGame.Controller
 			Debug.DrawRay(cameraTransform.position, cameraTransform.forward * rayLength, Color.red);
 		}
 
+		public void TurnIdlePM()
+		{
+			capsule.material = idlePM;
+		}
 		public void TurnPlayerPM()
 		{
 			capsule.material = playerPM;
@@ -350,7 +364,6 @@ namespace MPGame.Controller
 		{
 			vertRot -= mouseY * vertRotSpeed;
 			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
-
 			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
 			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
 		}

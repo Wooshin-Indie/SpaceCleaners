@@ -22,8 +22,10 @@ namespace MPGame.Controller.StateMachine
 
             vertInput = horzInput = vertInputRaw = horzInputRaw = 0f;
             diagW = 1.0f;
+			controller.Rigidbody.linearDamping = 3f;
+            controller.TurnPlayerPM();
 
-        }
+		}
 
         public override void Exit()
         {
@@ -61,7 +63,6 @@ namespace MPGame.Controller.StateMachine
                 controller.StateMachine.ChangeState(controller.fallState);
             }
 
-            controller.RotateWithMouse(mouseX, mouseY);
             controller.Jump(isJumpPrssed);
 		}
 
@@ -70,9 +71,11 @@ namespace MPGame.Controller.StateMachine
             base.PhysicsUpdate();
             controller.RaycastInteractableObject();
 
-            diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
+			controller.RotateWithMouse(mouseX, mouseY);
+			diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
             controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
-        }
+
+		}
     }
 
 }
