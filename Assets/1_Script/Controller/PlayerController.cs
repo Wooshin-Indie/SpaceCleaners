@@ -75,7 +75,7 @@ namespace MPGame.Controller
 			animator = GetComponent<Animator>();
 			capsule = GetComponent<CapsuleCollider>();
 
-			stateMachine = new PlayerStateMachine();
+            stateMachine = new PlayerStateMachine();
 			idleState = new IdleState(this, stateMachine);
 			walkState = new WalkState(this, stateMachine);
 			jumpState = new JumpState(this, stateMachine);
@@ -111,7 +111,6 @@ namespace MPGame.Controller
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 			UpdatePlayerTransformServerRPC(transform.position, transform.rotation, cameraTransform.localRotation);
-			//UpdateObjectsTransformServerRpc();
 		}
 
 		private void FixedUpdate()
@@ -190,6 +189,7 @@ namespace MPGame.Controller
 			}
 		}
 
+
 		public bool OnSlope()
 		{
 			Debug.DrawRay(transform.position, Vector3.down* slopeRayLength, Color.red);
@@ -210,13 +210,32 @@ namespace MPGame.Controller
 			rigid.AddForce(new Vector3(0f, jumpForce, 0f), ForceMode.Impulse);
 			stateMachine.ChangeState(jumpState);
 		}
-		
-		#endregion
+
+		public void Vacuuming()
+		{
+			if (!stateMachine.CurState.IsVacuumEnabled) return;
+
+			if (!stateMachine.CurState.IsVacuumPressed)
+			{
+				if (isVacuumingStarted)
+                {
+                    isVacuumingStarted = false;
+
+                    vacuumingObjects.Clear();
+                }
+                return;
+			}
+
+            DetectVacuumingObjects();
+            MoveObjectsTowardsPlayer();
+        }
+
+        #endregion
 
 
-		#region Physics Control Funcs
+        #region Physics Control Funcs
 
-		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
+        public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
 		{
 			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw);
 			currentSpeed = moveDir.magnitude * walkSpeed * diag;
@@ -308,53 +327,39 @@ namespace MPGame.Controller
         #region Vacuum Funcs
 
         [Header("Vacuum Settings")]
-        private float vacuumRadius = 10f;
-        private float vacuumSpeed = 5f;
-        private LayerMask vacuumableLayers;
-        private KeyCode vacuumKey = KeyCode.Space;
+        [SerializeField] private float vacuumDetectRadius = 10f;
+        [SerializeField] private float vacuumDetectLength = 1f;
+        [SerializeField] private float vacuumSpeed = 5f;
+        [SerializeField] private LayerMask vacuumableLayers;
 
         [Header("Absorption Settings")]
         private float absorbDistance = 1f;
+
         private Transform absorbPoint;
+		private bool isVacuumingStarted = false;
 
-		private bool isVacuumEnabled = false;
-		private bool isVacuuming = false;
+
         private List<VacuumableObject> vacuumingObjects = new List<VacuumableObject>();
-
-        private void OnUpdateVacuumFunc()
+        Vector3 cameraPos;
+        Vector3 cameraForward;
+		Vector3 detectingVector;
+        private void DetectVacuumingObjects()
         {
-			if (Input.GetKeyDown(KeyCode.Alpha1))
-				isVacuumEnabled = isVacuumEnabled ? false : true;
+			if (!isVacuumingStarted) isVacuumingStarted = true;
 
-			if (Input.GetMouseButton(0))
-				isVacuuming = true;
-			else
-                isVacuuming = false;
+            cameraPos = cameraTransform.position;
+            cameraForward = cameraTransform.forward;
+			detectingVector = cameraPos + cameraForward * vacuumDetectLength;
 
-
-            if (isVacuuming)
-            {
-                DetectNewObjects();
-                MoveObjectsTowardsPlayer();
-            }
-        }
-
-		//빨아들일 수 있는 물체 탐지
-        private void DetectNewObjects()
-        {
-            Collider[] hitColliders = Physics.OverlapSphere(transform.position, vacuumRadius, vacuumableLayers);
-
+            Collider[] hitColliders = Physics.OverlapCapsule(cameraTransform.position, detectingVector, vacuumDetectRadius, vacuumableLayers);
+            //HashSet으로 이전 프레임에 감지된 오브젝트를 저장하고, 이번 프레임에 감지된 오브젝트와 비교하여 중복된 오브젝트를 제거하는 방식으로 구현해야함
             foreach (var hitCollider in hitColliders)
             {
-               
+                // 이미 처리 중인 오브젝트는 건너뛰기
+                if (vacuumingObjects.Exists(obj => obj.ObjectCollider == hitCollider))
+                    continue;
 
-                // VacuumableObject 컴포넌트 확인 또는 추가
                 VacuumableObject vacObj = hitCollider.GetComponent<VacuumableObject>();
-                if (vacObj == null)
-                {
-                    vacObj = hitCollider.gameObject.AddComponent<VacuumableObject>();
-                }
-
                 vacuumingObjects.Add(vacObj);
 
                 vacObj.Init(absorbPoint);
@@ -386,7 +391,7 @@ namespace MPGame.Controller
                 }
 
                 // 거리에 따른 속도 조절 (가까울수록 빨라짐)
-                float speedMultiplier = 1f + (vacuumRadius - distance) / vacuumRadius;
+                float speedMultiplier = 1f + (vacuumDetectRadius - distance) / vacuumDetectRadius;
                 float currentSpeed = vacuumSpeed * speedMultiplier * Time.deltaTime;
 
                 // 오브젝트 이동

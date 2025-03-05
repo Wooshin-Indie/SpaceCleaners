@@ -17,6 +17,10 @@ namespace MPGame.Controller.StateMachine
 
         protected bool isESCPressed = false;
         protected bool isJumpPrssed = false;
+        protected bool isVacuumEnabled = false;
+        public bool IsVacuumEnabled { get => isVacuumEnabled; }
+        protected bool isVacuumPressed = false;
+        public bool IsVacuumPressed { get => isVacuumPressed; }
 
         public StateBase(PlayerController controller, PlayerStateMachine stateMachine)
         {
@@ -66,6 +70,17 @@ namespace MPGame.Controller.StateMachine
         {
             isPressed = Input.GetKeyDown(KeyCode.Space);
         }
+
+        protected void GetEnableVacuumInput(out bool isPressed)
+        {
+            isPressed = Input.GetKeyDown(KeyCode.Alpha1);
+        }
+
+        protected void GetVacuumInput(out bool isPressed)
+        {
+            isPressed = Input.GetMouseButton(0);
+        }
+
 
         #endregion
     }

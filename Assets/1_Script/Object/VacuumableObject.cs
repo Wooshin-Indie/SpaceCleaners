@@ -24,6 +24,12 @@ public class VacuumableObject : MonoBehaviour
         }
     }
 
+    public void VacuumEnd()
+    {
+        objectRigidbody.isKinematic = false; // 물리법칙 영향 다시 받도록 설정
+        // 원래 가고있던 벡터로 이동하는 코드 추가해야함
+    }
+
     private void OnTriggerStay(Collider other)
     {
         if (!isInitialized) return;

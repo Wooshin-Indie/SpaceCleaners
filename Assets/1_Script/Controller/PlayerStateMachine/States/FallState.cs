@@ -37,7 +37,9 @@ namespace MPGame.Controller.StateMachine
 			GetMovementInput(out vertInput, out horzInput);
 			GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
 			GetMouseInput(out mouseX, out mouseY);
-		}
+            GetEnableVacuumInput(out isVacuumEnabled);
+            GetVacuumInput(out isVacuumPressed);
+        }
 
 		public override void LogicUpdate()
 		{
@@ -53,6 +55,7 @@ namespace MPGame.Controller.StateMachine
 				controller.TurnSlopePM();
 			}
 
+			controller.Vacuuming();
 			controller.RotateWithMouse(mouseX, mouseY);
 		}
 
