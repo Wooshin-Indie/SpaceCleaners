@@ -21,7 +21,7 @@ namespace MPGame.Controller
 			rigid = GetComponent<Rigidbody>();
 		}
 
-		private void Update()
+		private void FixedUpdate()
 		{
 			UpdatePlayerTransformServerRPC(transform.position, transform.rotation);
 		}
@@ -87,9 +87,14 @@ namespace MPGame.Controller
 		private void UpdatePlayerTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat)
 		{
 			if (IsOwner) return;
-			transform.position = playerPosition;
-			transform.rotation = playerQuat;
+
+			if (rigid != null)
+			{
+				rigid.MovePosition(playerPosition);
+				rigid.MoveRotation(playerQuat);
+			}
 		}
+
 
 		#endregion
 

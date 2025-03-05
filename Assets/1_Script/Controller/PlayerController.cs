@@ -125,8 +125,10 @@ namespace MPGame.Controller
 			rigid.isKinematic = !IsOwner;
 			ChangeAnimatorParam(animIDMotionSpeed, 1f);
 
-			if (IsHost)
+			if (IsOwner && IsHost)
+			{
 				PlayerSpawner.Instance.SpawnEnvironments();
+			}
 		}
 
 		private void Update()
