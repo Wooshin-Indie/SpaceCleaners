@@ -32,7 +32,8 @@ namespace MPGame.Controller.StateMachine
             GetMouseInput(out mouseX, out mouseY);
             GetInteractableInput();
             GetJumpInput(out isJumpPrssed);
-        }
+			GetFlyStateInput();
+		}
 
         public override void LogicUpdate()
         {

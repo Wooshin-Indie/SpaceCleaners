@@ -33,10 +33,11 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.HandleInput();
 
-
 			GetMovementInput(out vertInput, out horzInput);
 			GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
 			GetMouseInput(out mouseX, out mouseY);
+
+			GetFlyStateInput();
 		}
 
 		public override void LogicUpdate()

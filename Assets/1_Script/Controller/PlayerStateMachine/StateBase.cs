@@ -34,6 +34,7 @@ namespace MPGame.Controller.StateMachine
         public virtual void HandleInput() { }       // Manage Input in particular state
         public virtual void LogicUpdate()           // Logic Update  
 		{
+
 		}           
         public virtual void PhysicsUpdate()         // Only Physics Update
 		{
@@ -92,6 +93,14 @@ namespace MPGame.Controller.StateMachine
         {
             isPressed = Input.GetKeyDown(KeyCode.Space);
         }
+
+        protected void GetFlyStateInput()
+		{
+			if (Input.GetKeyDown(KeyCode.R))
+			{
+				controller.StateMachine.ChangeState(controller.flyState);
+			}
+		}
 
         #endregion
     }

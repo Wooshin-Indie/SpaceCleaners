@@ -4,7 +4,6 @@ using MPGame.Props;
 using MPGame.Utils;
 using System;
 using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -71,6 +70,7 @@ namespace MPGame.Controller
 		public JumpState jumpState;
 		public FallState fallState;
 		public FlyState flyState;
+		public FlightState flightState;
 
 
 		public bool UseGravity { get => useGravity; set => useGravity = value; }
@@ -102,6 +102,7 @@ namespace MPGame.Controller
 			jumpState = new JumpState(this, stateMachine);
 			fallState = new FallState(this, stateMachine);
 			flyState = new FlyState(this, stateMachine);
+			flightState = new FlightState(this, stateMachine);
 
 			animIDSpeed = Animator.StringToHash("Speed");
 			animIDJump = Animator.StringToHash("Jump");
@@ -131,12 +132,14 @@ namespace MPGame.Controller
 		private void Update()
 		{
 			if (!IsOwner) return;
-			if (Input.GetKeyDown(KeyCode.R))
-			{
-				stateMachine.ChangeState(flyState);
-			}
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
+
+			if (Input.GetKeyDown(KeyCode.LeftBracket))
+			{
+				spaceship.TryInteract();
+			}
+
 			UpdatePlayerTransformServerRPC(transform.position, transform.rotation, cameraTransform.localRotation);
 		}
 
@@ -249,6 +252,8 @@ namespace MPGame.Controller
 
 		Vector3 gravityDirection = Vector3.zero;
 		Collider[] hitObjects;
+		SpaceshipContoller spaceship = null;
+		public SpaceshipContoller Spaceship { get => spaceship; }
 		public void GroundedCheck()
 		{
 			Vector3 rectPosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
@@ -258,6 +263,7 @@ namespace MPGame.Controller
 
 			if (!IsGrounded) return;
 
+			spaceship = hitObjects[0].transform.parent.GetComponent<SpaceshipContoller>();
 			SetParentServerRPC(hitObjects[0].transform.parent.GetComponent<NetworkObject>().NetworkObjectId);
 
 			GroundBase gb = hitObjects[0].GetComponentInParent<GroundBase>();
@@ -337,6 +343,15 @@ namespace MPGame.Controller
 		public void SetMaxFlySpeed()
 		{
 			rigid.maxLinearVelocity = maxFlySpeed;
+		}
+
+		public void TurnStateToIdleState()
+		{
+			stateMachine.ChangeState(idleState);
+		}
+		public void TurnStateToFlightState()
+		{
+			stateMachine.ChangeState(flightState);
 		}
 
 		// 앞뒤/양옆/위아래 입력

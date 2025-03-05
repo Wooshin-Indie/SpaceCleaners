@@ -4102,7 +4102,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b351cad6627b6fd42800828dffea4bb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkForce: 10
+  walkForce: 20
   maxWalkSpeed: 10
   jumpForce: 10
   gravityForce: 20
