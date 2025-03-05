@@ -14,11 +14,13 @@ namespace MPGame.Controller.StateMachine
         {
             base.Enter();
 			vertInputRaw = horzInputRaw = 0f;
-            controller.Rigidbody.constraints = RigidbodyConstraints.None;
             controller.Rigidbody.linearDamping = 0f;
-            controller.UseGravity = false;
-            controller.TurnFlyPM();
-            controller.UnsetParent();       // 날기 시작하면 Parent 없앰
+
+			controller.Rigidbody.constraints = RigidbodyConstraints.None;
+			controller.UseGravity = false;
+			controller.SetMaxFlySpeed();
+			controller.TurnFlyPM();
+            controller.UnsetParentServerRPC();       // 날기 시작하면 Parent 없앰
         }
 
         public override void Exit()
@@ -26,7 +28,9 @@ namespace MPGame.Controller.StateMachine
             base.Exit();
             controller.Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX
                 | RigidbodyConstraints.FreezeRotationZ;
+
 			controller.UseGravity = true;
+			controller.SetMaxWalkSpeed();
 			controller.TurnPlayerPM();
 		}
 

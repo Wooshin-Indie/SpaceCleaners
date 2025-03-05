@@ -2720,7 +2720,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6176282922468797728}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.052335955, y: -0, z: -0, w: 0.9986295}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.6421607, z: 0.1887473}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -4102,14 +4102,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b351cad6627b6fd42800828dffea4bb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 15
-  horzRotSpeed: 3
-  vertRotSpeed: 5
-  maxVertRot: 43.8
-  minVertRot: -45
+  walkForce: 10
+  maxWalkSpeed: 10
   jumpForce: 10
   gravityForce: 20
   useGravity: 1
+  maxVertRot: 43.8
+  minVertRot: -45
   groundedOffset: -0.04
   groundRectSize: {x: 0.5, y: 0.17, z: 0.5}
   slopeRayLength: 0.6
@@ -4118,6 +4117,7 @@ MonoBehaviour:
   playerPM: {fileID: 13400000, guid: dc11ef00556ac82418c30d537f2fe21a, type: 2}
   slopePM: {fileID: 13400000, guid: 08abb98db5f74cc4a928cedffa38c045, type: 2}
   flyPM: {fileID: 13400000, guid: 5aa0fd975bdf67245ab54e6fa8271666, type: 2}
+  maxFlySpeed: 100
   thrustPower: 10
   rotationPower: 5
   velocityToLand: 10

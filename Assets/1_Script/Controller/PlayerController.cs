@@ -4,6 +4,7 @@ using MPGame.Props;
 using MPGame.Utils;
 using System;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -24,14 +25,13 @@ namespace MPGame.Controller
 		public Animator Animator { get => animator; }
 
 		[Header("Player Move Args")]
-		[SerializeField] private float walkSpeed;
-		[SerializeField] private float horzRotSpeed;
-		[SerializeField] private float vertRotSpeed;
-		[SerializeField, Range(0f, 90f)] private float maxVertRot;
-		[SerializeField, Range(-90f, 0f)] private float minVertRot;
+		[SerializeField] private float walkForce;
+		[SerializeField] private float maxWalkSpeed;
 		[SerializeField] private float jumpForce;
 		[SerializeField] private float gravityForce;
 		[SerializeField] private bool useGravity;
+		[SerializeField, Range(0f, 90f)] private float maxVertRot;
+		[SerializeField, Range(-90f, 0f)] private float minVertRot;
 
 		[Header("Slope Args")]
 		[SerializeField] private float groundedOffset;
@@ -44,6 +44,7 @@ namespace MPGame.Controller
 		[SerializeField] private PhysicsMaterial flyPM;
 
 		[Header("Flying Args")]
+		[SerializeField] private float maxFlySpeed;
 		[SerializeField] private float thrustPower;
 		[SerializeField] private float rotationPower;
 		[SerializeField] private float velocityToLand;
@@ -86,7 +87,8 @@ namespace MPGame.Controller
 		private Vector3 gravityVector = new Vector3(0f, 0f, 0f);
 		private GravityType gravityType = GravityType.None;
 
-		Vector3 projectedForward = Vector3.zero;
+		private Vector3 projectedForward = Vector3.zero;
+		private float currentSpeed = 0f;
 
 		private void Awake()
 		{
@@ -106,15 +108,13 @@ namespace MPGame.Controller
 			animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
 			animIdGrounded = Animator.StringToHash("Grounded");
 			animIdFreeFall = Animator.StringToHash("FreeFall");
-
-			rigid.maxLinearVelocity = 10f;
 		}
 
-		float currentSpeed = 0f;
 
 		private void Start()
 		{
 			stateMachine.Init(idleState);
+			SetMaxWalkSpeed();
 		}
 
 		public override void OnNetworkSpawn()
@@ -148,6 +148,14 @@ namespace MPGame.Controller
 
 		}
 
+		private void OnDrawGizmos()
+		{
+			Gizmos.color = Color.blue;
+			Gizmos.matrix = Matrix4x4.TRS(new Vector3(transform.position.x, transform.position.y - groundedOffset,
+				transform.position.z), transform.rotation, Vector3.one);
+			Gizmos.DrawWireCube(Vector3.zero, groundRectSize * 2);
+		}
+
 		#region Transform Synchronization
 
 		[ServerRpc(RequireOwnership = false)]
@@ -165,43 +173,21 @@ namespace MPGame.Controller
 			cameraTransform.localRotation = camQuat;
 		}
 
-		#endregion
-
-		#region Logic Control Funcs
-
-		private float horzRot = 0f;
-		private float vertRot = 0f;
-
-		Collider[] hitObjects;
-		public void GroundedCheck()
+		[ServerRpc(RequireOwnership = false)]
+		public void SetParentServerRPC(ulong parentId)
 		{
-			Vector3 rectPosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
-				transform.position.z);
-			hitObjects = Physics.OverlapBox(rectPosition, groundRectSize, transform.rotation, Constants.LAYER_GROUND);
-			isGrounded = hitObjects.Length > 0;
-			ChangeAnimatorParam(animIdGrounded, isGrounded);
-
-			if (!IsGrounded) return;
-
-			transform.parent = hitObjects[0].transform.parent;		// 감지하면 Parent로 설정
-
-			GroundBase gb = hitObjects[0].GetComponentInParent<GroundBase>();
-			gravityType = gb.GravityType;
-			gravityVector = gb.GetGravityVector();
+			if(NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject)){
+				transform.parent = parentObject.transform;      // 감지하면 Parent로 설정
+			}
 		}
-
-		public void UnsetParent()
+		[ServerRpc(RequireOwnership = false)]
+		public void UnsetParentServerRPC()
 		{
 			transform.parent = null;
 		}
+		#endregion
 
-		private void OnDrawGizmos()
-		{
-			Gizmos.color = Color.blue;
-			Gizmos.matrix = Matrix4x4.TRS(new Vector3(transform.position.x, transform.position.y - groundedOffset,
-				transform.position.z), transform.rotation, Vector3.one);
-			Gizmos.DrawWireCube(Vector3.zero, groundRectSize * 2);
-		}
+		#region Logic Control Funcs
 
 		public void DetectIsGround()
 		{
@@ -211,46 +197,40 @@ namespace MPGame.Controller
 				stateMachine.ChangeState(idleState);
 			}
 		}
-
 		public void DetectIsFalling()
 		{
 			if (isGrounded) return;
 			DetectIsFallingWhileJump();
 		}
-
 		public void DetectIsFallingWhileJump()
 		{
-			if (rigid.linearVelocity.y <= 0f)
+			if (Vector3.Dot(rigid.linearVelocity, transform.up) <= 0f)
 			{
 				stateMachine.ChangeState(fallState);
 			}
 		}
 
-		private bool isOnSlope = false;
-		private bool isOnSlopeWhileFlying = false;
-		private float slopeAngle = 0f;
-
-		private Vector3 normalVector = Vector3.zero;
-
+		private bool isOnSlope = false;					// Check if ground is disable to walk
+		private bool isOnSlopeWhileFlying = false;		// Check if ground is disable to land
+		private float slopeAngle = 0f;					
+		private Vector3 normalVector = Vector3.zero;	// Slope angle (hit.normal)
 		public void SlopeCheck()
 		{
 			Debug.DrawRay(transform.position, -transform.up * slopeRayLength, Color.red);
 			if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeRayLength))
 			{
 				normalVector = hit.normal;
-				slopeAngle = Vector3.Angle(hit.normal, -GetGravityDirection());
+				slopeAngle = Vector3.Angle(hit.normal, -gravityDirection);
 
 				float landAngle = Vector3.Angle(hit.normal, transform.up);
 				isOnSlope = slopeAngle > slopeLimit;
 				isOnSlopeWhileFlying = slopeAngle > slopeLimit || landAngle > enableToLandAngle;
 			}
 		}
-
 		public bool OnSlope(bool isFlying = false)
 		{
 			return isFlying ? isOnSlopeWhileFlying : isOnSlope;
 		}
-
 		public void Jump(bool isJumpPressed)
 		{
 			if (!isJumpPressed) return;
@@ -258,7 +238,6 @@ namespace MPGame.Controller
 			rigid.AddForce(transform.up * jumpForce, ForceMode.Impulse);
 			stateMachine.ChangeState(jumpState);
 		}
-
 		public bool IsEnoughVelocityToLand()
 		{
 			return rigid.linearVelocity.magnitude < velocityToLand;
@@ -266,47 +245,56 @@ namespace MPGame.Controller
 
 		#endregion
 
-		private Vector3 GetGravityDirection()
+		#region Physics Control Funcs
+
+		Vector3 gravityDirection = Vector3.zero;
+		Collider[] hitObjects;
+		public void GroundedCheck()
 		{
-			Vector3 downDir = Vector3.zero;
+			Vector3 rectPosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
+				transform.position.z);
+			hitObjects = Physics.OverlapBox(rectPosition, groundRectSize, transform.rotation, Constants.LAYER_GROUND);
+			isGrounded = hitObjects.Length > 0;
+
+			if (!IsGrounded) return;
+
+			SetParentServerRPC(hitObjects[0].transform.parent.GetComponent<NetworkObject>().NetworkObjectId);
+
+			GroundBase gb = hitObjects[0].GetComponentInParent<GroundBase>();
+			gravityType = gb.GravityType;
+			gravityVector = gb.GetGravityVector();
+		}
+		public void CalculateGravity()
+		{
 			switch (gravityType)
 			{
-				case GravityType.None:
-					break;
 				case GravityType.Point:
-					downDir = Vector3.Normalize(gravityVector - transform.position);
+					gravityDirection = Vector3.Normalize(gravityVector - transform.position);
 					break;
 				case GravityType.Direction:
-					downDir = gravityVector;
+					gravityDirection = gravityVector;
 					break;
 			}
-			return downDir;
 		}
-
-		#region Physics Control Funcs
 
 		public void ApplyGravity()
 		{
 			if (!useGravity) return;
-
-			Vector3 downDir = GetGravityDirection(); 
 			
-			projectedForward = Vector3.ProjectOnPlane(transform.forward, downDir).normalized;
-			Quaternion targetRotation = Quaternion.LookRotation(projectedForward, -downDir);
+			projectedForward = Vector3.ProjectOnPlane(transform.forward, gravityDirection).normalized;
+			Quaternion targetRotation = Quaternion.LookRotation(projectedForward, -gravityDirection);
 
 			rigid.MoveRotation(targetRotation);
-			rigid.AddForce(downDir * gravityForce, ForceMode.Acceleration);
+			rigid.AddForce(gravityDirection * gravityForce, ForceMode.Acceleration);
 		}
-
 		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
 		{
-			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw) * diag * walkSpeed;
+			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw) * diag * walkForce;
 			
-			currentSpeed = moveDir.magnitude * walkSpeed * diag;
+			currentSpeed = moveDir.magnitude;
 			rigid.AddForce(Vector3.ProjectOnPlane(moveDir, normalVector) * Time.fixedDeltaTime, ForceMode.VelocityChange);
 			ChangeAnimatorParam(animIDSpeed, currentSpeed);
 		}
-
 		public void RaycastInteractableObject()
 		{
 			RaycastHit hit;
@@ -342,9 +330,17 @@ namespace MPGame.Controller
 		{
 			capsule.material = flyPM;
 		}
+		public void SetMaxWalkSpeed()
+		{
+			rigid.maxLinearVelocity = maxWalkSpeed;
+		}
+		public void SetMaxFlySpeed()
+		{
+			rigid.maxLinearVelocity = maxFlySpeed;
+		}
 
 		// 앞뒤/양옆/위아래 입력
-		float keyWeight = 0.2f;
+		private float keyWeight = 0.2f;
 		public void Fly(float vert, float horz, float depth)
 		{
 			rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Force);
@@ -360,9 +356,10 @@ namespace MPGame.Controller
 			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Force);
 		}
 
+		private float vertRot = 0f;
 		public void RotateWithMouse(float mouseX, float mouseY)
 		{
-			vertRot -= mouseY * vertRotSpeed;
+			vertRot -= mouseY * rotationPower;
 			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
 			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
 			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);

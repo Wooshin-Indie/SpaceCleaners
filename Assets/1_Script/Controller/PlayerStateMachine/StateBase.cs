@@ -38,6 +38,7 @@ namespace MPGame.Controller.StateMachine
         public virtual void PhysicsUpdate()         // Only Physics Update
 		{
 			controller.GroundedCheck();
+            controller.CalculateGravity();
 			controller.SlopeCheck();
 			controller.ApplyGravity();
 		}     

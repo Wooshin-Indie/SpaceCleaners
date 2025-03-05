@@ -42,8 +42,6 @@ namespace MPGame.Controller.StateMachine
 			base.LogicUpdate();
 
 			controller.DetectIsFallingWhileJump();
-
-			controller.RotateWithMouse(mouseX, mouseY);
 		}
 
 		public override void PhysicsUpdate()
@@ -52,7 +50,7 @@ namespace MPGame.Controller.StateMachine
 
 			diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
 			controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
-
+			controller.RotateWithMouse(mouseX, mouseY);
 		}
 	}
 }
