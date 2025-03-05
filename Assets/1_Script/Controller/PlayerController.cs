@@ -3,6 +3,7 @@ using MPGame.Manager;
 using MPGame.Props;
 using MPGame.Utils;
 using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -255,6 +256,7 @@ namespace MPGame.Controller
 		Vector3 gravityDirection = Vector3.zero;
 		Collider[] hitObjects;
 		SpaceshipContoller spaceship = null;
+
 		public SpaceshipContoller Spaceship { get => spaceship; }
 		public void GroundedCheck()
 		{

@@ -15,13 +15,13 @@ namespace MPGame.Controller
 
 		private NetworkVariable<ulong> ownerClientId = new NetworkVariable<ulong>(ulong.MaxValue);
 
-
 		private void Start()
 		{
 			rigid = GetComponent<Rigidbody>();
+			rigid.isKinematic = !IsHost;
 		}
 
-		private void FixedUpdate()
+		private void Update()
 		{
 			UpdatePlayerTransformServerRPC(transform.position, transform.rotation);
 		}
@@ -87,14 +87,9 @@ namespace MPGame.Controller
 		private void UpdatePlayerTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat)
 		{
 			if (IsOwner) return;
-
-			if (rigid != null)
-			{
-				rigid.MovePosition(playerPosition);
-				rigid.MoveRotation(playerQuat);
-			}
+			transform.position = playerPosition;
+			transform.rotation = playerQuat;
 		}
-
 
 		#endregion
 
