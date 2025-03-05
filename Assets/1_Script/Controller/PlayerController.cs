@@ -111,6 +111,7 @@ namespace MPGame.Controller
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 			UpdatePlayerTransformServerRPC(transform.position, transform.rotation, cameraTransform.localRotation);
+			//UpdateObjectsTransformServerRpc();
 		}
 
 		private void FixedUpdate()
@@ -318,18 +319,18 @@ namespace MPGame.Controller
 
 		private bool isVacuumEnabled = false;
 		private bool isVacuuming = false;
-        private List<VacuumableObject> targetObjects = new List<VacuumableObject>();
+        private List<VacuumableObject> vacuumingObjects = new List<VacuumableObject>();
 
         private void OnUpdateVacuumFunc()
         {
-            if (Input.GetMouseButton(0))
-            {
-                StartVacuuming();
-            }
-            else
-            {
-                StopVacuuming();
-            }
+			if (Input.GetKeyDown(KeyCode.Alpha1))
+				isVacuumEnabled = isVacuumEnabled ? false : true;
+
+			if (Input.GetMouseButton(0))
+				isVacuuming = true;
+			else
+                isVacuuming = false;
+
 
             if (isVacuuming)
             {
@@ -338,27 +339,14 @@ namespace MPGame.Controller
             }
         }
 
-        private void StartVacuuming()
-        {
-            isVacuuming = true;
-
-        }
-
-        private void StopVacuuming()
-        {
-            isVacuuming = false;
-
-        }
-
+		//빨아들일 수 있는 물체 탐지
         private void DetectNewObjects()
         {
             Collider[] hitColliders = Physics.OverlapSphere(transform.position, vacuumRadius, vacuumableLayers);
 
             foreach (var hitCollider in hitColliders)
             {
-                // 이미 처리 중인 오브젝트는 건너뛰기
-                if (targetObjects.Exists(obj => obj.ObjectCollider == hitCollider))
-                    continue;
+               
 
                 // VacuumableObject 컴포넌트 확인 또는 추가
                 VacuumableObject vacObj = hitCollider.GetComponent<VacuumableObject>();
@@ -367,24 +355,22 @@ namespace MPGame.Controller
                     vacObj = hitCollider.gameObject.AddComponent<VacuumableObject>();
                 }
 
-                // 리스트에 추가
-                targetObjects.Add(vacObj);
+                vacuumingObjects.Add(vacObj);
 
-                // 필요하다면 초기 설정
-                vacObj.Initialize(absorbPoint);
+                vacObj.Init(absorbPoint);
             }
         }
 
         private void MoveObjectsTowardsPlayer()
         {
-            for (int i = targetObjects.Count - 1; i >= 0; i--)
+            for (int i = vacuumingObjects.Count - 1; i >= 0; i--)
             {
-                VacuumableObject obj = targetObjects[i];
+                VacuumableObject obj = vacuumingObjects[i];
 
                 // 오브젝트가 유효한지 확인
                 if (obj == null || obj.gameObject == null)
                 {
-                    targetObjects.RemoveAt(i);
+                    vacuumingObjects.RemoveAt(i);
                     continue;
                 }
 
@@ -395,7 +381,7 @@ namespace MPGame.Controller
                 if (distance <= absorbDistance)
                 {
                     AbsorbObject(obj);
-                    targetObjects.RemoveAt(i);
+                    vacuumingObjects.RemoveAt(i);
                     continue;
                 }
 
