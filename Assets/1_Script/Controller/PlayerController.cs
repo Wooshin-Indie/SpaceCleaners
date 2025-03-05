@@ -1,5 +1,6 @@
 using MPGame.Controller.StateMachine;
 using MPGame.Utils;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -301,6 +302,112 @@ namespace MPGame.Controller
 		{
 
 		}
-		#endregion
-	}
+        #endregion
+
+        #region Vacuum Funcs
+
+        [Header("Vacuum Settings")]
+        private float vacuumRadius = 10f;
+        private float vacuumSpeed = 5f;
+        private LayerMask vacuumableLayers;
+        private KeyCode vacuumKey = KeyCode.Space;
+
+        [Header("Absorption Settings")]
+        private float absorbDistance = 1f;
+        private Transform absorbPoint;
+
+		private bool isVacuumEnabled = false;
+		private bool isVacuuming = false;
+        private List<VacuumableObject> targetObjects = new List<VacuumableObject>();
+
+        private void OnUpdateVacuumFunc()
+        {
+            if (Input.GetMouseButton(0))
+            {
+                StartVacuuming();
+            }
+            else
+            {
+                StopVacuuming();
+            }
+
+            if (isVacuuming)
+            {
+                DetectNewObjects();
+                MoveObjectsTowardsPlayer();
+            }
+        }
+
+        private void StartVacuuming()
+        {
+            isVacuuming = true;
+
+        }
+
+        private void StopVacuuming()
+        {
+            isVacuuming = false;
+
+        }
+
+        private void DetectNewObjects()
+        {
+            Collider[] hitColliders = Physics.OverlapSphere(transform.position, vacuumRadius, vacuumableLayers);
+
+            foreach (var hitCollider in hitColliders)
+            {
+                // 이미 처리 중인 오브젝트는 건너뛰기
+                if (targetObjects.Exists(obj => obj.ObjectCollider == hitCollider))
+                    continue;
+
+                // VacuumableObject 컴포넌트 확인 또는 추가
+                VacuumableObject vacObj = hitCollider.GetComponent<VacuumableObject>();
+                if (vacObj == null)
+                {
+                    vacObj = hitCollider.gameObject.AddComponent<VacuumableObject>();
+                }
+
+                // 리스트에 추가
+                targetObjects.Add(vacObj);
+
+                // 필요하다면 초기 설정
+                vacObj.Initialize(absorbPoint);
+            }
+        }
+
+        private void MoveObjectsTowardsPlayer()
+        {
+            for (int i = targetObjects.Count - 1; i >= 0; i--)
+            {
+                VacuumableObject obj = targetObjects[i];
+
+                // 오브젝트가 유효한지 확인
+                if (obj == null || obj.gameObject == null)
+                {
+                    targetObjects.RemoveAt(i);
+                    continue;
+                }
+
+                // 거리 계산
+                float distance = Vector3.Distance(obj.transform.position, absorbPoint.position);
+
+                // 흡수 거리에 도달했다면
+                if (distance <= absorbDistance)
+                {
+                    AbsorbObject(obj);
+                    targetObjects.RemoveAt(i);
+                    continue;
+                }
+
+                // 거리에 따른 속도 조절 (가까울수록 빨라짐)
+                float speedMultiplier = 1f + (vacuumRadius - distance) / vacuumRadius;
+                float currentSpeed = vacuumSpeed * speedMultiplier * Time.deltaTime;
+
+                // 오브젝트 이동
+                obj.MoveTowards(absorbPoint.position, currentSpeed);
+            }
+        }
+
+        #endregion
+    }
 }
