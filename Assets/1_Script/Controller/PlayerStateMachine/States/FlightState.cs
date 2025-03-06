@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.VisualScripting;
+using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
 {
@@ -27,6 +28,7 @@ namespace MPGame.Controller.StateMachine
 			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);
 			controller.Capsule.isTrigger = true;
 			controller.Rigidbody.isKinematic = true;
+			controller.cameraTransform.localRotation = Quaternion.identity;
 			controller.transform.localPosition = spaceShip.enterPosition;
 
 			controller.Rigidbody.constraints = RigidbodyConstraints.None;
@@ -37,8 +39,13 @@ namespace MPGame.Controller.StateMachine
 			base.Exit();
 			isOut = true;
 
-			// Own 삭제하는 rpc 호출해야됨
-			controller.transform.localPosition = spaceShip.enterPosition;
+			spaceShip.EndInteraction();
+			controller.Capsule.isTrigger = false;
+			controller.Rigidbody.isKinematic = false;
+			controller.transform.localPosition = spaceShip.exitPosition;
+			spaceShip = null;
+
+			controller.Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 		}
 
 		public override void HandleInput()
@@ -49,11 +56,18 @@ namespace MPGame.Controller.StateMachine
 			GetRollInput(out roll);
 			GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
 			GetUpDownInput(out isUpPressed, out isDownPressed);
+			GetESCInput(out isESCPressed);
 		}
 
 		public override void LogicUpdate()
 		{
 			if (isOut) return;
+
+			if (isESCPressed)
+			{
+				controller.TurnStateToIdleState();
+				return;
+			}
 
 			controller.transform.localPosition = spaceShip.enterPosition;
 			controller.transform.localRotation = fixedRotation;

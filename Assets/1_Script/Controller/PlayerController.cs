@@ -51,7 +51,7 @@ namespace MPGame.Controller
 		[SerializeField] private float enableToLandAngle;
 
 		[Header("GameObjects")]
-		[SerializeField] private Transform cameraTransform;
+		[SerializeField] public Transform cameraTransform;
 
 		[Header("Raycast Args")]                        // Use to detect Interactables
 		[SerializeField] private float rayLength;
@@ -123,7 +123,8 @@ namespace MPGame.Controller
 		{
 			base.OnNetworkSpawn();
 			cameraTransform.gameObject.SetActive(IsOwner);
-			rigid.isKinematic = !IsOwner;
+			rigid.isKinematic = false;
+			rigid.useGravity = false;
 			ChangeAnimatorParam(animIDMotionSpeed, 1f);
 
 			if (IsOwner && IsHost)

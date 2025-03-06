@@ -89,6 +89,11 @@ namespace MPGame.Controller.StateMachine
             }
         }
 
+        protected void GetESCInput(out bool isEscPressed)
+        {
+            isEscPressed = Input.GetKey(KeyCode.Escape);
+        }
+
         protected void GetJumpInput(out bool isPressed)
         {
             isPressed = Input.GetKeyDown(KeyCode.Space);

@@ -26,9 +26,21 @@ namespace MPGame.Controller
 			UpdatePlayerTransformServerRPC(transform.position, transform.rotation);
 		}
 
+		public void EndInteraction()
+		{
+			RequestRemoveOwnershipServerRPC();
+		}
+
 		public void TryInteract()
 		{
 			RequestOwnershipServerRpc(NetworkManager.Singleton.LocalClientId);
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		private void RequestRemoveOwnershipServerRPC()
+		{
+			NetworkObject.RemoveOwnership();
+			ownerClientId.Value = ulong.MaxValue;
 		}
 
 		[ServerRpc(RequireOwnership = false)]
@@ -72,7 +84,7 @@ namespace MPGame.Controller
 		{
 			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
 			rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Force);
-			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Force);
+			rigid.AddTorque(-transform.forward * roll * rotationPower, ForceMode.Force);
 		}
 
 		#region Transform Synchronization
