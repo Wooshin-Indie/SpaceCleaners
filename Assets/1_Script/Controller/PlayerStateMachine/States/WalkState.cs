@@ -50,10 +50,11 @@ namespace MPGame.Controller.StateMachine
         {
             base.LogicUpdate();
 
-            speed = Mathf.Abs(vertInput) + Mathf.Abs(horzInput);
+            speed = Mathf.Abs(vertInputRaw) + Mathf.Abs(horzInputRaw);
 
             if (Mathf.Approximately(speed, 0f))
             {
+                controller.Rigidbody.linearVelocity = Vector3.zero;
                 stateMachine.ChangeState(controller.idleState);
             }
 

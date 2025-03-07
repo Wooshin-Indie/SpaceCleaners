@@ -43,7 +43,7 @@ namespace MPGame.Controller.StateMachine
             GetUpDownInput(out isUpPressed, out isDownPressed);
             GetMouseInput(out mouseX, out mouseY);
             GetRollInput(out roll);
-
+            GetInteractableInput();
 		}
 
         public override void LogicUpdate()

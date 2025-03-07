@@ -3,7 +3,7 @@ using MPGame.Manager;
 using MPGame.Props;
 using MPGame.Utils;
 using System;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -82,8 +82,8 @@ namespace MPGame.Controller
 		public bool IsGrounded { get => isGrounded; }
 		public bool IsDetectInteractable { get => isDetectInteractable; }
 
-		private GameObject recentlyDetectedProp = null;
-		public GameObject RecentlyDetectedProp { get => recentlyDetectedProp; }
+		private PropsBase recentlyDetectedProp = null;
+		public PropsBase RecentlyDetectedProp { get => recentlyDetectedProp; }
 
 		private Vector3 gravityVector = new Vector3(0f, 0f, 0f);
 		private GravityType gravityType = GravityType.None;
@@ -139,11 +139,6 @@ namespace MPGame.Controller
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 
-			if (Input.GetKeyDown(KeyCode.LeftBracket))
-			{
-				spaceship.TryInteract();
-			}
-
 			UpdatePlayerTransformServerRPC(transform.position, transform.rotation, cameraTransform.localRotation);
 		}
 
@@ -184,7 +179,7 @@ namespace MPGame.Controller
 		public void SetParentServerRPC(ulong parentId)
 		{
 			if(NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject)){
-				transform.parent = parentObject.transform;      // �����ϸ� Parent�� ����
+				transform.parent = parentObject.transform;      // 감지하면 Parent로 설정
 			}
 		}
 		[ServerRpc(RequireOwnership = false)]
@@ -192,6 +187,27 @@ namespace MPGame.Controller
 		{
 			transform.parent = null;
 		}
+
+		public void SetKinematic(bool isKinematic)
+		{
+			rigid.isKinematic = isKinematic;
+			SetKinematicServerRPC(isKinematic);
+		}
+
+		[ServerRpc (RequireOwnership = false)]
+		private void SetKinematicServerRPC(bool isKinematic)
+		{
+			SetKinematicClientRPC(isKinematic);
+		}
+
+		[ClientRpc]
+		private void SetKinematicClientRPC(bool isKinematic)
+		{
+			if (IsOwner) return;
+			rigid.isKinematic = isKinematic;
+		}
+
+
 		#endregion
 
 		#region Logic Control Funcs
@@ -211,7 +227,9 @@ namespace MPGame.Controller
 		}
 		public void DetectIsFallingWhileJump()
 		{
-			if (Vector3.Dot(rigid.linearVelocity, transform.up) <= 0f)
+			Vector3 localVelocity = transform.InverseTransformDirection(rigid.linearVelocity);
+
+			if (localVelocity.y <= 0f) // 로컬 기준 y축(=위쪽) 속도가 0 이하이면 하강 중
 			{
 				stateMachine.ChangeState(fallState);
 			}
@@ -274,7 +292,9 @@ namespace MPGame.Controller
 			GroundBase gb = hitObjects[0].GetComponentInParent<GroundBase>();
 			gravityType = gb.GravityType;
 			gravityVector = gb.GetGravityVector();
+
 		}
+
 		public void CalculateGravity()
 		{
 			switch (gravityType)
@@ -295,9 +315,10 @@ namespace MPGame.Controller
 			projectedForward = Vector3.ProjectOnPlane(transform.forward, gravityDirection).normalized;
 			Quaternion targetRotation = Quaternion.LookRotation(projectedForward, -gravityDirection);
 
-			rigid.MoveRotation(targetRotation);
+			rigid.MoveRotation(targetRotation);		// HACK - AddTorque로 바꾸면 좋음
 			rigid.AddForce(gravityDirection * gravityForce, ForceMode.Acceleration);
 		}
+
 		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
 		{
 			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw) * diag * walkForce;
@@ -314,7 +335,8 @@ namespace MPGame.Controller
 			if (Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, rayLength, targetLayer))
 			{
 				isDetectInteractable = true;
-				recentlyDetectedProp = hit.transform.GetComponent<GameObject>();
+				Debug.Log(hit.transform.name);
+				recentlyDetectedProp = hit.transform.GetComponent<PropsBase>();
 			}
 			else
 			{
@@ -354,12 +376,17 @@ namespace MPGame.Controller
 		{
 			stateMachine.ChangeState(idleState);
 		}
-		public void TurnStateToFlightState()
+		public void TurnStateToFlyState()
 		{
+			stateMachine.ChangeState(flyState);
+		}
+		public void TurnStateToFlightState(Chair chair, bool isDriver)
+		{
+			flightState.SetParams(chair, isDriver);
 			stateMachine.ChangeState(flightState);
 		}
 
-		// �յ�/�翷/���Ʒ� �Է�
+		// 앞뒤/양옆/위아래 입력
 		private float keyWeight = 0.2f;
 		public void Fly(float vert, float horz, float depth)
 		{
@@ -383,6 +410,16 @@ namespace MPGame.Controller
 			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
 			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
 			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
+		}
+
+		public void RotateWithoutRigidbody(float mouseX, float mouseY)
+		{
+			vertRot -= mouseY * rotationPower;
+			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
+			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
+
+			Vector3 quat = transform.localRotation.eulerAngles;
+			transform.localRotation = Quaternion.Euler(quat.x, quat.y + mouseX * rotationPower, quat.z);
 		}
 		#endregion
 

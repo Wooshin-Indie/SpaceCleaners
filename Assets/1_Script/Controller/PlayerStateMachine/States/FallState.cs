@@ -46,8 +46,8 @@ namespace MPGame.Controller.StateMachine
 
 			if (!controller.OnSlope())
 			{
-				controller.DetectIsGround();
 				controller.TurnPlayerPM();
+				controller.DetectIsGround();
 			}
 			else
 			{

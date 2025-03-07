@@ -1,4 +1,5 @@
 using Cinemachine;
+using MPGame.Props;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -83,15 +84,15 @@ namespace MPGame.Controller.StateMachine
 
         protected void GetInteractableInput()
         {
-            if(Input.GetMouseButtonDown(0) && controller.IsDetectInteractable)
+            if(Input.GetKeyDown(KeyCode.F) && controller.IsDetectInteractable)
             {
-                // TODO - Handle Interactable Object
+                controller.RecentlyDetectedProp.TryInteract();
             }
         }
 
         protected void GetESCInput(out bool isEscPressed)
         {
-            isEscPressed = Input.GetKey(KeyCode.Escape);
+            isEscPressed = Input.GetKeyDown(KeyCode.Escape);
         }
 
         protected void GetJumpInput(out bool isPressed)

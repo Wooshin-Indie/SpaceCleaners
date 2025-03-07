@@ -7,13 +7,11 @@ namespace MPGame.Controller
     {
 		private Rigidbody rigid;
 
+		public Rigidbody Rigidbody { get { return rigid; } }
+
 		[Header("Movement Args")]
 		[SerializeField] private float thrustPower;
 		[SerializeField] private float rotationPower;
-		public Vector3 enterPosition;
-		public Vector3 exitPosition;
-
-		private NetworkVariable<ulong> ownerClientId = new NetworkVariable<ulong>(ulong.MaxValue);
 
 		private void Start()
 		{
@@ -23,49 +21,7 @@ namespace MPGame.Controller
 
 		private void Update()
 		{
-			UpdatePlayerTransformServerRPC(transform.position, transform.rotation);
-		}
-
-		public void EndInteraction()
-		{
-			RequestRemoveOwnershipServerRPC();
-		}
-
-		public void TryInteract()
-		{
-			RequestOwnershipServerRpc(NetworkManager.Singleton.LocalClientId);
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		private void RequestRemoveOwnershipServerRPC()
-		{
-			NetworkObject.RemoveOwnership();
-			ownerClientId.Value = ulong.MaxValue;
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		private void RequestOwnershipServerRpc(ulong requestingClientId)
-		{
-			if (ownerClientId.Value == ulong.MaxValue)
-			{
-				NetworkObject.ChangeOwnership(requestingClientId);
-				ownerClientId.Value = requestingClientId;
-				GrantInteractionClientRpc(requestingClientId);
-			}
-			else
-			{
-				// TODO - 이미 있는 경우
-			}
-		}
-
-		[ClientRpc]
-		private void GrantInteractionClientRpc(ulong newOwnerClientId)
-		{
-			if (NetworkManager.Singleton.LocalClientId == newOwnerClientId)
-			{
-				NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()
-					.GetComponent<PlayerController>().TurnStateToFlightState();
-			}
+			UpdateShipTransformServerRPC(transform.position, transform.rotation);
 		}
 
 		// 앞뒤/양옆/위아래 입력
@@ -74,29 +30,29 @@ namespace MPGame.Controller
 		[ServerRpc (RequireOwnership = false)]
 		public void FlyServerRPC(float vert, float horz, float depth)
 		{
-			rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Force);
-			rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Force);
-			rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Force);
+			rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Acceleration);
+			rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Acceleration);
+			rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Acceleration);
 		}
 
 		[ServerRpc(RequireOwnership = false)]
 		public void RotateBodyWithMouseServerRPC(float mouseX, float mouseY, float roll)
 		{
-			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
-			rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Force);
-			rigid.AddTorque(-transform.forward * roll * rotationPower, ForceMode.Force);
+			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Acceleration);
+			rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Acceleration);
+			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Acceleration);
 		}
 
 		#region Transform Synchronization
 
 		[ServerRpc(RequireOwnership = false)]
-		private void UpdatePlayerTransformServerRPC(Vector3 playerPosition, Quaternion playerQuat)
+		private void UpdateShipTransformServerRPC(Vector3 playerPosition, Quaternion playerQuat)
 		{
-			UpdatePlayerTransformClientRPC(playerPosition, playerQuat);
+			UpdateShipTransformClientRPC(playerPosition, playerQuat);
 		}
 
 		[ClientRpc]
-		private void UpdatePlayerTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat)
+		private void UpdateShipTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat)
 		{
 			if (IsOwner) return;
 			transform.position = playerPosition;

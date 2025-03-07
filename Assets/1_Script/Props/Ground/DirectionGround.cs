@@ -9,7 +9,7 @@ namespace MPGame.Props
 		public override GravityType GravityType { get => GravityType.Direction; }
 		public override Vector3 GetGravityVector()
 		{
-			return transform.TransformDirection(-transform.up);
+			return -transform.up;
 		}
 	}
 }

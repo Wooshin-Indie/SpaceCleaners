@@ -1,35 +1,45 @@
-﻿using Unity.VisualScripting;
+﻿using MPGame.Props;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
 {
 	public class FlightState : StateBase
 	{
-
-		public SpaceshipContoller spaceShip;
 		private Quaternion fixedRotation = Quaternion.identity;
+
+		private Chair spaceChair;
+		private SpaceshipContoller spaceShip;
+		bool isDriver = false;
+
+		public void SetParams(Chair chair, bool isDriver)
+		{
+			spaceChair = chair;
+			this.isDriver = isDriver;
+		}
 
 		public FlightState(PlayerController controller, PlayerStateMachine stateMachine)
 			: base(controller, stateMachine)
 		{
 		}
 
-		private bool isOut = true;
 		public override void Enter()
 		{
 			base.Enter();
-			isOut = false;
 			vertInputRaw = horzInputRaw = 0f;
-			spaceShip = controller.Spaceship;
+			spaceShip = spaceChair.GetComponentInParent<SpaceshipContoller>();
 			if (spaceShip == null)
 			{
-				controller.TurnStateToIdleState();
+				controller.TurnStateToFlyState();
 			}
-			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);
+
+			controller.UseGravity = false;
+			controller.SetParentServerRPC(spaceShip.GetComponent<NetworkObject>().NetworkObjectId);
+			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);	// TODO - 앉는 모션으로 바꿔야됨
 			controller.Capsule.isTrigger = true;
-			controller.Rigidbody.isKinematic = true;
-			controller.cameraTransform.localRotation = Quaternion.identity;
-			controller.transform.localPosition = spaceShip.enterPosition;
+			controller.SetKinematic(true);
+			controller.transform.localRotation = spaceChair.transform.localRotation;
+			controller.transform.localPosition = spaceChair.localEnterPosition;
 
 			controller.Rigidbody.constraints = RigidbodyConstraints.None;
 		}
@@ -37,15 +47,15 @@ namespace MPGame.Controller.StateMachine
 		public override void Exit()
 		{
 			base.Exit();
-			isOut = true;
 
-			spaceShip.EndInteraction();
 			controller.Capsule.isTrigger = false;
-			controller.Rigidbody.isKinematic = false;
-			controller.transform.localPosition = spaceShip.exitPosition;
-			spaceShip = null;
+			controller.UseGravity = true;
+			controller.SetKinematic(false);
+			controller.transform.localPosition = spaceChair.localExitPosition;
+			controller.transform.localRotation = spaceChair.transform.localRotation;
 
-			controller.Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+			controller.Rigidbody.constraints = RigidbodyConstraints.None;
+			spaceChair.EndInteraction();
 		}
 
 		public override void HandleInput()
@@ -53,24 +63,29 @@ namespace MPGame.Controller.StateMachine
 			base.HandleInput();
 
 			GetMouseInput(out mouseX, out mouseY);
-			GetRollInput(out roll);
-			GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
-			GetUpDownInput(out isUpPressed, out isDownPressed);
 			GetESCInput(out isESCPressed);
+			if (isDriver)
+			{
+				GetRollInput(out roll);
+				GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
+				GetUpDownInput(out isUpPressed, out isDownPressed);
+			}
 		}
 
 		public override void LogicUpdate()
 		{
-			if (isOut) return;
-
 			if (isESCPressed)
 			{
-				controller.TurnStateToIdleState();
+				controller.TurnStateToFlyState();
+				isESCPressed = false;
 				return;
 			}
 
-			controller.transform.localPosition = spaceShip.enterPosition;
-			controller.transform.localRotation = fixedRotation;
+			controller.transform.localPosition = spaceChair.localEnterPosition;
+			if (isDriver)
+			{
+				controller.transform.localRotation = fixedRotation;
+			}
 		}
 
 		public override void PhysicsUpdate()
@@ -79,11 +94,18 @@ namespace MPGame.Controller.StateMachine
 
 			if (spaceShip == null) return;
 
-			float depth = 0;
-			if (isUpPressed == isDownPressed) depth = 0;
-			else depth = isUpPressed ? 1 : -1;
-			spaceShip.FlyServerRPC(vertInputRaw, horzInputRaw, depth);
-			spaceShip.RotateBodyWithMouseServerRPC(mouseX, mouseY, roll);
+			if (isDriver)
+			{
+				float depth = 0;
+				if (isUpPressed == isDownPressed) depth = 0;
+				else depth = isUpPressed ? 1 : -1;
+				spaceShip.FlyServerRPC(vertInputRaw, horzInputRaw, depth);
+				spaceShip.RotateBodyWithMouseServerRPC(mouseX, mouseY, roll);
+			}
+			else
+			{
+				controller.RotateWithoutRigidbody(mouseX, mouseY);
+			}
 		}
 	}
 }
