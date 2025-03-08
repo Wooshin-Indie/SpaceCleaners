@@ -169,9 +169,9 @@ namespace MPGame.Controller
 		}
 
 		[ClientRpc]
-		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition)
+		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition, bool fromServer = false)
 		{
-			if (IsOwner) return;
+			if (!fromServer && IsOwner) return;
 			transform.position = playerPosition;
 		}
 
@@ -182,9 +182,9 @@ namespace MPGame.Controller
 		}
 
 		[ClientRpc]
-		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat)
+		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat, bool fromServer = false)
 		{
-			if (IsOwner) return;
+			if (!fromServer && IsOwner) return;
 			transform.rotation = playerQuat;
 			cameraTransform.localRotation = camQuat;
 		}
@@ -193,9 +193,24 @@ namespace MPGame.Controller
 		public void SetParentServerRPC(ulong parentId)
 		{
 			if(NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject)){
-				transform.parent = parentObject.transform;      // 감지하면 Parent로 설정
+				transform.parent = parentObject.transform;
 			}
 		}
+
+		[ServerRpc(RequireOwnership = false)]
+		public void SetParentServerRPC(ulong parentId, Vector3 localPos, Quaternion localRot)
+		{
+			if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject))
+			{
+				transform.parent = parentObject.transform;
+				transform.localPosition = localPos;
+				transform.localRotation = localRot;
+
+				UpdatePlayerPositionClientRPC(localPos, true);
+				UpdatePlayerRotateClientRPC(localRot, Quaternion.identity, true);
+			}
+		}
+
 		[ServerRpc(RequireOwnership = false)]
 		public void UnsetParentServerRPC()
 		{

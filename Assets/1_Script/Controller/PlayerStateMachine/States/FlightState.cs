@@ -34,13 +34,13 @@ namespace MPGame.Controller.StateMachine
 			}
 
 			controller.UseGravity = false;
-			controller.SetParentServerRPC(spaceShip.GetComponent<NetworkObject>().NetworkObjectId);
+			controller.SetParentServerRPC(spaceShip.GetComponent<NetworkObject>().NetworkObjectId,
+				spaceChair.localEnterPosition,
+				spaceChair.transform.localRotation);
+
 			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);	// TODO - 앉는 모션으로 바꿔야됨
 			controller.Capsule.isTrigger = true;
 			controller.SetKinematic(true);
-			controller.transform.localRotation = spaceChair.transform.localRotation;
-			controller.transform.localPosition = spaceChair.localEnterPosition;
-			controller.UpdatePlayerPositionServerRPC(controller.transform.position);
 
 			controller.Rigidbody.constraints = RigidbodyConstraints.None;
 		}
