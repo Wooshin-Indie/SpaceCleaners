@@ -35,15 +35,20 @@ namespace MPGame.Controller.StateMachine
 			GetMovementInput(out vertInput, out horzInput);
 			GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
 			GetMouseInput(out mouseX, out mouseY);
-
 			GetFlyStateInput();
-		}
+            GetEnableVacuumInput();
+            GetVacuumInput(out isVacuumPressed);
+        }
 
 		public override void LogicUpdate()
 		{
 			base.LogicUpdate();
 
 			controller.DetectIsFallingWhileJump();
+			controller.DetectIsFalling();
+
+            controller.Vacuuming();
+            controller.RotateWithMouse(mouseX, mouseY);
 		}
 
 		public override void PhysicsUpdate()

@@ -21,6 +21,10 @@ namespace MPGame.Controller.StateMachine
 
         protected bool isESCPressed = false;
         protected bool isJumpPrssed = false;
+        protected static bool isVacuumEnabled = false;
+        public static bool IsVacuumEnabled { get => isVacuumEnabled; }
+        protected static bool isVacuumPressed = false;
+        public static bool IsVacuumPressed { get => isVacuumPressed; }
 
         protected bool isUpPressed = false;
         protected bool isDownPressed = false;
@@ -107,6 +111,20 @@ namespace MPGame.Controller.StateMachine
 				controller.StateMachine.ChangeState(controller.flyState);
 			}
 		}
+        protected void GetEnableVacuumInput()
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                Debug.Log("1 pressed");
+                isVacuumEnabled = !isVacuumEnabled;
+            }
+        }
+
+        protected void GetVacuumInput(out bool isPressed)
+        {
+            isPressed = Input.GetMouseButton(0);
+        }
+
 
         #endregion
     }

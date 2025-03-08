@@ -43,7 +43,9 @@ namespace MPGame.Controller.StateMachine
             GetInteractableInput();
             GetJumpInput(out isJumpPrssed);
 			GetFlyStateInput();
-		}
+            GetEnableVacuumInput();
+            GetVacuumInput(out isVacuumPressed);
+        }
 
 
         public override void LogicUpdate()
@@ -66,6 +68,9 @@ namespace MPGame.Controller.StateMachine
             }
 
 			controller.Jump(isJumpPrssed);
+            controller.Vacuuming();
+            controller.RotateWithMouse(mouseX, mouseY);
+            controller.Jump(isJumpPrssed);
 		}
 
         public override void PhysicsUpdate()

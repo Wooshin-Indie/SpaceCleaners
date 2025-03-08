@@ -4129,6 +4129,12 @@ MonoBehaviour:
   animIDMotionSpeed: 0
   animIdGrounded: 0
   animIdFreeFall: 0
+  vacuumDetectRadius: 3
+  vacuumDetectLength: 10
+  vacuumSpeed: 5
+  vacuumableLayers:
+    serializedVersion: 2
+    m_Bits: 4096
 --- !u!136 &5956706022451259474
 CapsuleCollider:
   m_ObjectHideFlags: 0
