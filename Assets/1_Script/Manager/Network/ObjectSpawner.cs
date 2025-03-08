@@ -23,6 +23,15 @@ namespace MPGame.Manager
             }
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Y))
+            {
+                Vector3 pos = new Vector3(Random.Range(5, 7), 0.5f, -6);
+                SpawnVacuumableObjectServerRPC(pos);
+            }
+        }
+
         private List<VacuumableObject> vacuumableObjects = new List<VacuumableObject>();
         [SerializeField] private GameObject tempObject;
 
@@ -30,10 +39,8 @@ namespace MPGame.Manager
         public void SpawnVacuumableObjectServerRPC(Vector3 pos)
         {
             GameObject ob = Instantiate(tempObject, pos, Quaternion.identity);
-            NetworkObject no = ob.GetComponent<NetworkObject>();
-
-            no.Spawn();
-
+            ob.GetComponent<NetworkObject>().Spawn();
+            vacuumableObjects.Add(ob.GetComponent<VacuumableObject>());
         }
     }
 }

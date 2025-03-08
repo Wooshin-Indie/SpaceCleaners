@@ -1,7 +1,10 @@
 using MPGame.Controller.StateMachine;
 using MPGame.Utils;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using Unity.Netcode;
+using UnityEditor;
 using UnityEngine;
 
 
@@ -213,21 +216,27 @@ namespace MPGame.Controller
 
 		public void Vacuuming()
 		{
-			if (!stateMachine.CurState.IsVacuumEnabled) return;
-
-			if (!stateMachine.CurState.IsVacuumPressed)
+			if (!StateBase.IsVacuumEnabled)
 			{
-				if (isVacuumingStarted)
+                return;
+			}
+
+            if (!StateBase.IsVacuumPressed)
+			{
+                if (isVacuumingStarted)
                 {
                     isVacuumingStarted = false;
 
-                    vacuumingObjects.Clear();
+					foreach (var obj in prevDetected)
+					{
+						obj.VacuumEnd();
+                    }
+                    prevDetected.Clear();
                 }
                 return;
 			}
 
             DetectVacuumingObjects();
-            MoveObjectsTowardsPlayer();
         }
 
         #endregion
@@ -327,76 +336,110 @@ namespace MPGame.Controller
         #region Vacuum Funcs
 
         [Header("Vacuum Settings")]
-        [SerializeField] private float vacuumDetectRadius = 10f;
-        [SerializeField] private float vacuumDetectLength = 1f;
-        [SerializeField] private float vacuumSpeed = 5f;
+        [SerializeField] private float vacuumDetectRadius;
+        [SerializeField] private float vacuumDetectLength;
+        [SerializeField] private float vacuumSpeed;
         [SerializeField] private LayerMask vacuumableLayers;
+        private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //이전 프레임에 빨아들이고있던 물체들을	저장하는 HashSet
 
         [Header("Absorption Settings")]
         private float absorbDistance = 1f;
 
-        private Transform absorbPoint;
 		private bool isVacuumingStarted = false;
 
-
-        private List<VacuumableObject> vacuumingObjects = new List<VacuumableObject>();
-        Vector3 cameraPos;
-        Vector3 cameraForward;
-		Vector3 detectingVector;
+        private Vector3 cameraPos;
+        private Vector3 cameraForward;
+        private Vector3 detectingVector;
         private void DetectVacuumingObjects()
         {
-			if (!isVacuumingStarted) isVacuumingStarted = true;
+			if (!isVacuumingStarted)
+			{
+                isVacuumingStarted = true;
+            }
+
+			Debug.Log("Detecting");
 
             cameraPos = cameraTransform.position;
             cameraForward = cameraTransform.forward;
 			detectingVector = cameraPos + cameraForward * vacuumDetectLength;
 
             Collider[] hitColliders = Physics.OverlapCapsule(cameraTransform.position, detectingVector, vacuumDetectRadius, vacuumableLayers);
-            //HashSet으로 이전 프레임에 감지된 오브젝트를 저장하고, 이번 프레임에 감지된 오브젝트와 비교하여 중복된 오브젝트를 제거하는 방식으로 구현해야함
+			
+			HashSet<VacuumableObject> currentDetected = new HashSet<VacuumableObject>();
+
             foreach (var hitCollider in hitColliders)
             {
-                // 이미 처리 중인 오브젝트는 건너뛰기
-                if (vacuumingObjects.Exists(obj => obj.ObjectCollider == hitCollider))
-                    continue;
-
-                VacuumableObject vacObj = hitCollider.GetComponent<VacuumableObject>();
-                vacuumingObjects.Add(vacObj);
-
-                vacObj.Init(absorbPoint);
+				VacuumableObject cur = hitCollider.GetComponent<VacuumableObject>();
+                currentDetected.Add(cur);
+                cur.Init(cameraPos, cameraForward);
             }
+
+			foreach (var cur in currentDetected)
+			{
+				if (!prevDetected.Contains(cur))
+                {
+					// 새로 들어온 오브젝트들
+                }
+            }
+
+            foreach (VacuumableObject prev in prevDetected)
+            {
+                if (!currentDetected.Contains(prev))
+                {
+					prev.VacuumEnd();
+                }
+            }
+
+            prevDetected = currentDetected;
         }
 
-        private void MoveObjectsTowardsPlayer()
+        // 선택된 상태에서만 Scene 뷰에 그리기
+        private void OnDrawGizmosSelected()
         {
-            for (int i = vacuumingObjects.Count - 1; i >= 0; i--)
+            if (cameraTransform == null)
+                return;
+
+            // 시작점과 끝점을 정의 (detectingVector가 월드 좌표라면 그대로, 로컬 좌표라면 변환 필요)
+            Vector3 startPoint = cameraTransform.position;
+            Vector3 endPoint = detectingVector;
+
+            // Gizmos 색상 설정
+            Gizmos.color = Color.green;
+			#if UNITY_EDITOR
+            DrawWireCapsule(startPoint, endPoint, vacuumDetectRadius);
+			#endif
+        }
+        void DrawWireCapsule(Vector3 start, Vector3 end, float radius)
+        {
+            // 두 점 사이의 방향 및 거리 계산
+            Vector3 direction = end - start;
+            float height = direction.magnitude;
+            Vector3 up = direction.normalized;
+
+            // 시작점과 끝점에 원을 그립니다.
+            Handles.DrawWireDisc(start, up, radius);
+            Handles.DrawWireDisc(end, up, radius);
+
+            // 원을 연결할 때 사용할 두 축(수평 방향) 결정
+            Vector3 forward = Vector3.Cross(up, Vector3.right);
+            if (forward == Vector3.zero)
             {
-                VacuumableObject obj = vacuumingObjects[i];
-
-                // 오브젝트가 유효한지 확인
-                if (obj == null || obj.gameObject == null)
-                {
-                    vacuumingObjects.RemoveAt(i);
-                    continue;
-                }
-
-                // 거리 계산
-                float distance = Vector3.Distance(obj.transform.position, absorbPoint.position);
-
-                // 흡수 거리에 도달했다면
-                if (distance <= absorbDistance)
-                {
-                    AbsorbObject(obj);
-                    vacuumingObjects.RemoveAt(i);
-                    continue;
-                }
-
-                // 거리에 따른 속도 조절 (가까울수록 빨라짐)
-                float speedMultiplier = 1f + (vacuumDetectRadius - distance) / vacuumDetectRadius;
-                float currentSpeed = vacuumSpeed * speedMultiplier * Time.deltaTime;
-
-                // 오브젝트 이동
-                obj.MoveTowards(absorbPoint.position, currentSpeed);
+                forward = Vector3.Cross(up, Vector3.forward);
             }
+            forward.Normalize();
+            Vector3 right = Vector3.Cross(up, forward).normalized;
+
+            // 원 둘레의 네 방향(상, 하, 좌, 우)으로 오프셋 계산
+            Vector3 offset1 = forward * radius;
+            Vector3 offset2 = -forward * radius;
+            Vector3 offset3 = right * radius;
+            Vector3 offset4 = -right * radius;
+
+            // 각 원의 네 점을 연결하는 선분을 그립니다.
+            Handles.DrawLine(start + offset1, end + offset1);
+            Handles.DrawLine(start + offset2, end + offset2);
+            Handles.DrawLine(start + offset3, end + offset3);
+            Handles.DrawLine(start + offset4, end + offset4);
         }
 
         #endregion

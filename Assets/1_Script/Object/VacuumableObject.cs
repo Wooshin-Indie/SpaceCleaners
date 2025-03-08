@@ -1,49 +1,56 @@
+using System.Runtime.ConstrainedExecution;
 using UnityEngine;
 
 public class VacuumableObject : MonoBehaviour
 {
     private Collider objectCollider;
+    [SerializeField] private float vacuumingForce;
+    [SerializeField] private float vacuumingForceToCenter;
     public Collider ObjectCollider { get => objectCollider ; set => objectCollider = value; }
     private Rigidbody objectRigidbody;
 
-    private Transform targetPoint;
+    private Vector3 targetPoint;
+    private Vector3 cameraDirection;
+    private bool isVacuumed = false;
 
-    private bool isInitialized = false;
-
-    public void Init(Transform target)
+    private void Awake()
     {
         objectCollider = GetComponent<Collider>();
         objectRigidbody = GetComponent<Rigidbody>();
-        targetPoint = target;
-        isInitialized = true;
+    }
 
-        // 물리 시스템에서 제외 (직접 제어하기 위해)
-        if (objectRigidbody != null)
-        {
-            objectRigidbody.isKinematic = true;
-        }
+    public void Init(Vector3 target, Vector3 camDirection)
+    {
+        targetPoint = target;
+        cameraDirection = camDirection;
+        isVacuumed = true;
+        GetComponent<Renderer>().material.color = Color.green;
     }
 
     public void VacuumEnd()
     {
-        objectRigidbody.isKinematic = false; // 물리법칙 영향 다시 받도록 설정
-        // 원래 가고있던 벡터로 이동하는 코드 추가해야함
+        isVacuumed = false;
+        targetPoint = Vector3.zero;
+        cameraDirection = Vector3.zero;
+        GetComponent<Renderer>().material.color = Color.red;
     }
 
-    private void OnTriggerStay(Collider other)
+    private void Update()
     {
-        if (!isInitialized) return;
+        if (!isVacuumed) return;
         else
         {
             MoveTowardTarget();
         }
     }
 
-
-
     private void MoveTowardTarget()
     {
+        Vector3 toObject = transform.position - targetPoint;
+        Vector3 proj = Vector3.Project(toObject, cameraDirection);
         if (targetPoint == null) return;
-        transform.position = Vector3.MoveTowards(transform.position, targetPoint.position, 0.1f);
+        objectRigidbody.AddForce(-proj.normalized * vacuumingForce, ForceMode.Acceleration);
+        objectRigidbody.AddForce((proj - toObject).normalized * vacuumingForceToCenter, ForceMode.Acceleration);
+        
     }
 }

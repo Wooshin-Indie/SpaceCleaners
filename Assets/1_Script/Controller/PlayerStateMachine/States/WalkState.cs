@@ -40,7 +40,7 @@ namespace MPGame.Controller.StateMachine
             GetMouseInput(out mouseX, out mouseY);
             GetInteractableInput();
             GetJumpInput(out isJumpPrssed);
-            GetEnableVacuumInput(out isVacuumEnabled);
+            GetEnableVacuumInput();
             GetVacuumInput(out isVacuumPressed);
         }
 
