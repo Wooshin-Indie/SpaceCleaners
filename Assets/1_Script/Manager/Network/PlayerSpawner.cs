@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Unity.Netcode;
+using UnityEditor.PackageManager;
 using UnityEngine;
-using static UnityEngine.EventSystems.EventTrigger;
 
 namespace MPGame.Manager
 {
@@ -26,12 +26,24 @@ namespace MPGame.Manager
 		[SerializeField] private GameObject playerPrefab;
 		private Dictionary<ulong, GameObject> players = new Dictionary<ulong, GameObject>();
 
+		[SerializeField] private List<GameObject> environments =new List<GameObject>();
+
+		public void SpawnEnvironments()
+		{
+			for (int i = 0; i < environments.Count; i++)
+			{
+				GameObject go = Instantiate(environments[i]);
+				NetworkObject no = go.GetComponent<NetworkObject>();
+				no?.Spawn();
+			}
+		}
+
 		[ServerRpc(RequireOwnership = false)]
 		public void SpawnPlayerServerRPC(ulong clientId)
 		{
 			GameObject go = Instantiate(playerPrefab, new Vector3(0, 1f, 0), Quaternion.identity);
 			NetworkObject no = go.GetComponent<NetworkObject>();
-			
+
 			if (no != null)
 			{
 				no.SpawnAsPlayerObject(clientId);

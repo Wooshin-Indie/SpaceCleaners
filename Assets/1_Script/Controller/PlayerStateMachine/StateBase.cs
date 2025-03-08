@@ -1,3 +1,6 @@
+using Cinemachine;
+using MPGame.Props;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
@@ -14,9 +17,17 @@ namespace MPGame.Controller.StateMachine
         protected float horzInputRaw = 0f;
         protected float mouseX = 0f;
         protected float mouseY = 0f;
+        protected float roll = 0f;
 
         protected bool isESCPressed = false;
         protected bool isJumpPrssed = false;
+        protected static bool isVacuumEnabled = false;
+        public static bool IsVacuumEnabled { get => isVacuumEnabled; }
+        protected static bool isVacuumPressed = false;
+        public static bool IsVacuumPressed { get => isVacuumPressed; }
+
+        protected bool isUpPressed = false;
+        protected bool isDownPressed = false;
 
         public StateBase(PlayerController controller, PlayerStateMachine stateMachine)
         {
@@ -28,9 +39,15 @@ namespace MPGame.Controller.StateMachine
         public virtual void HandleInput() { }       // Manage Input in particular state
         public virtual void LogicUpdate()           // Logic Update  
 		{
-            controller.GroundedCheck();
+
 		}           
-        public virtual void PhysicsUpdate() { }     // Only Physics Update
+        public virtual void PhysicsUpdate()         // Only Physics Update
+		{
+			controller.GroundedCheck();
+            controller.CalculateGravity();
+			controller.SlopeCheck();
+			controller.ApplyGravity();
+		}     
         public virtual void Exit() { }              // Run once when Exit State
 
 
@@ -42,7 +59,16 @@ namespace MPGame.Controller.StateMachine
             mouseY = Input.GetAxis("Mouse Y");
         }
 
-        protected void GetMovementInputRaw(out float vert, out float horz)
+        protected void GetRollInput(out float roll)
+        {
+            bool left = Input.GetKey(KeyCode.Q);
+            bool right = Input.GetKey(KeyCode.E);
+            if (left == right) roll = 0f;
+            else roll = right ? 1f : -1f;
+        }
+
+
+		protected void GetMovementInputRaw(out float vert, out float horz)
         {
             vert = Input.GetAxisRaw("Vertical");
             horz = Input.GetAxisRaw("Horizontal");
@@ -54,18 +80,51 @@ namespace MPGame.Controller.StateMachine
             horz = Input.GetAxis("Horizontal");
         }
 
+        protected void GetUpDownInput(out bool isUpPressed, out bool isDownPressed)
+        {
+            isUpPressed = Input.GetKey(KeyCode.Space);
+            isDownPressed = Input.GetKey(KeyCode.LeftControl);
+        }
+
         protected void GetInteractableInput()
         {
-            if(Input.GetMouseButtonDown(0) && controller.IsDetectInteractable)
+            if(Input.GetKeyDown(KeyCode.F) && controller.IsDetectInteractable)
             {
-                // TODO - Handle Interactable Object
+                controller.RecentlyDetectedProp.TryInteract();
             }
+        }
+
+        protected void GetESCInput(out bool isEscPressed)
+        {
+            isEscPressed = Input.GetKeyDown(KeyCode.Escape);
         }
 
         protected void GetJumpInput(out bool isPressed)
         {
             isPressed = Input.GetKeyDown(KeyCode.Space);
         }
+
+        protected void GetFlyStateInput()
+		{
+			if (Input.GetKeyDown(KeyCode.R))
+			{
+				controller.StateMachine.ChangeState(controller.flyState);
+			}
+		}
+        protected void GetEnableVacuumInput()
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                Debug.Log("1 pressed");
+                isVacuumEnabled = !isVacuumEnabled;
+            }
+        }
+
+        protected void GetVacuumInput(out bool isPressed)
+        {
+            isPressed = Input.GetMouseButton(0);
+        }
+
 
         #endregion
     }

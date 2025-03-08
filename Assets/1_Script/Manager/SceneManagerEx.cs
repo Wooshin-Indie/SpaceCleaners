@@ -19,10 +19,10 @@ namespace MPGame.Manager
 			LoadScene(sceneEnum);
 		}
 
-		private void LoadScene(SceneEnum sceneEnum)
+		private async void LoadScene(SceneEnum sceneEnum)
 		{
 			CurrentScene?.Clear();
-			SceneManager.LoadScene(sceneEnum.ToString() + "Scene", LoadSceneMode.Additive);
+			await SceneManager.LoadSceneAsync(sceneEnum.ToString() + "Scene", LoadSceneMode.Additive);
 		}
 
 		public async void UnloadCurrentScene()

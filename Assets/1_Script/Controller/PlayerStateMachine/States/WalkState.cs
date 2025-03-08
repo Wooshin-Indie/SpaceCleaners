@@ -22,8 +22,10 @@ namespace MPGame.Controller.StateMachine
 
             vertInput = horzInput = vertInputRaw = horzInputRaw = 0f;
             diagW = 1.0f;
+			controller.Rigidbody.linearDamping = 3f;
+            controller.TurnPlayerPM();
 
-        }
+		}
 
         public override void Exit()
         {
@@ -40,17 +42,21 @@ namespace MPGame.Controller.StateMachine
             GetMouseInput(out mouseX, out mouseY);
             GetInteractableInput();
             GetJumpInput(out isJumpPrssed);
-		}
+			GetFlyStateInput();
+            GetEnableVacuumInput();
+            GetVacuumInput(out isVacuumPressed);
+        }
 
 
         public override void LogicUpdate()
         {
             base.LogicUpdate();
 
-            speed = Mathf.Abs(vertInput) + Mathf.Abs(horzInput);
+            speed = Mathf.Abs(vertInputRaw) + Mathf.Abs(horzInputRaw);
 
             if (Mathf.Approximately(speed, 0f))
             {
+                controller.Rigidbody.linearVelocity = Vector3.zero;
                 stateMachine.ChangeState(controller.idleState);
             }
 
@@ -61,6 +67,8 @@ namespace MPGame.Controller.StateMachine
                 controller.StateMachine.ChangeState(controller.fallState);
             }
 
+			controller.Jump(isJumpPrssed);
+            controller.Vacuuming();
             controller.RotateWithMouse(mouseX, mouseY);
             controller.Jump(isJumpPrssed);
 		}
@@ -70,9 +78,10 @@ namespace MPGame.Controller.StateMachine
             base.PhysicsUpdate();
             controller.RaycastInteractableObject();
 
-            diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
+			diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
             controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
-        }
+			controller.RotateWithMouse(mouseX, mouseY);
+		}
     }
 
 }
