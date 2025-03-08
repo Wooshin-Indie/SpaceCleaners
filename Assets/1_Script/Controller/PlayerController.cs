@@ -4,7 +4,6 @@ using MPGame.Props;
 using MPGame.Utils;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
@@ -329,8 +328,6 @@ namespace MPGame.Controller
             DetectVacuumingObjects();
         }
 
-        #endregion
-
 		Vector3 gravityDirection = Vector3.zero;
 		Collider[] hitObjects;
 		SpaceshipContoller spaceship = null;
@@ -445,7 +442,7 @@ namespace MPGame.Controller
 			stateMachine.ChangeState(flightState);
 		}
 
-		// // �
+
 		private float keyWeight = 0.2f;
 		public void Fly(float vert, float horz, float depth)
 		{
@@ -480,7 +477,7 @@ namespace MPGame.Controller
 			Vector3 quat = transform.localRotation.eulerAngles;
 			transform.localRotation = Quaternion.Euler(quat.x, quat.y + mouseX * rotationPower, quat.z);
 		}
-		#endregion
+
 
 		#region Animation Synchronization
 
