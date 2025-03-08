@@ -14,12 +14,13 @@ namespace MPGame.Props
 		public Vector3 localExitPosition;
 		[SerializeField] private bool isDriver;
 
-		protected override void Interaction(ulong newOwnerClientId)
+		protected override bool Interaction(ulong newOwnerClientId)
 		{
-			base.Interaction(newOwnerClientId);
+			if (!base.Interaction(newOwnerClientId)) return false;
 
 			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()
 				.GetComponent<PlayerController>().TurnStateToFlightState(this, isDriver);
+			return true;
 		}
 	}
 }

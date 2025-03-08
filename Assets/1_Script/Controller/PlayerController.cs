@@ -191,6 +191,7 @@ namespace MPGame.Controller
 		public void SetKinematic(bool isKinematic)
 		{
 			rigid.isKinematic = isKinematic;
+			capsule.isTrigger = !isKinematic;
 			SetKinematicServerRPC(isKinematic);
 		}
 
@@ -205,6 +206,7 @@ namespace MPGame.Controller
 		{
 			if (IsOwner) return;
 			rigid.isKinematic = isKinematic;
+			capsule.isTrigger = !isKinematic;
 		}
 
 

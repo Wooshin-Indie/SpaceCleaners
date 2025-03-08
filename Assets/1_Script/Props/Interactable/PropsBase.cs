@@ -54,9 +54,9 @@ namespace MPGame.Props
 			Interaction(newOwnerClientId);
 		}
 
-		protected virtual void Interaction(ulong newOwnerClientId)
+		protected virtual bool Interaction(ulong newOwnerClientId)
 		{
-			if (NetworkManager.Singleton.LocalClientId != newOwnerClientId) return;
+			return NetworkManager.Singleton.LocalClientId == newOwnerClientId;
 		}
 	}
 }
