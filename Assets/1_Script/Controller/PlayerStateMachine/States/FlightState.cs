@@ -40,6 +40,7 @@ namespace MPGame.Controller.StateMachine
 			controller.SetKinematic(true);
 			controller.transform.localRotation = spaceChair.transform.localRotation;
 			controller.transform.localPosition = spaceChair.localEnterPosition;
+			controller.UpdatePlayerPositionServerRPC(controller.transform.position);
 
 			controller.Rigidbody.constraints = RigidbodyConstraints.None;
 		}

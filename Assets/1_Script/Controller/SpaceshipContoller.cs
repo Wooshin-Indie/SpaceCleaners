@@ -21,6 +21,7 @@ namespace MPGame.Controller
 
 		private void Update()
 		{
+			if (!IsHost) return;
 			UpdateShipTransformServerRPC(transform.position, transform.rotation);
 		}
 
@@ -54,7 +55,7 @@ namespace MPGame.Controller
 		[ClientRpc]
 		private void UpdateShipTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat)
 		{
-			if (IsOwner) return;
+			if (IsHost) return;
 			transform.position = playerPosition;
 			transform.rotation = playerQuat;
 		}

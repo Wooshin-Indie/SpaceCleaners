@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -28,7 +27,7 @@ namespace MPGame.Props
 		[ServerRpc(RequireOwnership = false)]
 		private void RequestRemoveOwnershipServerRPC()
 		{
-			NetworkObject.RemoveOwnership();
+			//NetworkObject.RemoveOwnership();
 			ownerClientId.Value = ulong.MaxValue;
 		}
 
@@ -38,7 +37,7 @@ namespace MPGame.Props
 			UnityEngine.Debug.Log(ownerClientId.Value + ", " + requestingClientId);
 			if (ownerClientId.Value == ulong.MaxValue)
 			{
-				NetworkObject.ChangeOwnership(requestingClientId);
+				//NetworkObject.ChangeOwnership(requestingClientId);
 				ownerClientId.Value = requestingClientId;
 				GrantInteractionClientRpc(requestingClientId);
 			}

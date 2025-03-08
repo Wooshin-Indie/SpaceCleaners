@@ -139,7 +139,9 @@ namespace MPGame.Controller
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 
-			UpdatePlayerTransformServerRPC(transform.position, transform.rotation, cameraTransform.localRotation);
+			if (!rigid.isKinematic)
+				UpdatePlayerPositionServerRPC(transform.position);
+			UpdatePlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		private void FixedUpdate()
@@ -161,16 +163,28 @@ namespace MPGame.Controller
 		#region Transform Synchronization
 
 		[ServerRpc(RequireOwnership = false)]
-		private void UpdatePlayerTransformServerRPC(Vector3 playerPosition, Quaternion playerQuat, Quaternion camQuat)
+		public void UpdatePlayerPositionServerRPC(Vector3 playerPosition)
 		{
-			UpdatePlayerTransformClientRPC(playerPosition, playerQuat, camQuat);
+			UpdatePlayerPositionClientRPC(playerPosition);
 		}
 
 		[ClientRpc]
-		private void UpdatePlayerTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat, Quaternion camQuat)
+		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition)
 		{
 			if (IsOwner) return;
 			transform.position = playerPosition;
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		private void UpdatePlayerRotateServerRPC(Quaternion playerQuat, Quaternion camQuat)
+		{
+			UpdatePlayerRotateClientRPC(playerQuat, camQuat);
+		}
+
+		[ClientRpc]
+		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat)
+		{
+			if (IsOwner) return;
 			transform.rotation = playerQuat;
 			cameraTransform.localRotation = camQuat;
 		}
@@ -191,7 +205,7 @@ namespace MPGame.Controller
 		public void SetKinematic(bool isKinematic)
 		{
 			rigid.isKinematic = isKinematic;
-			capsule.isTrigger = !isKinematic;
+			capsule.isTrigger = isKinematic;
 			SetKinematicServerRPC(isKinematic);
 		}
 
@@ -206,7 +220,7 @@ namespace MPGame.Controller
 		{
 			if (IsOwner) return;
 			rigid.isKinematic = isKinematic;
-			capsule.isTrigger = !isKinematic;
+			capsule.isTrigger = isKinematic;
 		}
 
 
