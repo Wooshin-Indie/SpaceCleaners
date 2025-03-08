@@ -1,8 +1,10 @@
 using MPGame.Controller.StateMachine;
+using MPGame.Manager;
+using MPGame.Props;
 using MPGame.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
@@ -25,23 +27,33 @@ namespace MPGame.Controller
 		public Animator Animator { get => animator; }
 
 		[Header("Player Move Args")]
-		[SerializeField] private float walkSpeed;
-		[SerializeField] private float horzRotSpeed;
-		[SerializeField] private float vertRotSpeed;
+		[SerializeField] private float walkForce;
+		[SerializeField] private float maxWalkSpeed;
+		[SerializeField] private float jumpForce;
+		[SerializeField] private float gravityForce;
+		[SerializeField] private bool useGravity;
 		[SerializeField, Range(0f, 90f)] private float maxVertRot;
 		[SerializeField, Range(-90f, 0f)] private float minVertRot;
-		[SerializeField] private float jumpForce;
 
 		[Header("Slope Args")]
 		[SerializeField] private float groundedOffset;
 		[SerializeField] private Vector3 groundRectSize;
 		[SerializeField] private float slopeRayLength;
 		[SerializeField] private float slopeLimit;
+		[SerializeField] private PhysicsMaterial idlePM;
 		[SerializeField] private PhysicsMaterial playerPM;
 		[SerializeField] private PhysicsMaterial slopePM;
+		[SerializeField] private PhysicsMaterial flyPM;
+
+		[Header("Flying Args")]
+		[SerializeField] private float maxFlySpeed;
+		[SerializeField] private float thrustPower;
+		[SerializeField] private float rotationPower;
+		[SerializeField] private float velocityToLand;
+		[SerializeField] private float enableToLandAngle;
 
 		[Header("GameObjects")]
-		[SerializeField] private Transform cameraTransform;
+		[SerializeField] public Transform cameraTransform;
 
 		[Header("Raycast Args")]                        // Use to detect Interactables
 		[SerializeField] private float rayLength;
@@ -60,7 +72,11 @@ namespace MPGame.Controller
 		public WalkState walkState;
 		public JumpState jumpState;
 		public FallState fallState;
+		public FlyState flyState;
+		public FlightState flightState;
 
+
+		public bool UseGravity { get => useGravity; set => useGravity = value; }
 
 		private bool isGrounded = true;
 		private bool isDetectInteractable = false;
@@ -68,9 +84,14 @@ namespace MPGame.Controller
 		public bool IsGrounded { get => isGrounded; }
 		public bool IsDetectInteractable { get => isDetectInteractable; }
 
-		private GameObject recentlyDetectedProp = null;
-		public GameObject RecentlyDetectedProp { get => recentlyDetectedProp; }
+		private PropsBase recentlyDetectedProp = null;
+		public PropsBase RecentlyDetectedProp { get => recentlyDetectedProp; }
 
+		private Vector3 gravityVector = new Vector3(0f, 0f, 0f);
+		private GravityType gravityType = GravityType.None;
+
+		private Vector3 projectedForward = Vector3.zero;
+		private float currentSpeed = 0f;
 
 		private void Awake()
 		{
@@ -83,37 +104,46 @@ namespace MPGame.Controller
 			walkState = new WalkState(this, stateMachine);
 			jumpState = new JumpState(this, stateMachine);
 			fallState = new FallState(this, stateMachine);
+			flyState = new FlyState(this, stateMachine);
+			flightState = new FlightState(this, stateMachine);
 
 			animIDSpeed = Animator.StringToHash("Speed");
 			animIDJump = Animator.StringToHash("Jump");
 			animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
 			animIdGrounded = Animator.StringToHash("Grounded");
 			animIdFreeFall = Animator.StringToHash("FreeFall");
-
 		}
 
-		float currentSpeed = 0f;
 
 		private void Start()
 		{
 			stateMachine.Init(idleState);
+			SetMaxWalkSpeed();
 		}
 
 		public override void OnNetworkSpawn()
 		{
 			base.OnNetworkSpawn();
 			cameraTransform.gameObject.SetActive(IsOwner);
-			rigid.isKinematic = !IsOwner;
+			rigid.isKinematic = false;
+			rigid.useGravity = false;
 			ChangeAnimatorParam(animIDMotionSpeed, 1f);
+
+			if (IsOwner && IsHost)
+			{
+				PlayerSpawner.Instance.SpawnEnvironments();
+			}
 		}
 
 		private void Update()
 		{
 			if (!IsOwner) return;
-
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
-			UpdatePlayerTransformServerRPC(transform.position, transform.rotation, cameraTransform.localRotation);
+
+			if (!rigid.isKinematic)
+				UpdatePlayerPositionServerRPC(transform.position);
+			UpdatePlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		private void FixedUpdate()
@@ -121,58 +151,99 @@ namespace MPGame.Controller
 			if (!IsOwner) return;
 
 			stateMachine.CurState.PhysicsUpdate();
-		}
 
-		#region Transform Synchronization
-
-		[ServerRpc(RequireOwnership = false)]
-		private void UpdatePlayerTransformServerRPC(Vector3 playerPosition, Quaternion playerQuat, Quaternion camQuat)
-		{
-			UpdatePlayerTransformClientRPC(playerPosition, playerQuat, camQuat);
-		}
-
-		[ClientRpc]
-		private void UpdatePlayerTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat, Quaternion camQuat)
-		{
-			if (IsOwner) return;
-			transform.position = playerPosition;
-			transform.rotation = playerQuat;
-			cameraTransform.localRotation = camQuat;
-		}
-
-		#endregion
-
-		#region Logic Control Funcs
-
-		private float horzRot = 0f;
-		private float vertRot = 0f;
-		public void RotateWithMouse(float mouseX, float mouseY)
-		{
-			horzRot += mouseX * horzRotSpeed;
-			vertRot -= mouseY * vertRotSpeed;
-			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
-
-			transform.rotation = Quaternion.Euler(0f, horzRot, 0f);
-			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
-		}
-
-		public void GroundedCheck()
-		{
-			Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
-				transform.position.z);
-			isGrounded = Physics.CheckBox(spherePosition, groundRectSize, Quaternion.identity,
-				Constants.LAYER_GROUND,
-				QueryTriggerInteraction.Ignore);
-
-			ChangeAnimatorParam(animIdGrounded, isGrounded);
 		}
 
 		private void OnDrawGizmos()
 		{
 			Gizmos.color = Color.blue;
-			Gizmos.DrawCube(new Vector3(transform.position.x, transform.position.y - groundedOffset,
-				transform.position.z), groundRectSize);
+			Gizmos.matrix = Matrix4x4.TRS(new Vector3(transform.position.x, transform.position.y - groundedOffset,
+				transform.position.z), transform.rotation, Vector3.one);
+			Gizmos.DrawWireCube(Vector3.zero, groundRectSize * 2);
 		}
+
+		#region Transform Synchronization
+
+		[ServerRpc(RequireOwnership = false)]
+		public void UpdatePlayerPositionServerRPC(Vector3 playerPosition)
+		{
+			UpdatePlayerPositionClientRPC(playerPosition);
+		}
+
+		[ClientRpc]
+		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition, bool fromServer = false)
+		{
+			if (!fromServer && IsOwner) return;
+			transform.position = playerPosition;
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		private void UpdatePlayerRotateServerRPC(Quaternion playerQuat, Quaternion camQuat)
+		{
+			UpdatePlayerRotateClientRPC(playerQuat, camQuat);
+		}
+
+		[ClientRpc]
+		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat, bool fromServer = false)
+		{
+			if (!fromServer && IsOwner) return;
+			transform.rotation = playerQuat;
+			cameraTransform.localRotation = camQuat;
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		public void SetParentServerRPC(ulong parentId)
+		{
+			if(NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject)){
+				transform.parent = parentObject.transform;
+			}
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		public void SetParentServerRPC(ulong parentId, Vector3 localPos, Quaternion localRot)
+		{
+			if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject))
+			{
+				transform.parent = parentObject.transform;
+				transform.localPosition = localPos;
+				transform.localRotation = localRot;
+
+				UpdatePlayerPositionClientRPC(transform.position, true);
+				UpdatePlayerRotateClientRPC(transform.rotation, Quaternion.identity, true);
+			}
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		public void UnsetParentServerRPC()
+		{
+			transform.parent = null;
+		}
+
+		public void SetKinematic(bool isKinematic)
+		{
+			rigid.isKinematic = isKinematic;
+			capsule.isTrigger = isKinematic;
+			SetKinematicServerRPC(isKinematic);
+		}
+
+		[ServerRpc (RequireOwnership = false)]
+		private void SetKinematicServerRPC(bool isKinematic)
+		{
+			SetKinematicClientRPC(isKinematic);
+		}
+
+		[ClientRpc]
+		private void SetKinematicClientRPC(bool isKinematic)
+		{
+			if (IsOwner) return;
+			rigid.isKinematic = isKinematic;
+			capsule.isTrigger = isKinematic;
+		}
+
+
+		#endregion
+
+		#region Logic Control Funcs
 
 		public void DetectIsGround()
 		{
@@ -182,37 +253,56 @@ namespace MPGame.Controller
 				stateMachine.ChangeState(idleState);
 			}
 		}
-
 		public void DetectIsFalling()
 		{
 			if (isGrounded) return;
-			if (rigid.linearVelocity.y < 0f)
+			DetectIsFallingWhileJump();
+		}
+		public void DetectIsFallingWhileJump()
+		{
+			Vector3 localVelocity = transform.InverseTransformDirection(rigid.linearVelocity);
+
+			if (localVelocity.y <= 0f) // æ¿¡Âœè€Œ æ¹²ê³—Â€ yç•°Â•(=ÂœÂ„ï§Ÿ) Â†ÂÂ„åª›Â€ 0 ÂëŒ„Â•Â˜ÂëŒ€ãˆƒ Â•Â˜åª›Â• ä»¥Â‘
 			{
 				stateMachine.ChangeState(fallState);
 			}
 		}
 
-
-		public bool OnSlope()
+		private bool isOnSlope = false;					// Check if ground is disable to walk
+		private bool isOnSlopeWhileFlying = false;		// Check if ground is disable to land
+		private float slopeAngle = 0f;					
+		private Vector3 normalVector = Vector3.zero;	// Slope angle (hit.normal)
+		public void SlopeCheck()
 		{
-			Debug.DrawRay(transform.position, Vector3.down* slopeRayLength, Color.red);
-			if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, slopeRayLength))
+			Debug.DrawRay(transform.position, -transform.up * slopeRayLength, Color.red);
+			if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeRayLength))
 			{
-				float angle = Vector3.Angle(hit.normal, Vector3.up);
-				return angle > slopeLimit;
+				normalVector = hit.normal;
+				slopeAngle = Vector3.Angle(hit.normal, -gravityDirection);
+
+				float landAngle = Vector3.Angle(hit.normal, transform.up);
+				isOnSlope = slopeAngle > slopeLimit;
+				isOnSlopeWhileFlying = slopeAngle > slopeLimit || landAngle > enableToLandAngle;
 			}
-
-			return false;
 		}
-
-
+		public bool OnSlope(bool isFlying = false)
+		{
+			return isFlying ? isOnSlopeWhileFlying : isOnSlope;
+		}
 		public void Jump(bool isJumpPressed)
 		{
 			if (!isJumpPressed) return;
 
-			rigid.AddForce(new Vector3(0f, jumpForce, 0f), ForceMode.Impulse);
+			rigid.AddForce(transform.up * jumpForce, ForceMode.Impulse);
 			stateMachine.ChangeState(jumpState);
 		}
+    
+		public bool IsEnoughVelocityToLand()
+		{
+			return rigid.linearVelocity.magnitude < velocityToLand;
+		}
+
+		#endregion
 
 		public void Vacuuming()
 		{
@@ -241,18 +331,61 @@ namespace MPGame.Controller
 
         #endregion
 
+		Vector3 gravityDirection = Vector3.zero;
+		Collider[] hitObjects;
+		SpaceshipContoller spaceship = null;
 
-        #region Physics Control Funcs
-
-        public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
+		public SpaceshipContoller Spaceship { get => spaceship; }
+		public void GroundedCheck()
 		{
-			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw);
-			currentSpeed = moveDir.magnitude * walkSpeed * diag;
+			Vector3 rectPosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
+				transform.position.z);
+			hitObjects = Physics.OverlapBox(rectPosition, groundRectSize, transform.rotation, Constants.LAYER_GROUND);
+			isGrounded = hitObjects.Length > 0;
 
-			rigid.MovePosition(transform.position + moveDir * diag * walkSpeed * Time.fixedDeltaTime);
-			ChangeAnimatorParam(animIDSpeed, currentSpeed);
+			if (!IsGrounded) return;
+
+			spaceship = hitObjects[0].transform.parent.GetComponent<SpaceshipContoller>();
+			SetParentServerRPC(hitObjects[0].transform.parent.GetComponent<NetworkObject>().NetworkObjectId);
+
+			GroundBase gb = hitObjects[0].GetComponentInParent<GroundBase>();
+			gravityType = gb.GravityType;
+			gravityVector = gb.GetGravityVector();
+
 		}
 
+		public void CalculateGravity()
+		{
+			switch (gravityType)
+			{
+				case GravityType.Point:
+					gravityDirection = Vector3.Normalize(gravityVector - transform.position);
+					break;
+				case GravityType.Direction:
+					gravityDirection = gravityVector;
+					break;
+			}
+		}
+
+		public void ApplyGravity()
+		{
+			if (!useGravity) return;
+			
+			projectedForward = Vector3.ProjectOnPlane(transform.forward, gravityDirection).normalized;
+			Quaternion targetRotation = Quaternion.LookRotation(projectedForward, -gravityDirection);
+
+			rigid.MoveRotation(targetRotation);		// HACK - AddTorqueæ¿¡Âœ è«›Â”è¢ëªƒãˆƒ é†«Â‹ÂÂŒ
+			rigid.AddForce(gravityDirection * gravityForce, ForceMode.Acceleration);
+		}
+
+		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
+		{
+			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw) * diag * walkForce;
+			
+			currentSpeed = moveDir.magnitude;
+			rigid.AddForce(Vector3.ProjectOnPlane(moveDir, normalVector) * Time.fixedDeltaTime, ForceMode.VelocityChange);
+			ChangeAnimatorParam(animIDSpeed, currentSpeed);
+		}
 		public void RaycastInteractableObject()
 		{
 			RaycastHit hit;
@@ -261,7 +394,8 @@ namespace MPGame.Controller
 			if (Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, rayLength, targetLayer))
 			{
 				isDetectInteractable = true;
-				recentlyDetectedProp = hit.transform.GetComponent<GameObject>();
+				Debug.Log(hit.transform.name);
+				recentlyDetectedProp = hit.transform.GetComponent<PropsBase>();
 			}
 			else
 			{
@@ -272,16 +406,80 @@ namespace MPGame.Controller
 			Debug.DrawRay(cameraTransform.position, cameraTransform.forward * rayLength, Color.red);
 		}
 
+		public void TurnIdlePM()
+		{
+			capsule.material = idlePM;
+		}
 		public void TurnPlayerPM()
 		{
 			capsule.material = playerPM;
 		}
-
 		public void TurnSlopePM()
 		{
 			capsule.material = slopePM;
 		}
+		public void TurnFlyPM()
+		{
+			capsule.material = flyPM;
+		}
+		public void SetMaxWalkSpeed()
+		{
+			rigid.maxLinearVelocity = maxWalkSpeed;
+		}
+		public void SetMaxFlySpeed()
+		{
+			rigid.maxLinearVelocity = maxFlySpeed;
+		}
 
+		public void TurnStateToIdleState()
+		{
+			stateMachine.ChangeState(idleState);
+		}
+		public void TurnStateToFlyState()
+		{
+			stateMachine.ChangeState(flyState);
+		}
+		public void TurnStateToFlightState(Chair chair, bool isDriver)
+		{
+			flightState.SetParams(chair, isDriver);
+			stateMachine.ChangeState(flightState);
+		}
+
+		// Â•ÂÂ’/Â–Â‘Â˜Â†/ÂœÂ„Â•Â„ÂÂ˜ ÂÂ…ï¿½
+		private float keyWeight = 0.2f;
+		public void Fly(float vert, float horz, float depth)
+		{
+			rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Force);
+			rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Force);
+			rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Force);
+		}
+		public void RotateBodyWithMouse(float mouseX, float mouseY, float roll)
+		{
+			cameraTransform.localRotation = Quaternion.Lerp(cameraTransform.localRotation, Quaternion.identity, 0.5f);
+
+			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
+			rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Force);
+			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Force);
+		}
+
+		private float vertRot = 0f;
+		public void RotateWithMouse(float mouseX, float mouseY)
+		{
+			vertRot -= mouseY * rotationPower;
+			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
+			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
+			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
+		}
+
+		public void RotateWithoutRigidbody(float mouseX, float mouseY)
+		{
+			vertRot -= mouseY * rotationPower;
+			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
+			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
+
+			Vector3 quat = transform.localRotation.eulerAngles;
+			transform.localRotation = Quaternion.Euler(quat.x, quat.y + mouseX * rotationPower, quat.z);
+		}
 		#endregion
 
 		#region Animation Synchronization
@@ -340,7 +538,7 @@ namespace MPGame.Controller
         [SerializeField] private float vacuumDetectLength;
         [SerializeField] private float vacuumSpeed;
         [SerializeField] private LayerMask vacuumableLayers;
-        private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //ÀÌÀü ÇÁ·¹ÀÓ¿¡ »¡¾ÆµéÀÌ°íÀÖ´ø ¹°Ã¼µéÀ»	ÀúÀåÇÏ´Â HashSet
+        private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //ì´ì „ í”„ë ˆì„ì— ë¹¨ì•„ë“¤ì´ê³ ìˆë˜ ë¬¼ì²´ë“¤ì„	ì €ì¥í•˜ëŠ” HashSet
 
         [Header("Absorption Settings")]
         private float absorbDistance = 1f;
@@ -378,7 +576,7 @@ namespace MPGame.Controller
 			{
 				if (!prevDetected.Contains(cur))
                 {
-					// »õ·Î µé¾î¿Â ¿ÀºêÁ§Æ®µé
+					// ìƒˆë¡œ ë“¤ì–´ì˜¨ ì˜¤ë¸Œì íŠ¸ë“¤
                 }
             }
 
@@ -393,17 +591,17 @@ namespace MPGame.Controller
             prevDetected = currentDetected;
         }
 
-        // ¼±ÅÃµÈ »óÅÂ¿¡¼­¸¸ Scene ºä¿¡ ±×¸®±â
+        // ì„ íƒëœ ìƒíƒœì—ì„œë§Œ Scene ë·°ì— ê·¸ë¦¬ê¸°
         private void OnDrawGizmosSelected()
         {
             if (cameraTransform == null)
                 return;
 
-            // ½ÃÀÛÁ¡°ú ³¡Á¡À» Á¤ÀÇ (detectingVector°¡ ¿ùµå ÁÂÇ¥¶ó¸é ±×´ë·Î, ·ÎÄÃ ÁÂÇ¥¶ó¸é º¯È¯ ÇÊ¿ä)
+            // ì‹œì‘ì ê³¼ ëì ì„ ì •ì˜ (detectingVectorê°€ ì›”ë“œ ì¢Œí‘œë¼ë©´ ê·¸ëŒ€ë¡œ, ë¡œì»¬ ì¢Œí‘œë¼ë©´ ë³€í™˜ í•„ìš”)
             Vector3 startPoint = cameraTransform.position;
             Vector3 endPoint = detectingVector;
 
-            // Gizmos »ö»ó ¼³Á¤
+            // Gizmos ìƒ‰ìƒ ì„¤ì •
             Gizmos.color = Color.green;
 			#if UNITY_EDITOR
             DrawWireCapsule(startPoint, endPoint, vacuumDetectRadius);
@@ -411,16 +609,16 @@ namespace MPGame.Controller
         }
         void DrawWireCapsule(Vector3 start, Vector3 end, float radius)
         {
-            // µÎ Á¡ »çÀÌÀÇ ¹æÇâ ¹× °Å¸® °è»ê
+            // ë‘ ì  ì‚¬ì´ì˜ ë°©í–¥ ë° ê±°ë¦¬ ê³„ì‚°
             Vector3 direction = end - start;
             float height = direction.magnitude;
             Vector3 up = direction.normalized;
 
-            // ½ÃÀÛÁ¡°ú ³¡Á¡¿¡ ¿øÀ» ±×¸³´Ï´Ù.
+            // ì‹œì‘ì ê³¼ ëì ì— ì›ì„ ê·¸ë¦½ë‹ˆë‹¤.
             Handles.DrawWireDisc(start, up, radius);
             Handles.DrawWireDisc(end, up, radius);
 
-            // ¿øÀ» ¿¬°áÇÒ ¶§ »ç¿ëÇÒ µÎ Ãà(¼öÆò ¹æÇâ) °áÁ¤
+            // ì›ì„ ì—°ê²°í•  ë•Œ ì‚¬ìš©í•  ë‘ ì¶•(ìˆ˜í‰ ë°©í–¥) ê²°ì •
             Vector3 forward = Vector3.Cross(up, Vector3.right);
             if (forward == Vector3.zero)
             {
@@ -429,13 +627,13 @@ namespace MPGame.Controller
             forward.Normalize();
             Vector3 right = Vector3.Cross(up, forward).normalized;
 
-            // ¿ø µÑ·¹ÀÇ ³× ¹æÇâ(»ó, ÇÏ, ÁÂ, ¿ì)À¸·Î ¿ÀÇÁ¼Â °è»ê
+            // ì› ë‘˜ë ˆì˜ ë„¤ ë°©í–¥(ìƒ, í•˜, ì¢Œ, ìš°)ìœ¼ë¡œ ì˜¤í”„ì…‹ ê³„ì‚°
             Vector3 offset1 = forward * radius;
             Vector3 offset2 = -forward * radius;
             Vector3 offset3 = right * radius;
             Vector3 offset4 = -right * radius;
 
-            // °¢ ¿øÀÇ ³× Á¡À» ¿¬°áÇÏ´Â ¼±ºĞÀ» ±×¸³´Ï´Ù.
+            // ê° ì›ì˜ ë„¤ ì ì„ ì—°ê²°í•˜ëŠ” ì„ ë¶„ì„ ê·¸ë¦½ë‹ˆë‹¤.
             Handles.DrawLine(start + offset1, end + offset1);
             Handles.DrawLine(start + offset2, end + offset2);
             Handles.DrawLine(start + offset3, end + offset3);

@@ -40,6 +40,12 @@ namespace MPGame.Manager
 			GameManagerEx.Instance.UpdateClients();
 		}
 
+		[ClientRpc]
+		public void UpdateClientsPlayerInfoClientRPC(ulong steamId, string steamName, ulong clientId)
+		{
+			GameManagerEx.Instance.AddPlayerToDictionary(clientId, steamName, steamId);
+		}
+
 		[ServerRpc(RequireOwnership = false)]
 		public void RemoveMeFromDictionaryServerRPC(ulong steamId)
 		{
@@ -51,12 +57,6 @@ namespace MPGame.Manager
 		{
 			Debug.Log("removing client");
 			GameManagerEx.Instance.RemovePlayerFromDictionary(steamId);
-		}
-
-		[ClientRpc]
-		public void UpdateClientsPlayerInfoClientRPC(ulong steamId, string steamName, ulong clientId)
-		{
-			GameManagerEx.Instance.AddPlayerToDictionary(clientId, steamName, steamId);
 		}
 
 		[ServerRpc(RequireOwnership = false)]

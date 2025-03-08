@@ -2720,7 +2720,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6176282922468797728}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.052335955, y: -0, z: -0, w: 0.9986295}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.6421607, z: 0.1887473}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -4073,7 +4073,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 1
   m_Drag: 1
-  m_AngularDrag: 0.05
+  m_AngularDrag: 15
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -4085,7 +4085,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 80
@@ -4102,18 +4102,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b351cad6627b6fd42800828dffea4bb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 4
-  horzRotSpeed: 4
-  vertRotSpeed: 4
+  walkForce: 30
+  maxWalkSpeed: 10
+  jumpForce: 7
+  gravityForce: 10
+  useGravity: 1
   maxVertRot: 43.8
   minVertRot: -45
-  jumpForce: 5
   groundedOffset: -0.04
   groundRectSize: {x: 0.5, y: 0.17, z: 0.5}
   slopeRayLength: 0.6
   slopeLimit: 50
+  idlePM: {fileID: 13400000, guid: a01f2de4b2e6c464aa5e733e5989d5d1, type: 2}
   playerPM: {fileID: 13400000, guid: dc11ef00556ac82418c30d537f2fe21a, type: 2}
   slopePM: {fileID: 13400000, guid: 08abb98db5f74cc4a928cedffa38c045, type: 2}
+  flyPM: {fileID: 13400000, guid: 5aa0fd975bdf67245ab54e6fa8271666, type: 2}
+  maxFlySpeed: 100
+  thrustPower: 10
+  rotationPower: 5
+  velocityToLand: 10
+  enableToLandAngle: 15
   cameraTransform: {fileID: 4180898942451597415}
   rayLength: 10
   animIDSpeed: 0

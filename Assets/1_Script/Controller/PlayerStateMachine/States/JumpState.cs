@@ -16,7 +16,9 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.Enter();
 			vertInputRaw = horzInputRaw = 0f;
+			controller.Rigidbody.linearDamping = 3f;
 			controller.ChangeAnimatorParam(controller.animIDJump, true);
+			controller.TurnPlayerPM();
 		}
 
 		public override void Exit()
@@ -33,6 +35,7 @@ namespace MPGame.Controller.StateMachine
 			GetMovementInput(out vertInput, out horzInput);
 			GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
 			GetMouseInput(out mouseX, out mouseY);
+			GetFlyStateInput();
             GetEnableVacuumInput();
             GetVacuumInput(out isVacuumPressed);
         }
@@ -41,6 +44,7 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.LogicUpdate();
 
+			controller.DetectIsFallingWhileJump();
 			controller.DetectIsFalling();
 
             controller.Vacuuming();
@@ -53,6 +57,7 @@ namespace MPGame.Controller.StateMachine
 
 			diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
 			controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
+			controller.RotateWithMouse(mouseX, mouseY);
 		}
 	}
 }

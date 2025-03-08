@@ -1,5 +1,4 @@
-﻿using Unity.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
 {
@@ -17,14 +16,15 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.Enter();
 			vertInputRaw = horzInputRaw = 0f;
+			controller.Rigidbody.angularDamping = 5f;
+			controller.Rigidbody.linearDamping = 3f;
 			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);
+			controller.TurnPlayerPM();
 		}
 
 		public override void Exit()
 		{
 			base.Exit();
-			
-				controller.TurnPlayerPM();
 			controller.ChangeAnimatorParam(controller.animIdFreeFall, false);
 		}
 
@@ -33,10 +33,10 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.HandleInput();
 
-
 			GetMovementInput(out vertInput, out horzInput);
 			GetMovementInputRaw(out vertInputRaw, out horzInputRaw);
 			GetMouseInput(out mouseX, out mouseY);
+			GetFlyStateInput();
             GetEnableVacuumInput();
             GetVacuumInput(out isVacuumPressed);
         }
@@ -47,8 +47,8 @@ namespace MPGame.Controller.StateMachine
 
 			if (!controller.OnSlope())
 			{
-				controller.DetectIsGround();
 				controller.TurnPlayerPM();
+				controller.DetectIsGround();
 			}
 			else
 			{
@@ -68,6 +68,7 @@ namespace MPGame.Controller.StateMachine
 				diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
 				controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
 			}
+			controller.RotateWithMouse(mouseX, mouseY);
 		}
 	}
 }
