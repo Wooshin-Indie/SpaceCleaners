@@ -173,6 +173,7 @@ namespace MPGame.Controller
 		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition, bool fromServer = false)
 		{
 			if (!fromServer && IsOwner) return;
+			rigid.linearVelocity = Vector3.zero;
 			transform.position = playerPosition;
 		}
 

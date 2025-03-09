@@ -2619,9 +2619,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1971004617371411818}
   - component: {fileID: 8414548315660600656}
-  - component: {fileID: 3210965355734055860}
   - component: {fileID: -1543824233346960989}
-  - component: {fileID: -84831696142605626}
+  - component: {fileID: 7133835473742413623}
   m_Layer: 0
   m_Name: NearFutureShip
   m_TagString: Untagged
@@ -2666,7 +2665,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 68222519
+  GlobalObjectIdHash: 1678556271
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 0
@@ -2675,18 +2674,6 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
---- !u!114 &3210965355734055860
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8644338739374899709}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1511a5fb5d38d9048b2086bd87392518, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &-1543824233346960989
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2699,9 +2686,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3c7762c8c4874a42868adb07e6db1eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thrustPower: 50
+  thrustPower: 10
   rotationPower: 10
---- !u!54 &-84831696142605626
+--- !u!54 &7133835473742413623
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2709,19 +2696,19 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8644338739374899709}
   serializedVersion: 4
-  m_Mass: 20
+  m_Mass: 1
   m_Drag: 0
-  m_AngularDrag: 2
-  m_CenterOfMass: {x: 0, y: 3.5, z: 4}
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0.00880202, y: 0.008649721, z: 0.008649721, w: 0.9998864}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_ImplicitCom: 0
+  m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0

@@ -22,7 +22,7 @@ namespace MPGame.Controller
 		private void Update()
 		{
 			if (!IsHost) return;
-			UpdateShipTransformServerRPC(transform.position, transform.rotation);
+			UpdateShipTransformClientRPC(transform.position, transform.rotation);
 		}
 
 		// 앞뒤/양옆/위아래 입력
@@ -46,18 +46,14 @@ namespace MPGame.Controller
 
 		#region Transform Synchronization
 
-		[ServerRpc(RequireOwnership = false)]
-		private void UpdateShipTransformServerRPC(Vector3 playerPosition, Quaternion playerQuat)
-		{
-			UpdateShipTransformClientRPC(playerPosition, playerQuat);
-		}
-
 		[ClientRpc]
 		private void UpdateShipTransformClientRPC(Vector3 playerPosition, Quaternion playerQuat)
 		{
 			if (IsHost) return;
-			transform.position = playerPosition;
-			transform.rotation = playerQuat;
+			if (rigid == null) return;
+
+			transform.position = (playerPosition);
+			transform.rotation = (playerQuat);
 		}
 
 		#endregion
