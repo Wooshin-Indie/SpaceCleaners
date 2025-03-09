@@ -22,7 +22,7 @@ namespace MPGame.Controller
 		private void Update()
 		{
 			if (!IsHost) return;
-			// UpdateShipTransformClientRPC(transform.position, transform.rotation);
+			UpdateShipTransformClientRPC(transform.position, transform.rotation);
 		}
 
 		// 앞뒤/양옆/위아래 입력
@@ -52,8 +52,8 @@ namespace MPGame.Controller
 			if (IsHost) return;
 			if (rigid == null) return;
 
-			transform.position = (playerPosition);
-			transform.rotation = (playerQuat);
+			rigid.MovePosition(playerPosition);
+			rigid.MoveRotation(playerQuat);
 		}
 
 		#endregion
