@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using Unity.Netcode;
+using UnityEditor.PackageManager;
 using UnityEngine;
+using static UnityEditor.Experimental.GraphView.GraphView;
+using UnityEngine.InputSystem;
 using static UnityEngine.EventSystems.EventTrigger;
 
 namespace MPGame.Manager
@@ -41,6 +44,15 @@ namespace MPGame.Manager
             GameObject ob = Instantiate(tempObject, pos, Quaternion.identity);
             ob.GetComponent<NetworkObject>().Spawn();
             vacuumableObjects.Add(ob.GetComponent<VacuumableObject>());
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void DespawnVacuumableObjectServerRPC(NetworkObject no)
+        {
+            vacuumableObjects.Remove(no.GetComponent<VacuumableObject>());
+            no.Despawn();
+            GameObject go = no.gameObject;
+            Destroy(go);
         }
     }
 }

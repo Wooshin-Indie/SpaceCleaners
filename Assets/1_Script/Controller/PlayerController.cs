@@ -24,7 +24,7 @@ namespace MPGame.Controller
 		public Rigidbody Rigidbody { get => rigid; }
 		public CapsuleCollider Capsule { get => capsule; }
 		public Animator Animator { get => animator; }
-
+		
 		[Header("Player Move Args")]
 		[SerializeField] private float walkForce;
 		[SerializeField] private float maxWalkSpeed;
@@ -566,7 +566,7 @@ namespace MPGame.Controller
             {
 				VacuumableObject cur = hitCollider.GetComponent<VacuumableObject>();
                 currentDetected.Add(cur);
-                cur.Init(cameraPos, cameraForward);
+                cur.Init(GameManagerEx.Instance.MyClientId, cameraPos, cameraForward);
             }
 
 			foreach (var cur in currentDetected)
