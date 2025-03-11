@@ -41,11 +41,6 @@ namespace MPGame.Manager
 		public Dictionary<ulong, PlayerInfo> playerInfo = new Dictionary<ulong, PlayerInfo>();
 
 
-		public Action<string, string> OnSendMessageAction { get; set; }
-		public Action <PlayerInfo> OnAddPlayerAction { get; set; }
-		public Action <PlayerInfo> OnRemovePlayerAction { get; set; }
-		public Action<bool, ulong> OnUpdatePlayerReadyAction { get; set; }
-
 		public void SendMessageToChat(string text, ulong fromwho, bool server)
 		{
 			string name = Constants.NAME_SERVER;
@@ -55,7 +50,7 @@ namespace MPGame.Manager
 				name = playerInfo[fromwho].steamName;
 			}
 
-			OnSendMessageAction(name, text);
+			UIManager.Lobby.SendMessageToUI(name, text);
 		}
 
 		public void HostCreated()
@@ -93,7 +88,7 @@ namespace MPGame.Manager
 			{
 				PlayerInfo pi = new PlayerInfo(steamName, steamId);
 				playerInfo.Add(clientId, pi);
-				OnAddPlayerAction?.Invoke(pi);
+				UIManager.Lobby.OnAddPlayerToDictionary(pi);
 			}
 		}
 
@@ -125,7 +120,7 @@ namespace MPGame.Manager
 			{
 				playerInfo.Remove(key);
 			}
-			OnRemovePlayerAction?.Invoke(value);
+			UIManager.Lobby.OnRemovePlayerFromDictionary(value);
 		}
 
 		public void UpdatePlayerIsReady(bool isReady, ulong clientId)
@@ -135,7 +130,7 @@ namespace MPGame.Manager
 				if (player.Key == clientId)
 				{
 					player.Value.isReady = isReady;
-					OnUpdatePlayerReadyAction?.Invoke(isReady, player.Value.steamId);
+					UIManager.Lobby.OnUpdatePlayerReady(isReady, player.Value.steamId);
 				}
 			}
 		}

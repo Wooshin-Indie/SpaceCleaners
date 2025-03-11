@@ -140,9 +140,9 @@ namespace MPGame.Controller
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 
-			if (!rigid.isKinematic)
-				UpdatePlayerPositionServerRPC(transform.position);
-			UpdatePlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
+			// if (!rigid.isKinematic)
+				// UpdatePlayerPositionServerRPC(transform.position);
+			// UpdatePlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		private void FixedUpdate()

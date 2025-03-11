@@ -43,10 +43,6 @@ namespace MPGame.UI.LobbyScene
 
 		private void Start()
 		{
-			GameManagerEx.Instance.OnSendMessageAction += SendMessage;
-			GameManagerEx.Instance.OnAddPlayerAction += OnAddPlayerToDictionary;
-			GameManagerEx.Instance.OnRemovePlayerAction += OnRemovePlayerFromDictionary;
-			GameManagerEx.Instance.OnUpdatePlayerReadyAction += OnUpdatePlayerReady;
 
 			disconnectButton.onClick.AddListener(GameNetworkManager.Instance.Disconnected);
 			readyButton.onClick.AddListener(() => {
@@ -65,10 +61,7 @@ namespace MPGame.UI.LobbyScene
 
 		private void OnDestroy()
 		{
-			GameManagerEx.Instance.OnSendMessageAction -= SendMessage;
-			GameManagerEx.Instance.OnAddPlayerAction -= OnAddPlayerToDictionary;
-			GameManagerEx.Instance.OnRemovePlayerAction -= OnRemovePlayerFromDictionary;
-			GameManagerEx.Instance.OnUpdatePlayerReadyAction -= OnUpdatePlayerReady;
+
 		}
 
 
@@ -98,7 +91,7 @@ namespace MPGame.UI.LobbyScene
 			}
 		}
 
-		private void SendMessage(string name, string text)
+		public void SendMessageToUI(string name, string text)
         {
 			if (messageList.Count >= maxMessages)
 			{
@@ -125,14 +118,14 @@ namespace MPGame.UI.LobbyScene
 			}
 		}
 
-		private void OnAddPlayerToDictionary(PlayerInfo pi)
+		public void OnAddPlayerToDictionary(PlayerInfo pi)
 		{
 			PlayerCard pc = Instantiate(playerCardPrefab, playerFieldBox).GetComponent<PlayerCard>();
 			pc.SetPlayerCard(pi);
 			cardList.Add(pc);
 		}
 
-		private void OnRemovePlayerFromDictionary(PlayerInfo pi)
+		public void OnRemovePlayerFromDictionary(PlayerInfo pi)
 		{
 			for(int i=cardList.Count-1; i>=0; i--)
 			{
@@ -144,7 +137,7 @@ namespace MPGame.UI.LobbyScene
 			}
 		}
 
-		private void OnUpdatePlayerReady(bool isReady, ulong steamId)
+		public void OnUpdatePlayerReady(bool isReady, ulong steamId)
 		{
 			bool isAllReady = true;
 			foreach (PlayerCard card in cardList)
@@ -163,7 +156,7 @@ namespace MPGame.UI.LobbyScene
 				notreadyButton.gameObject.SetActive(isReady);
 			}
 
-			// Host¸é °ÔÀÓ½ÃÀÛ¹öÆ° ¶ç¿ö¾ßµÊ
+			// Hostë©´ ê²Œì„ì‹œì‘ë²„íŠ¼ ë„ì›Œì•¼ë¨
 			if (NetworkManager.Singleton.IsHost)				
 			{
 				startButton.gameObject.SetActive(isAllReady);
