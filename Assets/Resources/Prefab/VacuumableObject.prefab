@@ -152,7 +152,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   vacuumingForce: 1
   vacuumingForceToCenter: 4
-  removeDistance: 0.3
+  removeDistance: 1
 --- !u!65 &25157132417193402
 BoxCollider:
   m_ObjectHideFlags: 0

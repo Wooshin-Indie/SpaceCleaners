@@ -7,11 +7,12 @@ namespace MPGame.Props
     {
 
 		private NetworkVariable<ulong> ownerClientId = new NetworkVariable<ulong>(ulong.MaxValue);
+		public NetworkVariable<ulong> OwnerClientId { get => ownerClientId; }
 
-		/// <summary>
-		/// 외부에서 Interact 할 때 호출하는 함수
-		/// </summary>
-		public void TryInteract()
+        /// <summary>
+        /// 외부에서 Interact 할 때 호출하는 함수
+        /// </summary>
+        public void TryInteract()
 		{
 			RequestOwnershipServerRpc(NetworkManager.Singleton.LocalClientId);
 		}

@@ -2,9 +2,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEditor.PackageManager;
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.GraphView;
-using UnityEngine.InputSystem;
-using static UnityEngine.EventSystems.EventTrigger;
+using MPGame.Props;
 
 namespace MPGame.Manager
 {

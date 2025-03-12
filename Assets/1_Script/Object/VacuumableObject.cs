@@ -21,6 +21,7 @@ namespace MPGame.Props
         protected override bool Interaction(ulong newOwnerClientId)
         {
             if (!base.Interaction(newOwnerClientId)) return false;
+            return true;
         }
 
         private void Awake()
@@ -31,21 +32,27 @@ namespace MPGame.Props
 
         public void Init(ulong playerID, Vector3 target, Vector3 camDirection)
         {
-            if (OwnerClientId.value == 100)
-                objectOwnerID = playerID;
-            targetPoint = target;
-            cameraDirection = camDirection;
-            isBeingVacuumed = true;
-            GetComponent<Renderer>().material.color = Color.green;
+            if (OwnerClientId.Value == ulong.MaxValue)
+                TryInteract();
+
+            if (Interaction(OwnerClientId.Value))
+            {
+                Debug.Log("Interaction...");
+                targetPoint = target;
+                cameraDirection = camDirection;
+                isBeingVacuumed = true;
+                GetComponent<Renderer>().material.color = Color.green;
+            }
         }
 
         public void VacuumEnd()
         {
-            objectOwnerID = 100;
             isBeingVacuumed = false;
             targetPoint = Vector3.zero;
             cameraDirection = Vector3.zero;
             GetComponent<Renderer>().material.color = Color.red;
+            EndInteraction();
+            Debug.Log("Interaction End");
         }
 
         private void Update()
@@ -73,7 +80,7 @@ namespace MPGame.Props
         {
             if (Vector3.Distance(transform.position, targetPoint) < removeDistance)
             {
-                PlayerSpawner.Instance.Players[objectOwnerID].
+                PlayerSpawner.Instance.Players[OwnerClientId.Value].
                     GetComponent<PlayerController>().RemoveVacuumingObjectsFromHashsets(this);
                 ObjectSpawner.Instance.RequsetDespawnVacuumableObjectToServer(GetComponent<VacuumableObject>());
                 Debug.Log("Test1!!");
