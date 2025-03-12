@@ -4119,7 +4119,7 @@ MonoBehaviour:
   flyPM: {fileID: 13400000, guid: 5aa0fd975bdf67245ab54e6fa8271666, type: 2}
   maxFlySpeed: 100
   thrustPower: 10
-  rotationPower: 5
+  rotationPower: 1
   velocityToLand: 10
   enableToLandAngle: 15
   cameraTransform: {fileID: 4180898942451597415}

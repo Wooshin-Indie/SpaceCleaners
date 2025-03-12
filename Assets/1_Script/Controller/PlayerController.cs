@@ -536,6 +536,7 @@ namespace MPGame.Controller
         [SerializeField] private float vacuumSpeed;
         [SerializeField] private LayerMask vacuumableLayers;
         private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //이전 프레임에 빨아들이고있던 물체들을	저장하는 HashSet
+        private HashSet<VacuumableObject> currentDetected = new HashSet<VacuumableObject>();
 
         [Header("Absorption Settings")]
         private float absorbDistance = 1f;
@@ -559,8 +560,6 @@ namespace MPGame.Controller
 			detectingVector = cameraPos + cameraForward * vacuumDetectLength;
 
             Collider[] hitColliders = Physics.OverlapCapsule(cameraTransform.position, detectingVector, vacuumDetectRadius, vacuumableLayers);
-			
-			HashSet<VacuumableObject> currentDetected = new HashSet<VacuumableObject>();
 
             foreach (var hitCollider in hitColliders)
             {
@@ -586,6 +585,12 @@ namespace MPGame.Controller
             }
 
             prevDetected = currentDetected;
+        }
+
+		public void RemoveVacuumingObjectsFromHashsets(VacuumableObject ob)
+		{
+			currentDetected.Remove(ob);
+			prevDetected.Remove(ob);
         }
 
         // 선택된 상태에서만 Scene 뷰에 그리기

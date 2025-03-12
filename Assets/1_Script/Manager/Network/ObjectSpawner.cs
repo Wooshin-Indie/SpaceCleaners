@@ -47,12 +47,19 @@ namespace MPGame.Manager
         }
 
         [ServerRpc(RequireOwnership = false)]
-        public void DespawnVacuumableObjectServerRPC(NetworkObject no)
+        public void DespawnVacuumableObjectServerRPC()
         {
-            vacuumableObjects.Remove(no.GetComponent<VacuumableObject>());
-            no.Despawn();
-            GameObject go = no.gameObject;
-            Destroy(go);
+            vacuumableObjects.Remove(tmpOb);
+            tmpOb.GetComponent<NetworkObject>().Despawn();
+            Destroy(tmpOb.gameObject);
+            Debug.Log("Despawned!!");
+        }
+
+        private VacuumableObject tmpOb;
+        public void RequsetDespawnVacuumableObjectToServer(VacuumableObject ob)
+        {
+            tmpOb = ob;
+            DespawnVacuumableObjectServerRPC();
         }
     }
 }
