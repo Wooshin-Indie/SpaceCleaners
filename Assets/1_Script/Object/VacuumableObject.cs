@@ -30,6 +30,39 @@ namespace MPGame.Props
             objectRigidbody = GetComponent<Rigidbody>();
         }
 
+        private void OnUpdate()
+        {
+            if (!objectRigidbody.isKinematic)
+                UpdateObjectPositionServerRPC(transform.position);
+            UpdateObjectRotateServerRPC(transform.rotation);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void UpdateObjectPositionServerRPC(Vector3 objectPosition)
+        {
+            UpdateObjectPositionClientRPC(objectPosition);
+        }
+
+        [ClientRpc]
+        private void UpdateObjectPositionClientRPC(Vector3 objectPosition, bool fromServer = false)
+        {
+            if (!fromServer && IsOwner) return;
+            transform.position = objectPosition;
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void UpdateObjectRotateServerRPC(Quaternion objectQuat)
+        {
+            UpdateObjectRotateClientRPC(objectQuat);
+        }
+
+        [ClientRpc]
+        private void UpdateObjectRotateClientRPC(Quaternion objectQuat, bool fromServer = false)
+        {
+            if (!fromServer && IsOwner) return;
+            transform.rotation = objectQuat;
+        }
+
         public void Init(ulong playerID, Vector3 target, Vector3 camDirection)
         {
             if (OwnerClientId.Value == ulong.MaxValue)
@@ -82,7 +115,7 @@ namespace MPGame.Props
             {
                 PlayerSpawner.Instance.Players[OwnerClientId.Value].
                     GetComponent<PlayerController>().RemoveVacuumingObjectsFromHashsets(this);
-                ObjectSpawner.Instance.RequsetDespawnVacuumableObjectToServer(GetComponent<VacuumableObject>());
+                ObjectSpawner.Instance.RequestDespawnVacuumableObjectToServer(GetComponent<VacuumableObject>());
                 Debug.Log("Test1!!");
             }
         }

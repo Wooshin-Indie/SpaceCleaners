@@ -591,6 +591,7 @@ namespace MPGame.Controller
 		{
 			currentDetected.Remove(ob);
 			prevDetected.Remove(ob);
+			Debug.Log("HashSet Removed");
         }
 
         // 선택된 상태에서만 Scene 뷰에 그리기

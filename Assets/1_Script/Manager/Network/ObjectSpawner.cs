@@ -54,7 +54,7 @@ namespace MPGame.Manager
         }
 
         private VacuumableObject tmpOb;
-        public void RequsetDespawnVacuumableObjectToServer(VacuumableObject ob)
+        public void RequestDespawnVacuumableObjectToServer(VacuumableObject ob)
         {
             tmpOb = ob;
             DespawnVacuumableObjectServerRPC();
