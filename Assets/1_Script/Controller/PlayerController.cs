@@ -136,7 +136,7 @@ namespace MPGame.Controller
 
 		private void Update()
 		{
-			if (!IsOwner) return;
+            if (!IsOwner) return;
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 
@@ -195,7 +195,7 @@ namespace MPGame.Controller
 		{
 			if(NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject)){
 				transform.parent = parentObject.transform;
-			}
+            }
 		}
 
 		[ServerRpc(RequireOwnership = false)]

@@ -3,6 +3,7 @@ using MPGame.Manager;
 using System.Runtime.ConstrainedExecution;
 using Unity.Netcode;
 using UnityEngine;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 namespace MPGame.Props
 {
@@ -30,11 +31,18 @@ namespace MPGame.Props
             objectRigidbody = GetComponent<Rigidbody>();
         }
 
-        private void OnUpdate()
+        public void OnUpdate()
         {
             if (!objectRigidbody.isKinematic)
                 UpdateObjectPositionServerRPC(transform.position);
             UpdateObjectRotateServerRPC(transform.rotation);
+
+            if (!isBeingVacuumed) return;
+            else
+            {
+                MoveTowardTarget();
+                DestroyWhenClosedToPlayer();
+            }
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -46,7 +54,9 @@ namespace MPGame.Props
         [ClientRpc]
         private void UpdateObjectPositionClientRPC(Vector3 objectPosition, bool fromServer = false)
         {
+            // 일단 넣어놓긴 함, 아마 동작은 안할 듯
             if (!fromServer && IsOwner) return;
+
             transform.position = objectPosition;
         }
 
@@ -88,16 +98,6 @@ namespace MPGame.Props
             Debug.Log("Interaction End");
         }
 
-        private void Update()
-        {
-            if (!isBeingVacuumed) return;
-            else
-            {
-                MoveTowardTarget();
-                DestroyWhenClosedToPlayer();
-            }
-        }
-
         private void MoveTowardTarget()
         {
             Vector3 toObject = transform.position - targetPoint;
@@ -111,9 +111,11 @@ namespace MPGame.Props
         [SerializeField] private float removeDistance;
         private void DestroyWhenClosedToPlayer()
         {
+            Debug.Log("OwnerClientId: " + OwnerClientId.Value);
+
             if (Vector3.Distance(transform.position, targetPoint) < removeDistance)
             {
-                PlayerSpawner.Instance.Players[OwnerClientId.Value].
+                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(OwnerClientId.Value).
                     GetComponent<PlayerController>().RemoveVacuumingObjectsFromHashsets(this);
                 ObjectSpawner.Instance.RequestDespawnVacuumableObjectToServer(GetComponent<VacuumableObject>());
                 Debug.Log("Test1!!");

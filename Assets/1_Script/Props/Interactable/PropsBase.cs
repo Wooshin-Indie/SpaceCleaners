@@ -35,7 +35,7 @@ namespace MPGame.Props
 		[ServerRpc(RequireOwnership = false)]
 		private void RequestOwnershipServerRpc(ulong requestingClientId)
 		{
-			UnityEngine.Debug.Log(ownerClientId.Value + ", " + requestingClientId);
+			Debug.Log(ownerClientId.Value + ", " + requestingClientId);
 			if (ownerClientId.Value == ulong.MaxValue)
 			{
 				//NetworkObject.ChangeOwnership(requestingClientId);

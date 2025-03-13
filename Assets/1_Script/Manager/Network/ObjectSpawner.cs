@@ -31,6 +31,11 @@ namespace MPGame.Manager
                 Vector3 pos = new Vector3(Random.Range(5, 7), 0.5f, -6);
                 SpawnVacuumableObjectServerRPC(pos);
             }
+
+            foreach (var ob in vacuumableObjects)
+            {
+                ob.OnUpdate();
+            }
         }
 
         private List<VacuumableObject> vacuumableObjects = new List<VacuumableObject>();
