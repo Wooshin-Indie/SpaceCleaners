@@ -1,10 +1,12 @@
 using MPGame.Controller.StateMachine;
 using MPGame.Manager;
+using MPGame.Physics;
 using MPGame.Props;
 using MPGame.Utils;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -74,10 +76,8 @@ namespace MPGame.Controller
 		public FlyState flyState;
 		public FlightState flightState;
 
-
-		public bool UseGravity { get => useGravity; set => useGravity = value; }
-
 		private bool isGrounded = true;
+		private bool isInGravity = false;
 		private bool isDetectInteractable = false;
 
 		public bool IsGrounded { get => isGrounded; }
@@ -86,11 +86,10 @@ namespace MPGame.Controller
 		private PropsBase recentlyDetectedProp = null;
 		public PropsBase RecentlyDetectedProp { get => recentlyDetectedProp; }
 
-		private Vector3 gravityVector = new Vector3(0f, 0f, 0f);
-		private GravityType gravityType = GravityType.None;
-
 		private Vector3 projectedForward = Vector3.zero;
 		private float currentSpeed = 0f;
+
+		private PlanetBody[] planets = null;
 
 		private void Awake()
 		{
@@ -116,8 +115,7 @@ namespace MPGame.Controller
 
 		private void Start()
 		{
-			stateMachine.Init(idleState);
-			SetMaxWalkSpeed();
+			stateMachine.Init(flyState);
 		}
 
 		public override void OnNetworkSpawn()
@@ -140,9 +138,10 @@ namespace MPGame.Controller
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 
-			// if (!rigid.isKinematic)
-				// UpdatePlayerPositionServerRPC(transform.position);
-			// UpdatePlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
+			if (Input.GetKeyDown(KeyCode.U))
+			{
+				planets = FindObjectsByType<PlanetBody>(FindObjectsSortMode.None);
+			}
 		}
 
 		private void FixedUpdate()
@@ -276,7 +275,7 @@ namespace MPGame.Controller
 		public void SlopeCheck()
 		{
 			Debug.DrawRay(transform.position, -transform.up * slopeRayLength, Color.red);
-			if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeRayLength))
+			if (UnityEngine.Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeRayLength))
 			{
 				normalVector = hit.normal;
 				slopeAngle = Vector3.Angle(hit.normal, -gravityDirection);
@@ -339,42 +338,80 @@ namespace MPGame.Controller
 		{
 			Vector3 rectPosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
 				transform.position.z);
-			hitObjects = Physics.OverlapBox(rectPosition, groundRectSize, transform.rotation, Constants.LAYER_GROUND);
+			hitObjects = UnityEngine.Physics.OverlapBox(rectPosition, groundRectSize, transform.rotation, Constants.LAYER_GROUND);
 			isGrounded = hitObjects.Length > 0;
 
 			if (!IsGrounded) return;
-
-			spaceship = hitObjects[0].transform.parent.GetComponent<SpaceshipContoller>();
-			SetParentServerRPC(hitObjects[0].transform.parent.GetComponent<NetworkObject>().NetworkObjectId);
-
-			GroundBase gb = hitObjects[0].GetComponentInParent<GroundBase>();
-			gravityType = gb.GravityType;
-			gravityVector = gb.GetGravityVector();
-
 		}
 
-		public void CalculateGravity()
-		{
-			switch (gravityType)
-			{
-				case GravityType.Point:
-					gravityDirection = Vector3.Normalize(gravityVector - transform.position);
-					break;
-				case GravityType.Direction:
-					gravityDirection = gravityVector;
-					break;
-			}
-		}
+
+		private const float GravitationalConstant = 100f;
+		private PlanetBody playerPlanet = null;
+
+		private float gravityScaleMultiplier = 1f;
+		private float orbitSpeedInfluence = .5f;
 
 		public void ApplyGravity()
 		{
-			if (!useGravity) return;
-			
-			projectedForward = Vector3.ProjectOnPlane(transform.forward, gravityDirection).normalized;
-			Quaternion targetRotation = Quaternion.LookRotation(projectedForward, -gravityDirection);
+			if (planets == null) return;
 
-			rigid.MoveRotation(targetRotation);		// HACK - AddTorque濡 諛袁몃㈃ 醫
-			rigid.AddForce(gravityDirection * gravityForce, ForceMode.Acceleration);
+			float maxMag = 0f;
+			PlanetBody maxPlanet = null;
+
+			foreach (PlanetBody planet in planets)
+			{
+				Vector3 positionDiff = planet.Rigid.position - rigid.position;
+				float distanceSqr = positionDiff.sqrMagnitude;
+
+				// 중력 계산
+				Vector3 newtonForce = positionDiff.normalized * GravitationalConstant * planet.Rigid.mass * rigid.mass / distanceSqr;
+				newtonForce *= planet.GravityScale;
+				
+				Vector3 orbitalDirection = planet.Rigid.linearVelocity.normalized;
+				float dot = Vector3.Dot(rigid.linearVelocity.normalized, orbitalDirection);
+				newtonForce *= gravityScaleMultiplier * (1f + dot * orbitSpeedInfluence);
+
+				newtonForce *= Time.fixedDeltaTime;
+				rigid.AddForce(newtonForce);
+
+				// 가장 강한 중력을 가진 행성 찾기
+				float mag = newtonForce.magnitude;
+				if (maxMag < mag)
+				{
+					maxMag = mag;
+					maxPlanet = planet;
+				}
+			}
+
+			// 가장 강한 중력을 가진 행성 처리
+			if (maxPlanet == null || maxPlanet.IsSun) return;
+
+			if ((maxPlanet.Rigid.position - rigid.position).magnitude > maxPlanet.GravityRadius)
+			{
+				isInGravity = false;
+				playerPlanet = null;
+			}
+			else
+			{
+				
+				isInGravity = true;
+				RotateTowardsPlanet(maxPlanet);
+				playerPlanet = maxPlanet;
+			}
+		}
+
+
+		private void RotateTowardsPlanet(PlanetBody planet)
+		{
+			Transform cachedTransform = transform;
+			Quaternion cachedTransformRotation = cachedTransform.rotation;
+
+			Vector3 gravityForceDirection = (cachedTransform.position - planet.Rigid.position).normalized;
+			Vector3 playerUp = cachedTransform.up;
+			Quaternion neededRotation = Quaternion.FromToRotation(playerUp, gravityForceDirection) * cachedTransformRotation;
+
+			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.deltaTime);
+			cachedTransform.rotation = cachedTransformRotation;
 		}
 
 		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
@@ -390,10 +427,9 @@ namespace MPGame.Controller
 			RaycastHit hit;
 			int targetLayer = Constants.LAYER_INTERACTABLE;
 
-			if (Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, rayLength, targetLayer))
+			if (UnityEngine.Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, rayLength, targetLayer))
 			{
 				isDetectInteractable = true;
-				Debug.Log(hit.transform.name);
 				recentlyDetectedProp = hit.transform.GetComponent<PropsBase>();
 			}
 			else
@@ -423,10 +459,12 @@ namespace MPGame.Controller
 		}
 		public void SetMaxWalkSpeed()
 		{
+			Debug.Log("SET MAX WALK");
 			rigid.maxLinearVelocity = maxWalkSpeed;
 		}
 		public void SetMaxFlySpeed()
 		{
+			Debug.Log("SET MAX Fly");
 			rigid.maxLinearVelocity = maxFlySpeed;
 		}
 
@@ -448,28 +486,56 @@ namespace MPGame.Controller
 		private float keyWeight = 0.2f;
 		public void Fly(float vert, float horz, float depth)
 		{
-			rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Force);
-			rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Force);
+			if (isInGravity)
+			{
+				Vector3 moveDirection = (transform.forward * vert) + (transform.right * horz);
+				moveDirection = moveDirection.normalized;
+
+				Vector3 planetToPlayer = transform.position - playerPlanet.Rigid.position;
+				Vector3 projectedMove = Vector3.ProjectOnPlane(moveDirection, planetToPlayer.normalized);
+
+				Vector3 targetVelocity = projectedMove * thrustPower + playerPlanet.Rigid.linearVelocity;
+				rigid.linearVelocity = Vector3.Lerp(rigid.linearVelocity, targetVelocity, Time.deltaTime * 5f);
+			}
+			else
+			{
+				rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Force);
+				rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Force);
+			}
 			rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Force);
 		}
+
+		float camRotateSpeed = 10f; 
+		private bool previousGravityState = false;
+
 		public void RotateBodyWithMouse(float mouseX, float mouseY, float roll)
 		{
-			cameraTransform.localRotation = Quaternion.Lerp(cameraTransform.localRotation, Quaternion.identity, 0.5f);
+			if (isInGravity != previousGravityState)
+			{
+				cameraTransform.localRotation = Quaternion.identity;
+				transform.rotation = Quaternion.Euler(cameraTransform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+				previousGravityState = isInGravity;
+			}
 
-			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
-			rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Force);
-			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Force);
+			if (isInGravity)
+			{
+				Vector3 camRot = cameraTransform.localRotation.eulerAngles;
+				float tmpV = camRot.x - mouseY * rotationPower;
+				if (tmpV >= 180) tmpV -= 360;
+				float rotValue = Mathf.Clamp(tmpV, minVertRot, maxVertRot);
+				Quaternion targetRotation = Quaternion.Euler(rotValue, 0f, 0f);
+				cameraTransform.localRotation = Quaternion.Lerp(cameraTransform.localRotation, targetRotation, Time.deltaTime * 10f);
+			}
+			else
+			{
+				rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Acceleration);
+			}
+
+			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Acceleration);
+			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Acceleration);
 		}
 
-		private float vertRot = 0f;
-		public void RotateWithMouse(float mouseX, float mouseY)
-		{
-			vertRot -= mouseY * rotationPower;
-			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
-			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
-			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
-		}
-
+		float vertRot = 0;
 		public void RotateWithoutRigidbody(float mouseX, float mouseY)
 		{
 			vertRot -= mouseY * rotationPower;
@@ -560,7 +626,7 @@ namespace MPGame.Controller
             cameraForward = cameraTransform.forward;
 			detectingVector = cameraPos + cameraForward * vacuumDetectLength;
 
-            Collider[] hitColliders = Physics.OverlapCapsule(cameraTransform.position, detectingVector, vacuumDetectRadius, vacuumableLayers);
+            Collider[] hitColliders = UnityEngine.Physics.OverlapCapsule(cameraTransform.position, detectingVector, vacuumDetectRadius, vacuumableLayers);
 			
 			HashSet<VacuumableObject> currentDetected = new HashSet<VacuumableObject>();
 

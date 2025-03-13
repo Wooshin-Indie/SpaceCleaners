@@ -45,6 +45,7 @@ namespace MPGame.Controller.StateMachine
 			GetFlyStateInput();
             GetEnableVacuumInput();
             GetVacuumInput(out isVacuumPressed);
+            GetRollInput(out roll);
         }
 
 
@@ -69,7 +70,6 @@ namespace MPGame.Controller.StateMachine
 
 			controller.Jump(isJumpPrssed);
             controller.Vacuuming();
-            controller.RotateWithMouse(mouseX, mouseY);
             controller.Jump(isJumpPrssed);
 		}
 
@@ -80,7 +80,7 @@ namespace MPGame.Controller.StateMachine
 
 			diagW = (Mathf.Abs(horzInput) > 0.5f && Mathf.Abs(vertInput) > 0.5f) ? 0.71f : 1.0f;
             controller.WalkWithArrow(horzInputRaw, vertInputRaw, diagW);
-			controller.RotateWithMouse(mouseX, mouseY);
+            controller.RotateBodyWithMouse(mouseX, mouseY, roll);
 		}
     }
 

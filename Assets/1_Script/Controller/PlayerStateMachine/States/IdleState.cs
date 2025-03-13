@@ -35,6 +35,7 @@ namespace MPGame.Controller.StateMachine
 			GetFlyStateInput();
             GetEnableVacuumInput();
             GetVacuumInput(out isVacuumPressed);
+            GetRollInput(out roll);
         }
 
         public override void LogicUpdate()
@@ -49,7 +50,6 @@ namespace MPGame.Controller.StateMachine
 			controller.DetectIsFalling();
 
             controller.Vacuuming();
-            controller.RotateWithMouse(mouseX, mouseY);
             controller.Jump(isJumpPrssed);
 		}
 
@@ -58,7 +58,7 @@ namespace MPGame.Controller.StateMachine
             base.PhysicsUpdate();
             controller.RaycastInteractableObject();
 			controller.WalkWithArrow(0f, 0f, 0f);
-			controller.RotateWithMouse(mouseX, mouseY);
+			controller.RotateBodyWithMouse(mouseX, mouseY, roll);
 		}
     }
 }

@@ -1,4 +1,4 @@
-﻿using MPGame.Props;
+using MPGame.Props;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -33,7 +33,6 @@ namespace MPGame.Controller.StateMachine
 				controller.TurnStateToFlyState();
 			}
 
-			controller.UseGravity = false;
 			controller.SetParentServerRPC(spaceShip.GetComponent<NetworkObject>().NetworkObjectId,
 				spaceChair.localEnterPosition,
 				spaceChair.transform.localRotation);
@@ -50,7 +49,6 @@ namespace MPGame.Controller.StateMachine
 			base.Exit();
 
 			controller.Capsule.isTrigger = false;
-			controller.UseGravity = true;
 			controller.SetKinematic(false);
 			controller.transform.localPosition = spaceChair.localExitPosition;
 			controller.transform.localRotation = spaceChair.transform.localRotation;

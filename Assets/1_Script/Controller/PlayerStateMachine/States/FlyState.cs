@@ -16,20 +16,15 @@ namespace MPGame.Controller.StateMachine
 			vertInputRaw = horzInputRaw = 0f;
             controller.Rigidbody.linearDamping = 0f;
 
-			controller.Rigidbody.constraints = RigidbodyConstraints.None;
-			controller.UseGravity = false;
 			controller.SetMaxFlySpeed();
 			controller.TurnFlyPM();
-            controller.UnsetParentServerRPC();       // ³¯±â ½ÃÀÛÇÏ¸é Parent ¾ø¾Ú
+            controller.UnsetParentServerRPC();       // ë‚ ê¸° ì‹œìž‘í•˜ë©´ Parent ì—†ì•°
         }
 
         public override void Exit()
         {
             base.Exit();
-            controller.Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX
-                | RigidbodyConstraints.FreezeRotationZ;
 
-			controller.UseGravity = true;
 			controller.SetMaxWalkSpeed();
 			controller.TurnPlayerPM();
 		}
@@ -49,7 +44,7 @@ namespace MPGame.Controller.StateMachine
         public override void LogicUpdate()
         {
             base.LogicUpdate();
-
+            
             if (!controller.OnSlope() && controller.IsEnoughVelocityToLand())
             {
                 controller.DetectIsGround();
