@@ -1485,7 +1485,7 @@ GameObject:
   - component: {fileID: 4250273759814867078}
   - component: {fileID: 3484147427680752873}
   m_Layer: 0
-  m_Name: player
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1578,7 +1578,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2123365057112069482}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 2
   m_Drag: 0
   m_AngularDrag: 15
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -1624,8 +1624,8 @@ MonoBehaviour:
   playerPM: {fileID: 13400000, guid: dc11ef00556ac82418c30d537f2fe21a, type: 2}
   slopePM: {fileID: 13400000, guid: 08abb98db5f74cc4a928cedffa38c045, type: 2}
   flyPM: {fileID: 13400000, guid: 5aa0fd975bdf67245ab54e6fa8271666, type: 2}
-  maxFlySpeed: 300
-  thrustPower: 50
+  maxFlySpeed: 500
+  thrustPower: 30
   rotationPower: 30
   velocityToLand: 10
   enableToLandAngle: 15
@@ -1636,6 +1636,7 @@ MonoBehaviour:
   animIDMotionSpeed: 0
   animIdGrounded: 0
   animIdFreeFall: 0
+  thrustWeight: 3
   vacuumDetectRadius: 3
   vacuumDetectLength: 10
   vacuumSpeed: 5
@@ -1890,7 +1891,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0

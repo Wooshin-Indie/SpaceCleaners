@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace MPGame.Controller
 {
@@ -12,10 +13,12 @@ namespace MPGame.Controller
 		[Header("Movement Args")]
 		[SerializeField] private float thrustPower;
 		[SerializeField] private float rotationPower;
+		[SerializeField] private float maxSpeed;
 
 		private void Start()
 		{
 			rigid = GetComponent<Rigidbody>();
+			rigid.maxLinearVelocity = maxSpeed;
 		}
 
 		private void Update()
@@ -24,7 +27,37 @@ namespace MPGame.Controller
 			// UpdateShipTransformClientRPC(transform.position, transform.rotation);
 		}
 
-		// ¾ÕµÚ/¾ç¿·/À§¾Æ·¡ ÀÔ·Â
+		private List<PlayerController> insidePlayers = new List<PlayerController>();
+
+		[SerializeField] private float playerGravity = 1000f;
+
+		private void FixedUpdate()
+		{
+			for (int i = 0; i < insidePlayers.Count; i++)
+			{
+				insidePlayers[i].Rigidbody.AddForce(-transform.up * playerGravity);
+				rigid.AddForce(transform.up * playerGravity);
+			}
+		}
+
+
+		void OnTriggerEnter(Collider other)
+		{
+			if (other.GetComponent<PlayerController>() == null) return;
+			if (!insidePlayers.Contains(other.GetComponent<PlayerController>()))
+				insidePlayers.Add(other.GetComponent<PlayerController>());
+		}
+
+		void OnTriggerExit(Collider other)
+		{
+			if (other.GetComponent<PlayerController>() == null) return;
+			if (insidePlayers.Contains(other.GetComponent<PlayerController>()))
+				insidePlayers.Remove(other.GetComponent<PlayerController>());
+		}
+
+
+
+		// ì•žë’¤/ì–‘ì˜†/ìœ„ì•„ëž˜ ìž…ë ¥
 		private float keyWeight = 0.2f;
 
 		[ServerRpc (RequireOwnership = false)]

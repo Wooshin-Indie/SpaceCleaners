@@ -6,7 +6,6 @@ using MPGame.Utils;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -129,6 +128,7 @@ namespace MPGame.Controller
 			if (IsOwner && IsHost)
 			{
 				PlayerSpawner.Instance.SpawnEnvironments();
+				PlayerSpawner.Instance.SpawnGalaxy();
 			}
 		}
 
@@ -137,11 +137,6 @@ namespace MPGame.Controller
 			if (!IsOwner) return;
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
-
-			if (Input.GetKeyDown(KeyCode.U))
-			{
-				planets = FindObjectsByType<PlanetBody>(FindObjectsSortMode.None);
-			}
 		}
 
 		private void FixedUpdate()
@@ -348,8 +343,11 @@ namespace MPGame.Controller
 		private const float GravitationalConstant = 100f;
 		private PlanetBody playerPlanet = null;
 
-		private float gravityScaleMultiplier = 1f;
-		private float orbitSpeedInfluence = .5f;
+		// TODO - ClientRPC
+		public void FindPlanets()
+		{
+			planets = FindObjectsByType<PlanetBody>(FindObjectsSortMode.None);
+		}
 
 		public void ApplyGravity()
 		{
@@ -367,10 +365,6 @@ namespace MPGame.Controller
 				Vector3 newtonForce = positionDiff.normalized * GravitationalConstant * planet.Rigid.mass * rigid.mass / distanceSqr;
 				newtonForce *= planet.GravityScale;
 				
-				Vector3 orbitalDirection = planet.Rigid.linearVelocity.normalized;
-				float dot = Vector3.Dot(rigid.linearVelocity.normalized, orbitalDirection);
-				newtonForce *= gravityScaleMultiplier * (1f + dot * orbitSpeedInfluence);
-
 				newtonForce *= Time.fixedDeltaTime;
 				rigid.AddForce(newtonForce);
 
@@ -390,21 +384,22 @@ namespace MPGame.Controller
 			{
 				isInGravity = false;
 				playerPlanet = null;
+				AlignToCamera();
 			}
 			else
 			{
-				
 				isInGravity = true;
 				RotateTowardsPlanet(maxPlanet);
 				playerPlanet = maxPlanet;
 			}
 		}
 
-
 		private void RotateTowardsPlanet(PlanetBody planet)
 		{
 			Transform cachedTransform = transform;
 			Quaternion cachedTransformRotation = cachedTransform.rotation;
+
+			Vector3 cameraLookDirection = cameraTransform.forward;
 
 			Vector3 gravityForceDirection = (cachedTransform.position - planet.Rigid.position).normalized;
 			Vector3 playerUp = cachedTransform.up;
@@ -412,6 +407,15 @@ namespace MPGame.Controller
 
 			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.deltaTime);
 			cachedTransform.rotation = cachedTransformRotation;
+
+			cameraTransform.rotation = Quaternion.LookRotation(cameraLookDirection, cachedTransform.up);
+		}
+
+		private void AlignToCamera()
+		{
+			Transform cachedTransform = transform;
+			Quaternion neededRotation = Quaternion.Inverse(cameraTransform.localRotation) * cachedTransform.rotation;
+			cachedTransform.rotation = Quaternion.Slerp(cachedTransform.rotation, neededRotation, Time.deltaTime);
 		}
 
 		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
@@ -459,12 +463,10 @@ namespace MPGame.Controller
 		}
 		public void SetMaxWalkSpeed()
 		{
-			Debug.Log("SET MAX WALK");
 			rigid.maxLinearVelocity = maxWalkSpeed;
 		}
 		public void SetMaxFlySpeed()
 		{
-			Debug.Log("SET MAX Fly");
 			rigid.maxLinearVelocity = maxFlySpeed;
 		}
 
@@ -484,6 +486,8 @@ namespace MPGame.Controller
 
 
 		private float keyWeight = 0.2f;
+		[SerializeField] private float thrustWeight = 6f;
+
 		public void Fly(float vert, float horz, float depth)
 		{
 			if (isInGravity)
@@ -495,14 +499,16 @@ namespace MPGame.Controller
 				Vector3 projectedMove = Vector3.ProjectOnPlane(moveDirection, planetToPlayer.normalized);
 
 				Vector3 targetVelocity = projectedMove * thrustPower + playerPlanet.Rigid.linearVelocity;
-				rigid.linearVelocity = Vector3.Lerp(rigid.linearVelocity, targetVelocity, Time.deltaTime * 5f);
+				rigid.linearVelocity = Vector3.Lerp(rigid.linearVelocity, targetVelocity, Time.deltaTime);
+
+				rigid.AddForce(transform.up * depth * thrustPower * thrustWeight, ForceMode.Force);
 			}
 			else
 			{
 				rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Force);
 				rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Force);
+				rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Force);
 			}
-			rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Force);
 		}
 
 		float camRotateSpeed = 10f; 
@@ -528,10 +534,10 @@ namespace MPGame.Controller
 			}
 			else
 			{
-				rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Acceleration);
+				rigid.AddTorque(-transform.right * mouseY * rotationPower * camRotateSpeed, ForceMode.Acceleration);
 			}
 
-			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Acceleration);
+			transform.Rotate(mouseX * Vector3.up * rotationPower * Time.fixedDeltaTime * camRotateSpeed, Space.Self);
 			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Acceleration);
 		}
 

@@ -1958,7 +1958,7 @@ Transform:
   m_GameObject: {fileID: 6774639544826301180}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2052,7 +2052,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: 0.016, y: 1.6, z: 11.347}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 1
 --- !u!54 &7442847139664417007
 Rigidbody:
@@ -2623,6 +2623,7 @@ GameObject:
   - component: {fileID: 7133835473742413623}
   - component: {fileID: 5918990439852801049}
   - component: {fileID: 173230026576953536}
+  - component: {fileID: 848638632501991863}
   m_Layer: 0
   m_Name: NearFutureShip
   m_TagString: Untagged
@@ -2690,6 +2691,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   thrustPower: 10
   rotationPower: 10
+  maxSpeed: 500
+  playerGravity: 70
 --- !u!54 &7133835473742413623
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2698,7 +2701,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8644338739374899709}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 10000
   m_Drag: 0
   m_AngularDrag: 5
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -2760,6 +2763,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!65 &848638632501991863
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8644338739374899709}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.8565357, y: 2.5284915, z: 11.0784645}
+  m_Center: {x: -0.05243683, y: 1.1666441, z: 6.7282176}
 --- !u!1 &8770594113148295491
 GameObject:
   m_ObjectHideFlags: 0
@@ -2918,7 +2942,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: 1.67, y: 0.7, z: 3.183}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 0
 --- !u!65 &4561491572665649252
 BoxCollider:
@@ -3073,7 +3097,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: 1.67, y: 0.7, z: 4.109}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 0
 --- !u!65 &8374080107555958452
 BoxCollider:
@@ -3223,7 +3247,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: -1.691, y: 0.7, z: 4.11}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 0
 --- !u!65 &2589662218219070165
 BoxCollider:
@@ -3383,7 +3407,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: -1.69, y: 0.7, z: 3.18}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 0
 --- !u!65 &5714632407939235264
 BoxCollider:

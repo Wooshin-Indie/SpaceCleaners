@@ -9,8 +9,6 @@ namespace MPGame.Physics
         [SerializeField] private bool isSun;            // true -> don't move
         [SerializeField] private float gravityScale;
 		[SerializeField] private float gravityRadius;
-		[SerializeField] private float rotationSpeed;
-		[SerializeField] private float rotationAngle;
 
 		[Header("Orbit")]
 		[SerializeField] private float orbitSpeed;
@@ -29,6 +27,20 @@ namespace MPGame.Physics
 		private void Awake()
 		{
 			rigid = GetComponent<Rigidbody>();
+		}
+
+		public void SetPlanetSize(float planetSize, float orbitRadius, float orbitAngle = 0f)
+		{
+			transform.localScale = planetSize * Vector3.one;
+			gravityScale = Mathf.Sqrt(planetSize);
+			gravityRadius = planetSize * 1.2f;
+
+			this.orbitRadius = orbitRadius;
+			orbitSpeed = 1000f / orbitRadius;
+
+			this.orbitAngle = orbitAngle;
+
+			startAngle = Random.Range(0f, 360f);
 			currentAngle = startAngle;
 		}
 

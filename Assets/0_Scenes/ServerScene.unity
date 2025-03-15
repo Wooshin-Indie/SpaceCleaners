@@ -1185,7 +1185,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 8623662460009209830, guid: 79692268826e45c498e3074f37ab6f05, type: 3}
-  environments: []
+  environments:
+  - {fileID: 8644338739374899709, guid: faa794838f4085547893903f00e98ea7, type: 3}
+  planetPrefab: {fileID: 7005988799852390065, guid: f3eea6c36480bff4ab1acc42fd2f78ec, type: 3}
 --- !u!1 &640824888
 GameObject:
   m_ObjectHideFlags: 0

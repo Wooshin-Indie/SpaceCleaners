@@ -1,6 +1,7 @@
 using MPGame.Props;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace MPGame.Controller.StateMachine
 {
@@ -23,9 +24,13 @@ namespace MPGame.Controller.StateMachine
 		{
 		}
 
+		private bool isOutState = true;
+
 		public override void Enter()
 		{
 			base.Enter();
+			isOutState = false;
+
 			vertInputRaw = horzInputRaw = 0f;
 			spaceShip = spaceChair.GetComponentInParent<SpaceshipContoller>();
 			if (spaceShip == null)
@@ -42,16 +47,19 @@ namespace MPGame.Controller.StateMachine
 			controller.SetKinematic(true);
 
 			controller.Rigidbody.constraints = RigidbodyConstraints.None;
-		}
+	}
 
-		public override void Exit()
+	public override void Exit()
 		{
 			base.Exit();
-
-			controller.Capsule.isTrigger = false;
-			controller.SetKinematic(false);
+			isOutState = true;
 			controller.transform.localPosition = spaceChair.localExitPosition;
 			controller.transform.localRotation = spaceChair.transform.localRotation;
+			
+			controller.SetKinematic(false);
+			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
+
+			controller.Capsule.isTrigger = false;
 
 			controller.Rigidbody.constraints = RigidbodyConstraints.None;
 			spaceChair.EndInteraction();
@@ -61,6 +69,7 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.HandleInput();
 
+			if (isOutState) return;
 			GetMouseInput(out mouseX, out mouseY);
 			GetESCInput(out isESCPressed);
 			if (isDriver)
@@ -73,6 +82,7 @@ namespace MPGame.Controller.StateMachine
 
 		public override void LogicUpdate()
 		{
+			if (isOutState) return;
 			if (isESCPressed)
 			{
 				controller.TurnStateToFlyState();
@@ -91,6 +101,7 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.PhysicsUpdate();
 
+			if (isOutState) return;
 			if (spaceShip == null) return;
 
 			if (isDriver)
