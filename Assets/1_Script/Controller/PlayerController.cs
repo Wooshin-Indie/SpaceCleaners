@@ -137,6 +137,10 @@ namespace MPGame.Controller
 			if (!IsOwner) return;
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
+
+			if (!rigid.isKinematic)
+				UpdatePlayerPositionServerRPC(transform.position);
+			UpdatePlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		private void FixedUpdate()
@@ -156,6 +160,20 @@ namespace MPGame.Controller
 		}
 
 		#region Transform Synchronization
+
+		[ServerRpc(RequireOwnership = false)]
+		public void UpdatePlayerLocalPositionServerRPC(Vector3 playerPosition)
+		{
+			UpdatePlayerLocalPositionClientRPC(playerPosition);
+		}
+
+		[ClientRpc]
+		private void UpdatePlayerLocalPositionClientRPC(Vector3 playerPosition)
+		{
+			if (IsOwner) return;
+
+			transform.localPosition = playerPosition;
+		}
 
 		[ServerRpc(RequireOwnership = false)]
 		public void UpdatePlayerPositionServerRPC(Vector3 playerPosition)
