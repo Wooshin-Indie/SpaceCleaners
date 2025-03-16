@@ -31,7 +31,7 @@ namespace MPGame.Props
             objectRigidbody = GetComponent<Rigidbody>();
         }
 
-        public void OnUpdate() // ¼­¹ö¿¡¼­¸¸ ½ÇÇàµÊ
+        public void OnUpdate() // ì„œë²„ì—ì„œë§Œ ì‹¤í–‰ë¨
         {
             UpdateObjectPositionServerRPC(transform.position);
             UpdateObjectRotateServerRPC(transform.rotation);
@@ -41,24 +41,24 @@ namespace MPGame.Props
             AddForceToTarget();
             if(DetectIsClosedToTarget())
             {
-                // ¿©±â¿¡ vacuumend¸¦ ³Ö¾îÁà¾ß ¿À·ù°¡ ¾È³¯¶ó³ª?
+                // ì—¬ê¸°ì— vacuumendë¥¼ ë„£ì–´ì¤˜ì•¼ ì˜¤ë¥˜ê°€ ì•ˆë‚ ë¼ë‚˜?
 
                 RemoveVacuumingObjectsFromHashsetsClientRPC(NetworkObjectId);
-                // ownerClientÀÇ PlayerController¿¡¼­ Hashset¿¡¼­ ÀÌ ¿ÀºêÁ§Æ®¸¦ »èÁ¦ÇÏ¶ó°í ¿äÃ»
+                // ownerClientì˜ PlayerControllerì—ì„œ Hashsetì—ì„œ ì´ ì˜¤ë¸Œì íŠ¸ë¥¼ ì‚­ì œí•˜ë¼ê³  ìš”ì²­
 
                 ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
-                // TODO - NetworkObject Ä¡¸é GetComponentÃ³·³ µÇ´Â°Å ¸Â³ª?
+                // TODO - NetworkObject ì¹˜ë©´ GetComponentì²˜ëŸ¼ ë˜ëŠ”ê±° ë§ë‚˜?
                 Debug.Log("Test1!!");
             }
         }
 
         public void Init(ulong playerID, Vector3 target, Vector3 camDirection)
         {
-            //OwnerClientId°¡ ¼³Á¤ÀÌ ¾ÈµÅÀÖÀ¸¸é ¼­¹ö¿¡ ±ÇÇÑ ¿äÃ»
+            //OwnerClientIdê°€ ì„¤ì •ì´ ì•ˆë¼ìˆìœ¼ë©´ ì„œë²„ì— ê¶Œí•œ ìš”ì²­
             if (OwnerClientId.Value == ulong.MaxValue)
-                TryInteract(); //serverRPC·Î ¿ÀºêÁ§Æ® ±ÇÇÑ ¿äÃ» ÈÄ clientRPC·Î ¹Ù²ï ±ÇÇÑ »Ñ¸²
+                TryInteract(); //serverRPCë¡œ ì˜¤ë¸Œì íŠ¸ ê¶Œí•œ ìš”ì²­ í›„ clientRPCë¡œ ë°”ë€ ê¶Œí•œ ë¿Œë¦¼
 
-            if (Interaction(OwnerClientId.Value)) //ownerClientID°¡ '³ª'¸é Á¢±Ù
+            if (Interaction(OwnerClientId.Value)) //ownerClientIDê°€ 'ë‚˜'ë©´ ì ‘ê·¼
             {
                 Debug.Log("Interaction...");
                 SetTargetServerRPC(target, camDirection);
@@ -100,7 +100,7 @@ namespace MPGame.Props
         [ClientRpc]
         private void UpdateObjectPositionClientRPC(Vector3 objectPosition, bool fromServer = false)
         {
-            // ÀÏ´Ü ³Ö¾î³õ±ä ÇÔ, ¾Æ¸¶ µ¿ÀÛÀº ¾ÈÇÒ µí
+            // ì¼ë‹¨ ë„£ì–´ë†“ê¸´ í•¨, ì•„ë§ˆ ë™ì‘ì€ ì•ˆí•  ë“¯
             if (!fromServer && IsOwner) return;
 
             transform.position = objectPosition;
@@ -121,7 +121,7 @@ namespace MPGame.Props
 
         public void VacuumEnd()
         {
-            EndInteraction(); // ÀÌ ¶§ serverRPC·Î ownerClientId¸¦ ÃÊ±âÈ­ÇØ¼­ clientRPC·Î ´Ù½Ã »Ñ¸²
+            EndInteraction(); // ì´ ë•Œ serverRPCë¡œ ownerClientIdë¥¼ ì´ˆê¸°í™”í•´ì„œ clientRPCë¡œ ë‹¤ì‹œ ë¿Œë¦¼
             UnsetTargetServerRPC();
             GetComponent<Renderer>().material.color = Color.red;
             Debug.Log("Interaction End");

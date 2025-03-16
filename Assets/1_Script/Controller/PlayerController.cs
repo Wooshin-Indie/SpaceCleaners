@@ -149,9 +149,7 @@ namespace MPGame.Controller
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 
-			if (!rigid.isKinematic)
-				UpdatePlayerPositionClientRPC(transform.position);
-			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
+			OnUpdateSync();
 		}
 
 		private void FixedUpdate()
@@ -213,7 +211,9 @@ namespace MPGame.Controller
 				newtonForce *= planet.GravityScale;
 				
 				newtonForce *= Time.fixedDeltaTime;
-				rigid.AddForce(newtonForce);
+
+				if (IsHost)
+					rigid.AddForce(newtonForce);
 
 				float mag = newtonForce.magnitude;
 				if (maxMag < mag)
@@ -226,6 +226,7 @@ namespace MPGame.Controller
 			// 가장 강한 중력을 가진 행성 처리
 			if (maxPlanet == null || maxPlanet.IsSun) return;
 
+			if (!IsOwner) return;
 			if ((maxPlanet.Rigid.position - rigid.position).magnitude > maxPlanet.GravityRadius)
 			{
 				isInGravity = false;

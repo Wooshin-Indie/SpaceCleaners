@@ -15,7 +15,6 @@ namespace MPGame.Controller
 		{
 			public int sequence;
 			public Vector3 moveDir;
-			public Vector3 rotateDir;
 			public float timestamp;
 
 			void INetworkSerializable.NetworkSerialize<T>(BufferSerializer<T> serializer)
@@ -23,7 +22,6 @@ namespace MPGame.Controller
 				serializer.SerializeValue(ref sequence);
 				serializer.SerializeValue(ref timestamp);
 				serializer.SerializeValue(ref moveDir);
-				serializer.SerializeValue(ref rotateDir);
 			}
 		}
 
@@ -32,10 +30,7 @@ namespace MPGame.Controller
 		// Delay 가 있긴할텐데 그건 Prediction으로 처리해서 부드럽게 만들예정
 
 		private NetworkVariable<Vector3> networkPosition = new(writePerm: NetworkVariableWritePermission.Server);
-		private NetworkVariable<Quaternion> networkRotation = new(writePerm: NetworkVariableWritePermission.Server);
-
-		private NetworkVariable<Vector3> networkVelocity = new(writePerm: NetworkVariableWritePermission.Server);
-
+		
 		private int currentSequence = 0;
 		private float lastProcessedTime = 0f;
 		private Queue<ClientInput> inputQueue = new Queue<ClientInput>();
@@ -58,10 +53,11 @@ namespace MPGame.Controller
 
 		}
 
-		private void OnUpdate()
+		private void OnUpdateSync()
 		{
-			// UpdatePlayerPositionClientRPC(transform.position);
-			// UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
+			if (!rigid.isKinematic)
+				UpdatePlayerPositionClientRPC(transform.position);
+			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		#region Input RPC
@@ -85,7 +81,6 @@ namespace MPGame.Controller
 		private void SendInputServerRPC(ClientInput input)
 		{
 			Move(input.moveDir.x, input.moveDir.y, input.moveDir.z);
-			RotateBodyWithMouse(input.rotateDir.x, input.rotateDir.y, input.rotateDir.z);
 
 			// SendCorrectionClientRPC(rigid.position, input.sequence);
 		}
@@ -142,7 +137,7 @@ namespace MPGame.Controller
 		[ClientRpc]
 		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition, bool fromServer = false)
 		{
-			if (IsHost) return;
+			if (IsOwner) return;
 			rigid.MovePosition(playerPosition);
 		}
 
