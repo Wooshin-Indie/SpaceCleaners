@@ -9,7 +9,7 @@ namespace MPGame.Props
 		private NetworkVariable<ulong> ownerClientId = new NetworkVariable<ulong>(ulong.MaxValue);
 
 		/// <summary>
-		/// ¿ÜºÎ¿¡¼­ Interact ÇÒ ¶§ È£ÃâÇÏ´Â ÇÔ¼ö
+		/// ì™¸ë¶€ì—ì„œ Interact í•  ë•Œ í˜¸ì¶œí•˜ëŠ” í•¨ìˆ˜
 		/// </summary>
 		public void TryInteract()
 		{
@@ -17,7 +17,7 @@ namespace MPGame.Props
 		}
 
 		/// <summary>
-		/// ¿ÜºÎ¿¡¼­ Interact ³¡³¾ ¶§ È£ÃâÇÏ´Â ÇÔ¼ö
+		/// ì™¸ë¶€ì—ì„œ Interact ëë‚¼ ë•Œ í˜¸ì¶œí•˜ëŠ” í•¨ìˆ˜
 		/// </summary>
 		public void EndInteraction()
 		{
@@ -43,7 +43,7 @@ namespace MPGame.Props
 			}
 			else
 			{
-				// TODO - ÀÌ¹Ì ÀÖ´Â °æ¿ì
+				// TODO - ì´ë¯¸ ìˆëŠ” ê²½ìš°
 			}
 		}
 

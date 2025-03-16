@@ -2,7 +2,6 @@ using MPGame.Controller;
 using MPGame.Physics;
 using System.Collections.Generic;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 namespace MPGame.Manager

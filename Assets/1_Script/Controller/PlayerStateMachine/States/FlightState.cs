@@ -1,7 +1,6 @@
 using MPGame.Props;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 
 namespace MPGame.Controller.StateMachine
 {
@@ -30,48 +29,44 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.Enter();
 			isOutState = false;
-
 			vertInputRaw = horzInputRaw = 0f;
+
 			spaceShip = spaceChair.GetComponentInParent<SpaceshipContoller>();
 			if (spaceShip == null)
 			{
-				controller.TurnStateToFlyState();
+				controller.SetFlyState();
 			}
 
 			controller.SetParentServerRPC(spaceShip.GetComponent<NetworkObject>().NetworkObjectId,
 				spaceChair.localEnterPosition,
 				spaceChair.transform.localRotation);
 
-			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);	// TODO - 앉는 모션으로 바꿔야됨
-			controller.Capsule.isTrigger = true;
+			// TODO - Anim (sit)
 			controller.SetKinematic(true);
-
-			controller.Rigidbody.constraints = RigidbodyConstraints.None;
 	}
 
 	public override void Exit()
 		{
 			base.Exit();
 			isOutState = true;
+
 			controller.transform.localPosition = spaceChair.localExitPosition;
 			controller.transform.localRotation = spaceChair.transform.localRotation;
 			
 			controller.SetKinematic(false);
 			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
 
-			controller.Capsule.isTrigger = false;
-
-			controller.Rigidbody.constraints = RigidbodyConstraints.None;
 			spaceChair.EndInteraction();
 		}
 
 		public override void HandleInput()
 		{
 			base.HandleInput();
-
 			if (isOutState) return;
+			
 			GetMouseInput(out mouseX, out mouseY);
 			GetESCInput(out isESCPressed);
+
 			if (isDriver)
 			{
 				GetRollInput(out roll);
@@ -83,9 +78,10 @@ namespace MPGame.Controller.StateMachine
 		public override void LogicUpdate()
 		{
 			if (isOutState) return;
+
 			if (isESCPressed)
 			{
-				controller.TurnStateToFlyState();
+				controller.SetFlyState();
 				isESCPressed = false;
 				return;
 			}

@@ -1,6 +1,3 @@
-using Cinemachine;
-using MPGame.Props;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
@@ -43,8 +40,7 @@ namespace MPGame.Controller.StateMachine
 		}           
         public virtual void PhysicsUpdate()         // Only Physics Update
 		{
-			controller.GroundedCheck();
-			controller.SlopeCheck();
+			controller.RaycastToGround();
 			controller.ApplyGravity();
 		}     
         public virtual void Exit() { }              // Run once when Exit State
@@ -114,7 +110,6 @@ namespace MPGame.Controller.StateMachine
         {
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                Debug.Log("1 pressed");
                 isVacuumEnabled = !isVacuumEnabled;
             }
         }

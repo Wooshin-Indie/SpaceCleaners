@@ -5,6 +5,7 @@ using MPGame.Props;
 using MPGame.Utils;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
@@ -12,95 +13,104 @@ using UnityEngine;
 
 namespace MPGame.Controller
 {
-	public class PlayerController : NetworkBehaviour
+	public partial class PlayerController : NetworkBehaviour
 	{
+
+		[Header("Player Movement")]
+
+		[SerializeField, Tooltip("Maximum speed of player.")]
+		private float maxFlySpeed;
+
+		[SerializeField, Tooltip("Thrust power using fuel.")] 
+		private float thrustPower;
+
+		[SerializeField, Tooltip("Additional thrust power to escape gravity area of planets.")]
+		private float thrustWeight;
+
+		[SerializeField, Tooltip("Rotation power using fuel.")] 
+		private float rotationPower;
+
+		[SerializeField, Tooltip("Additional multiplier to reduce the gap between key and mouse input.")]
+		private float rotationKeyWeight;
+
+		[SerializeField, Tooltip("Additional multiplier to make camera rotation more responsive.")]
+		private float rotationCameraWeight;
+
+		[SerializeField, Range(0f, 90f), Tooltip("Maximum vertical rotation angle (looking up, in gravity).")]
+		private float maxVertRot;
+
+		[SerializeField, Range(-90f, 0f), Tooltip("Minimum vertical rotation angle (looking down, in gravity).")]
+		private float minVertRot;
+
+
+		[Header("Raycast Arguments")]
+		
+		[SerializeField, Tooltip("Raycast length for interacting with objects (looking forward, from camera).")] 
+		private float interactRayLength;
+		
+		[SerializeField, Tooltip("Raycast length for detecting grounds (looking down, from (0,0,0)).")]
+		private float groundRayLength;
+
+
+		[Header("Transforms")]
+
+		[SerializeField, Tooltip("Player's camera for control view dir (in gravity).")]
+		public Transform cameraTransform;
+
 
 		/** Components **/
 		private Rigidbody rigid;
 		private CapsuleCollider capsule;
 		private Animator animator;
 
-
-		/** Properties **/
+		/** Component Properties **/
 		public Rigidbody Rigidbody { get => rigid; }
 		public CapsuleCollider Capsule { get => capsule; }
 		public Animator Animator { get => animator; }
 
-		[Header("Player Move Args")]
-		[SerializeField] private float walkForce;
-		[SerializeField] private float maxWalkSpeed;
-		[SerializeField] private float jumpForce;
-		[SerializeField] private float gravityForce;
-		[SerializeField] private bool useGravity;
-		[SerializeField, Range(0f, 90f)] private float maxVertRot;
-		[SerializeField, Range(-90f, 0f)] private float minVertRot;
+		/** Animation IDs **/
+		[HideInInspector] public int animIDSpeed;
+		[HideInInspector] public int animIDJump;
+		[HideInInspector] public int animIDMotionSpeed;
+		[HideInInspector] public int animIdGrounded;
+		[HideInInspector] public int animIdFreeFall;
 
-		[Header("Slope Args")]
-		[SerializeField] private float groundedOffset;
-		[SerializeField] private Vector3 groundRectSize;
-		[SerializeField] private float slopeRayLength;
-		[SerializeField] private float slopeLimit;
-		[SerializeField] private PhysicsMaterial idlePM;
-		[SerializeField] private PhysicsMaterial playerPM;
-		[SerializeField] private PhysicsMaterial slopePM;
-		[SerializeField] private PhysicsMaterial flyPM;
-
-		[Header("Flying Args")]
-		[SerializeField] private float maxFlySpeed;
-		[SerializeField] private float thrustPower;
-		[SerializeField] private float rotationPower;
-		[SerializeField] private float velocityToLand;
-		[SerializeField] private float enableToLandAngle;
-
-		[Header("GameObjects")]
-		[SerializeField] public Transform cameraTransform;
-
-		[Header("Raycast Args")]                        // Use to detect Interactables
-		[SerializeField] private float rayLength;
-
-
-		// animation Ids
-		public int animIDSpeed;
-		public int animIDJump;
-		public int animIDMotionSpeed;
-		public int animIdGrounded;
-		public int animIdFreeFall;
-
+		/** Player State Machine **/
 		private PlayerStateMachine stateMachine;
-		public PlayerStateMachine StateMachine { get => stateMachine; }
-		public IdleState idleState;
-		public WalkState walkState;
-		public JumpState jumpState;
-		public FallState fallState;
+
 		public FlyState flyState;
 		public FlightState flightState;
 
+		public PlayerStateMachine StateMachine { get => stateMachine; }
+
+		/** Player State Values **/
 		private bool isGrounded = true;
 		private bool isInGravity = false;
 		private bool isDetectInteractable = false;
-
+		
 		public bool IsGrounded { get => isGrounded; }
 		public bool IsDetectInteractable { get => isDetectInteractable; }
-
+		
 		private PropsBase recentlyDetectedProp = null;
 		public PropsBase RecentlyDetectedProp { get => recentlyDetectedProp; }
 
-		private Vector3 projectedForward = Vector3.zero;
-		private float currentSpeed = 0f;
-
 		private PlanetBody[] planets = null;
+		private PlanetBody playerPlanet = null;
+
+		private float camRotateSpeed = 10f;
+		private bool previousGravityState = false;
+		private float vertRot = 0;
+
+		#region Lifecycle Funcs
 
 		private void Awake()
 		{
+			Debug.Log("AWAKE");
 			rigid = GetComponent<Rigidbody>();
 			animator = GetComponent<Animator>();
 			capsule = GetComponent<CapsuleCollider>();
 
             stateMachine = new PlayerStateMachine();
-			idleState = new IdleState(this, stateMachine);
-			walkState = new WalkState(this, stateMachine);
-			jumpState = new JumpState(this, stateMachine);
-			fallState = new FallState(this, stateMachine);
 			flyState = new FlyState(this, stateMachine);
 			flightState = new FlightState(this, stateMachine);
 
@@ -111,36 +121,37 @@ namespace MPGame.Controller
 			animIdFreeFall = Animator.StringToHash("FreeFall");
 		}
 
-
 		private void Start()
 		{
+			Debug.Log("START");
 			stateMachine.Init(flyState);
 		}
 
 		public override void OnNetworkSpawn()
 		{
+			Debug.Log("SPAWN");
 			base.OnNetworkSpawn();
-			cameraTransform.gameObject.SetActive(IsOwner);
-			rigid.isKinematic = false;
-			rigid.useGravity = false;
-			ChangeAnimatorParam(animIDMotionSpeed, 1f);
 
+			// TODO - Anim : basic anim
+			cameraTransform.gameObject.SetActive(IsOwner);
+			
 			if (IsOwner && IsHost)
 			{
 				PlayerSpawner.Instance.SpawnEnvironments();
 				PlayerSpawner.Instance.SpawnGalaxy();
+			}
+			else
+			{
+				FindPlanets();
 			}
 		}
 
 		private void Update()
 		{
 			if (!IsOwner) return;
+
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
-
-			if (!rigid.isKinematic)
-				UpdatePlayerPositionServerRPC(transform.position);
-			UpdatePlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		private void FixedUpdate()
@@ -148,225 +159,44 @@ namespace MPGame.Controller
 			if (!IsOwner) return;
 
 			stateMachine.CurState.PhysicsUpdate();
-
 		}
 
-		private void OnDrawGizmos()
-		{
-			Gizmos.color = Color.blue;
-			Gizmos.matrix = Matrix4x4.TRS(new Vector3(transform.position.x, transform.position.y - groundedOffset,
-				transform.position.z), transform.rotation, Vector3.one);
-			Gizmos.DrawWireCube(Vector3.zero, groundRectSize * 2);
-		}
+		#endregion
 
-		#region Transform Synchronization
-
-		[ServerRpc(RequireOwnership = false)]
-		public void UpdatePlayerLocalPositionServerRPC(Vector3 playerPosition)
-		{
-			UpdatePlayerLocalPositionClientRPC(playerPosition);
-		}
-
-		[ClientRpc]
-		private void UpdatePlayerLocalPositionClientRPC(Vector3 playerPosition)
-		{
-			if (IsOwner) return;
-
-			transform.localPosition = playerPosition;
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void UpdatePlayerPositionServerRPC(Vector3 playerPosition)
-		{
-			UpdatePlayerPositionClientRPC(playerPosition);
-		}
-
-		[ClientRpc]
-		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition, bool fromServer = false)
-		{
-			if (!fromServer && IsOwner) return;
-
-			rigid.linearVelocity = Vector3.zero;
-			rigid.MovePosition(playerPosition);
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		private void UpdatePlayerRotateServerRPC(Quaternion playerQuat, Quaternion camQuat)
-		{
-			UpdatePlayerRotateClientRPC(playerQuat, camQuat);
-		}
-
-		[ClientRpc]
-		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat, bool fromServer = false)
-		{
-			if (!fromServer && IsOwner) return;
-			transform.rotation = playerQuat;
-			cameraTransform.localRotation = camQuat;
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void SetParentServerRPC(ulong parentId)
-		{
-			if(NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject)){
-				transform.parent = parentObject.transform;
-			}
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void SetParentServerRPC(ulong parentId, Vector3 localPos, Quaternion localRot)
-		{
-			if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject))
-			{
-				transform.parent = parentObject.transform;
-				transform.localPosition = localPos;
-				transform.localRotation = localRot;
-
-				UpdatePlayerPositionClientRPC(transform.position, true);
-				UpdatePlayerRotateClientRPC(transform.rotation, Quaternion.identity, true);
-			}
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void UnsetParentServerRPC()
-		{
-			transform.parent = null;
-		}
-
+		#region Player State Setters
 		public void SetKinematic(bool isKinematic)
 		{
 			rigid.isKinematic = isKinematic;
 			capsule.isTrigger = isKinematic;
 			SetKinematicServerRPC(isKinematic);
 		}
-
-		[ServerRpc (RequireOwnership = false)]
-		private void SetKinematicServerRPC(bool isKinematic)
+		public void SetFlyState()
 		{
-			SetKinematicClientRPC(isKinematic);
+			stateMachine.ChangeState(flyState);
 		}
-
-		[ClientRpc]
-		private void SetKinematicClientRPC(bool isKinematic)
+		public void SetFlightState(Chair chair, bool isDriver)
 		{
-			if (IsOwner) return;
-			rigid.isKinematic = isKinematic;
-			capsule.isTrigger = isKinematic;
+			flightState.SetParams(chair, isDriver);
+			stateMachine.ChangeState(flightState);
 		}
-
-
 		#endregion
 
-		#region Logic Control Funcs
-
-		public void DetectIsGround()
-		{
-			if (isGrounded)
-			{
-				ChangeAnimatorParam(animIdGrounded, true);
-				stateMachine.ChangeState(idleState);
-			}
-		}
-		public void DetectIsFalling()
-		{
-			if (isGrounded) return;
-			DetectIsFallingWhileJump();
-		}
-		public void DetectIsFallingWhileJump()
-		{
-			Vector3 localVelocity = transform.InverseTransformDirection(rigid.linearVelocity);
-
-			if (localVelocity.y <= 0f) // 濡而 湲곗 y異(=履) 媛 0 댄대㈃ 媛 以
-			{
-				stateMachine.ChangeState(fallState);
-			}
-		}
-
-		private bool isOnSlope = false;					// Check if ground is disable to walk
-		private bool isOnSlopeWhileFlying = false;		// Check if ground is disable to land
-		private float slopeAngle = 0f;					
-		private Vector3 normalVector = Vector3.zero;	// Slope angle (hit.normal)
-		public void SlopeCheck()
-		{
-			Debug.DrawRay(transform.position, -transform.up * slopeRayLength, Color.red);
-			if (UnityEngine.Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeRayLength))
-			{
-				normalVector = hit.normal;
-				slopeAngle = Vector3.Angle(hit.normal, -gravityDirection);
-
-				float landAngle = Vector3.Angle(hit.normal, transform.up);
-				isOnSlope = slopeAngle > slopeLimit;
-				isOnSlopeWhileFlying = slopeAngle > slopeLimit || landAngle > enableToLandAngle;
-			}
-		}
-		public bool OnSlope(bool isFlying = false)
-		{
-			return isFlying ? isOnSlopeWhileFlying : isOnSlope;
-		}
-		public void Jump(bool isJumpPressed)
-		{
-			if (!isJumpPressed) return;
-
-			rigid.AddForce(transform.up * jumpForce, ForceMode.Impulse);
-			stateMachine.ChangeState(jumpState);
-		}
-    
-		public bool IsEnoughVelocityToLand()
-		{
-			return rigid.linearVelocity.magnitude < velocityToLand;
-		}
-
-		#endregion
-
-		public void Vacuuming()
-		{
-			if (!StateBase.IsVacuumEnabled)
-			{
-                return;
-			}
-
-            if (!StateBase.IsVacuumPressed)
-			{
-                if (isVacuumingStarted)
-                {
-                    isVacuumingStarted = false;
-
-					foreach (var obj in prevDetected)
-					{
-						obj.VacuumEnd();
-                    }
-                    prevDetected.Clear();
-                }
-                return;
-			}
-
-            DetectVacuumingObjects();
-        }
-
-		Vector3 gravityDirection = Vector3.zero;
-		Collider[] hitObjects;
-		SpaceshipContoller spaceship = null;
-
-		public SpaceshipContoller Spaceship { get => spaceship; }
-		public void GroundedCheck()
-		{
-			Vector3 rectPosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
-				transform.position.z);
-			hitObjects = UnityEngine.Physics.OverlapBox(rectPosition, groundRectSize, transform.rotation, Constants.LAYER_GROUND);
-			isGrounded = hitObjects.Length > 0;
-
-			if (!IsGrounded) return;
-		}
-
-
-		private const float GravitationalConstant = 100f;
-		private PlanetBody playerPlanet = null;
-
-		// TODO - ClientRPC
+		/// <summary>
+		/// Find Planets in current loaded scene.
+		/// This MUST BE called at the start of the game.
+		/// </summary>
 		public void FindPlanets()
 		{
 			planets = FindObjectsByType<PlanetBody>(FindObjectsSortMode.None);
+			if (planets == null)
+			{
+				Debug.LogError("Planets cannot be null.");
+			}
 		}
 
+		/// <summary>
+		/// Apply gravity to player from planets. (FindPlanets Func must be called.)
+		/// </summary>
 		public void ApplyGravity()
 		{
 			if (planets == null) return;
@@ -379,14 +209,12 @@ namespace MPGame.Controller
 				Vector3 positionDiff = planet.Rigid.position - rigid.position;
 				float distanceSqr = positionDiff.sqrMagnitude;
 
-				// 중력 계산
-				Vector3 newtonForce = positionDiff.normalized * GravitationalConstant * planet.Rigid.mass * rigid.mass / distanceSqr;
+				Vector3 newtonForce = positionDiff.normalized * Constants.CONST_GRAV * planet.Rigid.mass * rigid.mass / distanceSqr;
 				newtonForce *= planet.GravityScale;
 				
 				newtonForce *= Time.fixedDeltaTime;
 				rigid.AddForce(newtonForce);
 
-				// 가장 강한 중력을 가진 행성 찾기
 				float mag = newtonForce.magnitude;
 				if (maxMag < mag)
 				{
@@ -412,6 +240,9 @@ namespace MPGame.Controller
 			}
 		}
 
+		/// <summary>
+		/// Rotate Body toward planet when player enters planet's gravity field.
+		/// </summary>
 		private void RotateTowardsPlanet(PlanetBody planet)
 		{
 			Transform cachedTransform = transform;
@@ -429,6 +260,9 @@ namespace MPGame.Controller
 			cameraTransform.rotation = Quaternion.LookRotation(cameraLookDirection, cachedTransform.up);
 		}
 
+		/// <summary>
+		/// Rotate Body to align with the camera when player exits planet's gravity field.
+		/// </summary>
 		private void AlignToCamera()
 		{
 			Transform cachedTransform = transform;
@@ -436,20 +270,16 @@ namespace MPGame.Controller
 			cachedTransform.rotation = Quaternion.Slerp(cachedTransform.rotation, neededRotation, Time.deltaTime);
 		}
 
-		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
-		{
-			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw) * diag * walkForce;
-			
-			currentSpeed = moveDir.magnitude;
-			rigid.AddForce(Vector3.ProjectOnPlane(moveDir, normalVector) * Time.fixedDeltaTime, ForceMode.VelocityChange);
-			ChangeAnimatorParam(animIDSpeed, currentSpeed);
-		}
-		public void RaycastInteractableObject()
+
+		/// <summary>
+		/// Shoot raycast from camera forward by interactRayLength
+		/// </summary>
+		public void RaycastToInteractableObject()
 		{
 			RaycastHit hit;
 			int targetLayer = Constants.LAYER_INTERACTABLE;
 
-			if (UnityEngine.Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, rayLength, targetLayer))
+			if (UnityEngine.Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, interactRayLength, targetLayer))
 			{
 				isDetectInteractable = true;
 				recentlyDetectedProp = hit.transform.GetComponent<PropsBase>();
@@ -460,53 +290,33 @@ namespace MPGame.Controller
 				recentlyDetectedProp = null;
 			}
 
-			Debug.DrawRay(cameraTransform.position, cameraTransform.forward * rayLength, Color.red);
+			Debug.DrawRay(cameraTransform.position, cameraTransform.forward * interactRayLength, Color.red);
 		}
 
-		public void TurnIdlePM()
+		/// <summary>
+		/// Shoot raycast from zero to downward by groundRayLength
+		/// </summary>
+		public void RaycastToGround()
 		{
-			capsule.material = idlePM;
-		}
-		public void TurnPlayerPM()
-		{
-			capsule.material = playerPM;
-		}
-		public void TurnSlopePM()
-		{
-			capsule.material = slopePM;
-		}
-		public void TurnFlyPM()
-		{
-			capsule.material = flyPM;
-		}
-		public void SetMaxWalkSpeed()
-		{
-			rigid.maxLinearVelocity = maxWalkSpeed;
-		}
-		public void SetMaxFlySpeed()
-		{
-			rigid.maxLinearVelocity = maxFlySpeed;
-		}
+			RaycastHit hit;
+			int targetLayer = Constants.LAYER_GROUND;
 
-		public void TurnStateToIdleState()
-		{
-			stateMachine.ChangeState(idleState);
-		}
-		public void TurnStateToFlyState()
-		{
-			stateMachine.ChangeState(flyState);
-		}
-		public void TurnStateToFlightState(Chair chair, bool isDriver)
-		{
-			flightState.SetParams(chair, isDriver);
-			stateMachine.ChangeState(flightState);
+			if(UnityEngine.Physics.Raycast(transform.position, -transform.up, out hit, groundRayLength))
+			{
+				isGrounded = true;
+			}
+			else
+			{
+				isGrounded = false;
+			}
 		}
 
 
-		private float keyWeight = 0.2f;
-		[SerializeField] private float thrustWeight = 6f;
-
-		public void Fly(float vert, float horz, float depth)
+		/// <summary>
+		/// Movement Func in general state.
+		/// Seperate fly and walk in this func.
+		/// </summary>
+		public void Move(float vert, float horz, float depth)
 		{
 			if (isInGravity)
 			{
@@ -529,9 +339,9 @@ namespace MPGame.Controller
 			}
 		}
 
-		float camRotateSpeed = 10f; 
-		private bool previousGravityState = false;
-
+		/// <summary>
+		/// Rotation Func in general state.
+		/// </summary>
 		public void RotateBodyWithMouse(float mouseX, float mouseY, float roll)
 		{
 			if (isInGravity != previousGravityState)
@@ -541,7 +351,7 @@ namespace MPGame.Controller
 				previousGravityState = isInGravity;
 			}
 
-			if (isInGravity)
+			if (isInGravity)		// TODO - erase local vars
 			{
 				Vector3 camRot = cameraTransform.localRotation.eulerAngles;
 				float tmpV = camRot.x - mouseY * rotationPower;
@@ -556,10 +366,12 @@ namespace MPGame.Controller
 			}
 
 			transform.Rotate(mouseX * Vector3.up * rotationPower * Time.fixedDeltaTime * camRotateSpeed, Space.Self);
-			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Acceleration);
+			rigid.AddTorque(-transform.forward * roll * rotationPower * rotationKeyWeight, ForceMode.Acceleration);
 		}
 
-		float vertRot = 0;
+		/// <summary>
+		/// Rotation Func while flight state (because flight state must be kinematic).
+		/// </summary>
 		public void RotateWithoutRigidbody(float mouseX, float mouseY)
 		{
 			vertRot -= mouseY * rotationPower;
@@ -572,7 +384,6 @@ namespace MPGame.Controller
 
 
 		#region Animation Synchronization
-
 		public void ChangeAnimatorParam(int id, bool param)
 		{
 			animator.SetBool(id, param);
@@ -582,30 +393,6 @@ namespace MPGame.Controller
 		{
 			animator.SetFloat(id, param);
 			ChangeAnimatorParamServerRPC(id, param);
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void ChangeAnimatorParamServerRPC(int id, bool param)
-		{
-			ChangeAnimatorParamClientRPC(id, param);
-		}
-		[ServerRpc(RequireOwnership = false)]
-		public void ChangeAnimatorParamServerRPC(int id, float param)
-		{
-			ChangeAnimatorParamClientRPC(id, param);
-		}
-
-		[ClientRpc]
-		public void ChangeAnimatorParamClientRPC(int id, bool param)
-		{
-			if (IsOwner) return;
-			animator.SetBool(id, param);
-		}
-		[ClientRpc]
-		public void ChangeAnimatorParamClientRPC(int id, float param)
-		{
-			if (IsOwner) return;
-			animator.SetFloat(id, param);
 		}
 		#endregion
 
@@ -637,7 +424,32 @@ namespace MPGame.Controller
         private Vector3 cameraPos;
         private Vector3 cameraForward;
         private Vector3 detectingVector;
-        private void DetectVacuumingObjects()
+
+		public void Vacuuming()
+		{
+			if (!StateBase.IsVacuumEnabled)
+			{
+				return;
+			}
+
+			if (!StateBase.IsVacuumPressed)
+			{
+				if (isVacuumingStarted)
+				{
+					isVacuumingStarted = false;
+
+					foreach (var obj in prevDetected)
+					{
+						obj.VacuumEnd();
+					}
+					prevDetected.Clear();
+				}
+				return;
+			}
+
+			DetectVacuumingObjects();
+		}
+		private void DetectVacuumingObjects()
         {
 			if (!isVacuumingStarted)
 			{

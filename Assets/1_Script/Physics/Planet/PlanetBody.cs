@@ -1,9 +1,10 @@
+using Unity.Netcode;
 using UnityEngine;
 
 namespace MPGame.Physics
 {
 	[RequireComponent(typeof(Rigidbody))]	
-    public class PlanetBody : MonoBehaviour
+    public class PlanetBody : NetworkBehaviour
     {
 		[Header("Planet")]
         [SerializeField] private bool isSun;            // true -> don't move
@@ -48,7 +49,7 @@ namespace MPGame.Physics
 		// HACK - 항성이 항상 (0, 0, 0) 에 존재한다고 가정하고 만듦
 		private void FixedUpdate()
 		{
-			if (isSun) return;
+			if (isSun || !IsHost) return;
 
 			currentAngle += orbitSpeed * Time.fixedDeltaTime;
 			currentAngle %= 360f;

@@ -1,4 +1,3 @@
-using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
 {
@@ -16,17 +15,12 @@ namespace MPGame.Controller.StateMachine
 			vertInputRaw = horzInputRaw = 0f;
             controller.Rigidbody.linearDamping = 0f;
 
-			controller.SetMaxFlySpeed();
-			controller.TurnFlyPM();
             controller.UnsetParentServerRPC();       // 날기 시작하면 Parent 없앰
         }
 
         public override void Exit()
         {
             base.Exit();
-
-			controller.SetMaxWalkSpeed();
-			controller.TurnPlayerPM();
 		}
 
 
@@ -44,23 +38,18 @@ namespace MPGame.Controller.StateMachine
         public override void LogicUpdate()
         {
             base.LogicUpdate();
-            
-            if (!controller.OnSlope() && controller.IsEnoughVelocityToLand())
-            {
-                controller.DetectIsGround();
-            }
 		}
 
         public override void PhysicsUpdate()
         {
             base.PhysicsUpdate();
-            controller.RaycastInteractableObject();
+            controller.RaycastToInteractableObject();
 			controller.RotateBodyWithMouse(mouseX, mouseY, roll);
 
             float depth = 0;
             if (isUpPressed == isDownPressed) depth = 0;
             else depth = isUpPressed ? 1 : -1;
-            controller.Fly(vertInputRaw, horzInputRaw, depth);
+            controller.Move(vertInputRaw, horzInputRaw, depth);
 		}
     }
 }
