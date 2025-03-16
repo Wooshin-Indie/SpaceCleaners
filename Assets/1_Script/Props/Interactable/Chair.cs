@@ -19,7 +19,7 @@ namespace MPGame.Props
 			if (!base.Interaction(newOwnerClientId)) return false;
 
 			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()
-				.GetComponent<PlayerController>().TurnStateToFlightState(this, isDriver);
+				.GetComponent<PlayerController>().SetFlightState(this, isDriver);
 			return true;
 		}
 	}

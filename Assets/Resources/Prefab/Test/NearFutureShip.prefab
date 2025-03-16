@@ -1958,7 +1958,7 @@ Transform:
   m_GameObject: {fileID: 6774639544826301180}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2052,7 +2052,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: 0.016, y: 1.6, z: 11.347}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 1
 --- !u!54 &7442847139664417007
 Rigidbody:
@@ -2619,9 +2619,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1971004617371411818}
   - component: {fileID: 8414548315660600656}
-  - component: {fileID: 3210965355734055860}
   - component: {fileID: -1543824233346960989}
-  - component: {fileID: -84831696142605626}
+  - component: {fileID: 7133835473742413623}
+  - component: {fileID: 5918990439852801049}
+  - component: {fileID: 848638632501991863}
   m_Layer: 0
   m_Name: NearFutureShip
   m_TagString: Untagged
@@ -2639,7 +2640,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -20, y: 2, z: -20}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 313851424250895587}
@@ -2666,7 +2667,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 68222519
+  GlobalObjectIdHash: 1678556271
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 0
@@ -2675,18 +2676,6 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
---- !u!114 &3210965355734055860
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8644338739374899709}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1511a5fb5d38d9048b2086bd87392518, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &-1543824233346960989
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2699,9 +2688,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3c7762c8c4874a42868adb07e6db1eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thrustPower: 50
+  thrustPower: 10
   rotationPower: 10
---- !u!54 &-84831696142605626
+  maxSpeed: 500
+  playerGravity: 70
+--- !u!54 &7133835473742413623
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2709,25 +2700,77 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8644338739374899709}
   serializedVersion: 4
-  m_Mass: 20
+  m_Mass: 10000
   m_Drag: 0
-  m_AngularDrag: 2
-  m_CenterOfMass: {x: 0, y: 3.5, z: 4}
+  m_AngularDrag: 5
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0.00880202, y: 0.008649721, z: 0.008649721, w: 0.9998864}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_ImplicitCom: 0
+  m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &5918990439852801049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8644338739374899709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  Interpolate: 1
+  SlerpPosition: 0
+--- !u!65 &848638632501991863
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8644338739374899709}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.8565357, y: 2.5284915, z: 11.0784645}
+  m_Center: {x: -0.05243683, y: 1.1666441, z: 6.7282176}
 --- !u!1 &8770594113148295491
 GameObject:
   m_ObjectHideFlags: 0
@@ -2886,7 +2929,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: 1.67, y: 0.7, z: 3.183}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 0
 --- !u!65 &4561491572665649252
 BoxCollider:
@@ -3041,7 +3084,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: 1.67, y: 0.7, z: 4.109}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 0
 --- !u!65 &8374080107555958452
 BoxCollider:
@@ -3191,7 +3234,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: -1.691, y: 0.7, z: 4.11}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 0
 --- !u!65 &2589662218219070165
 BoxCollider:
@@ -3351,7 +3394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localEnterPosition: {x: -1.69, y: 0.7, z: 3.18}
-  localExitPosition: {x: 0, y: 0, z: 0}
+  localExitPosition: {x: 0, y: 0, z: 7.5}
   isDriver: 0
 --- !u!65 &5714632407939235264
 BoxCollider:

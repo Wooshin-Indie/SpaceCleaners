@@ -10,7 +10,7 @@ namespace MPGame.Props
 		public NetworkVariable<ulong> OwnerClientId { get => ownerClientId; }
 
         /// <summary>
-        /// ¿ÜºÎ¿¡¼­ Interact ÇÒ ¶§ È£ÃâÇÏ´Â ÇÔ¼ö
+        /// ì™¸ë¶€ì—ì„œ Interact í•  ë•Œ í˜¸ì¶œí•˜ëŠ” í•¨ìˆ˜
         /// </summary>
         public void TryInteract()
 		{
@@ -18,7 +18,7 @@ namespace MPGame.Props
 		}
 
 		/// <summary>
-		/// ¿ÜºÎ¿¡¼­ Interact ³¡³¾ ¶§ È£ÃâÇÏ´Â ÇÔ¼ö
+		/// Â™ëªƒÂ€Â—ÂÂ„Âœ Interact ÂÂÂ‚ Â•ÂŒ Â˜ëª„ÂœÂ•Â˜ÂŠÂ” Â•â‘¥ÂˆÂ˜
 		/// </summary>
 		public void EndInteraction()
 		{
@@ -43,7 +43,7 @@ namespace MPGame.Props
 			}
 			else
 			{
-				// TODO - ÀÌ¹Ì ÀÖ´Â °æ¿ì
+				// TODO - ÂëŒ€ï¿½ ÂÂˆÂŠÂ” å¯ƒìŒÂš
 			}
 		}
 

@@ -17,6 +17,7 @@ namespace MPGame.Manager
 		{
 			UnloadCurrentScene();
 			LoadScene(sceneEnum);
+			UIManager.Instance.OnSceneChanged(sceneEnum);
 		}
 
 		private async void LoadScene(SceneEnum sceneEnum)
