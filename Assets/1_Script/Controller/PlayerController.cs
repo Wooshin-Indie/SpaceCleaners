@@ -5,7 +5,6 @@ using MPGame.Props;
 using MPGame.Utils;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
@@ -159,6 +158,8 @@ namespace MPGame.Controller
 			if (!IsOwner) return;
 
 			stateMachine.CurState.PhysicsUpdate();
+			
+			OnFixedUpdateSync();
 		}
 
 		#endregion
