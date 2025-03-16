@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using MPGame.Props;
-using UnityEditor.Build.Content;
+using System.Linq;
 using UnityEngine.InputSystem;
-using Unity.VisualScripting;
 
 namespace MPGame.Manager
 {
@@ -41,6 +39,7 @@ namespace MPGame.Manager
             {
                 vacuumableObjects[obID].OnUpdate();
             }
+            DespawnVacuumableObjects();
         }
 
         private Dictionary<ulong, VacuumableObject> vacuumableObjects = new Dictionary<ulong, VacuumableObject>();
@@ -58,16 +57,25 @@ namespace MPGame.Manager
             vacuumableObjects.Add(tmpKey, vacuumOb);
         }
 
-        [ServerRpc(RequireOwnership = false)]
-        public void DespawnVacuumableObjectServerRPC(ulong obKey) //key는 NetworkObjectId
+        public void DespawnVacuumableObjects() //key는 NetworkObjectId
         {
-            vacuumableObjects.Remove(obKey);
+            foreach (var obKey in vacuumObjectDespawn)
+            {
+                vacuumableObjects[obKey].VacuumEnd();
+                vacuumableObjects.Remove(obKey);
+                NetworkObject no = NetworkObject.NetworkManager.SpawnManager.SpawnedObjects[obKey];
+                no.Despawn(); //NetworkObjectId로 디스폰
+                Destroy(no.gameObject);
+                Debug.Log("Despawned!!");
+            }
+            vacuumObjectDespawn.Clear();
+        }
 
-            NetworkObject no = NetworkObject.NetworkManager.SpawnManager.SpawnedObjects[obKey];
-            no.Despawn(); //NetworkObjectId로 디스폰
-            Destroy(no.gameObject);
-
-            Debug.Log("Despawned!!");
+        private List<ulong> vacuumObjectDespawn = new List<ulong>();
+        [ServerRpc(RequireOwnership = false)]
+        public void AddVacuumableObjectToDespawnListServerRPC(ulong obKey)
+        {
+            vacuumObjectDespawn.Add(obKey);
         }
     }
 }

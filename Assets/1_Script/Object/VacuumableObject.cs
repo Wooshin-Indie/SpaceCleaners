@@ -46,8 +46,8 @@ namespace MPGame.Props
                 RemoveVacuumingObjectsFromHashsetsClientRPC(NetworkObjectId);
                 // ownerClient의 PlayerController에서 Hashset에서 이 오브젝트를 삭제하라고 요청
 
-                ObjectSpawner.Instance.DespawnVacuumableObjectServerRPC(NetworkObject.NetworkObjectId); // TODO - NetworkObject 치면 GetComponent처럼 되는거 맞나?
-                //혹시 몰라서 serverRPC로 해놨음
+                ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
+                // TODO - NetworkObject 치면 GetComponent처럼 되는거 맞나?
                 Debug.Log("Test1!!");
             }
         }

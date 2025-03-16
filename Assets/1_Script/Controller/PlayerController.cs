@@ -594,6 +594,7 @@ namespace MPGame.Controller
 
 		public void RemoveVacuumingObjectsFromHashsets(VacuumableObject ob)
 		{
+			prevDetected.Remove(ob);
         }
 
         // 선택된 상태에서만 Scene 뷰에 그리기
