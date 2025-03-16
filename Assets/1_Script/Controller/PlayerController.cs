@@ -1,5 +1,6 @@
 using MPGame.Controller.StateMachine;
 using MPGame.Manager;
+using MPGame.Physics;
 using MPGame.Props;
 using MPGame.Utils;
 using System;
@@ -11,86 +12,95 @@ using UnityEngine;
 
 namespace MPGame.Controller
 {
-	public class PlayerController : NetworkBehaviour
+	public partial class PlayerController : NetworkBehaviour
 	{
+
+		[Header("Player Movement")]
+
+		[SerializeField, Tooltip("Maximum speed of player.")]
+		private float maxFlySpeed;
+
+		[SerializeField, Tooltip("Thrust power using fuel.")] 
+		private float thrustPower;
+
+		[SerializeField, Tooltip("Additional thrust power to escape gravity area of planets.")]
+		private float thrustWeight;
+
+		[SerializeField, Tooltip("Rotation power using fuel.")] 
+		private float rotationPower;
+
+		[SerializeField, Tooltip("Additional multiplier to reduce the gap between key and mouse input.")]
+		private float rotationKeyWeight;
+
+		[SerializeField, Tooltip("Additional multiplier to make camera rotation more responsive.")]
+		private float rotationCameraWeight;
+
+		[SerializeField, Range(0f, 90f), Tooltip("Maximum vertical rotation angle (looking up, in gravity).")]
+		private float maxVertRot;
+
+		[SerializeField, Range(-90f, 0f), Tooltip("Minimum vertical rotation angle (looking down, in gravity).")]
+		private float minVertRot;
+
+
+		[Header("Raycast Arguments")]
+		
+		[SerializeField, Tooltip("Raycast length for interacting with objects (looking forward, from camera).")] 
+		private float interactRayLength;
+		
+		[SerializeField, Tooltip("Raycast length for detecting grounds (looking down, from (0,0,0)).")]
+		private float groundRayLength;
+
+
+		[Header("Transforms")]
+
+		[SerializeField, Tooltip("Player's camera for control view dir (in gravity).")]
+		public Transform cameraTransform;
+
 
 		/** Components **/
 		private Rigidbody rigid;
 		private CapsuleCollider capsule;
 		private Animator animator;
 
-
-		/** Properties **/
+		/** Component Properties **/
 		public Rigidbody Rigidbody { get => rigid; }
 		public CapsuleCollider Capsule { get => capsule; }
 		public Animator Animator { get => animator; }
 
-		[Header("Player Move Args")]
-		[SerializeField] private float walkForce;
-		[SerializeField] private float maxWalkSpeed;
-		[SerializeField] private float jumpForce;
-		[SerializeField] private float gravityForce;
-		[SerializeField] private bool useGravity;
-		[SerializeField, Range(0f, 90f)] private float maxVertRot;
-		[SerializeField, Range(-90f, 0f)] private float minVertRot;
+		/** Animation IDs **/
+		[HideInInspector] public int animIDSpeed;
+		[HideInInspector] public int animIDJump;
+		[HideInInspector] public int animIDMotionSpeed;
+		[HideInInspector] public int animIdGrounded;
+		[HideInInspector] public int animIdFreeFall;
 
-		[Header("Slope Args")]
-		[SerializeField] private float groundedOffset;
-		[SerializeField] private Vector3 groundRectSize;
-		[SerializeField] private float slopeRayLength;
-		[SerializeField] private float slopeLimit;
-		[SerializeField] private PhysicsMaterial idlePM;
-		[SerializeField] private PhysicsMaterial playerPM;
-		[SerializeField] private PhysicsMaterial slopePM;
-		[SerializeField] private PhysicsMaterial flyPM;
-
-		[Header("Flying Args")]
-		[SerializeField] private float maxFlySpeed;
-		[SerializeField] private float thrustPower;
-		[SerializeField] private float rotationPower;
-		[SerializeField] private float velocityToLand;
-		[SerializeField] private float enableToLandAngle;
-
-		[Header("GameObjects")]
-		[SerializeField] public Transform cameraTransform;
-
-		[Header("Raycast Args")]                        // Use to detect Interactables
-		[SerializeField] private float rayLength;
-
-
-		// animation Ids
-		public int animIDSpeed;
-		public int animIDJump;
-		public int animIDMotionSpeed;
-		public int animIdGrounded;
-		public int animIdFreeFall;
-
+		/** Player State Machine **/
 		private PlayerStateMachine stateMachine;
-		public PlayerStateMachine StateMachine { get => stateMachine; }
-		public IdleState idleState;
-		public WalkState walkState;
-		public JumpState jumpState;
-		public FallState fallState;
+
 		public FlyState flyState;
 		public FlightState flightState;
 
+		public PlayerStateMachine StateMachine { get => stateMachine; }
 
-		public bool UseGravity { get => useGravity; set => useGravity = value; }
-
+		/** Player State Values **/
 		private bool isGrounded = true;
+		private bool isInGravity = false;
 		private bool isDetectInteractable = false;
-
+		
 		public bool IsGrounded { get => isGrounded; }
 		public bool IsDetectInteractable { get => isDetectInteractable; }
-
+		
 		private PropsBase recentlyDetectedProp = null;
 		public PropsBase RecentlyDetectedProp { get => recentlyDetectedProp; }
 
-		private Vector3 gravityVector = new Vector3(0f, 0f, 0f);
-		private GravityType gravityType = GravityType.None;
+		private PlanetBody[] planets = null;
+		private PlanetBody playerPlanet = null;
 
-		private Vector3 projectedForward = Vector3.zero;
-		private float currentSpeed = 0f;
+		private float camRotateSpeed = 10f;
+		private bool previousGravityState = false;
+		private float vertRot = 0;
+
+		#region Lifecycle Funcs
 
 		private void Awake()
 		{
@@ -99,10 +109,6 @@ namespace MPGame.Controller
 			capsule = GetComponent<CapsuleCollider>();
 
             stateMachine = new PlayerStateMachine();
-			idleState = new IdleState(this, stateMachine);
-			walkState = new WalkState(this, stateMachine);
-			jumpState = new JumpState(this, stateMachine);
-			fallState = new FallState(this, stateMachine);
 			flyState = new FlyState(this, stateMachine);
 			flightState = new FlightState(this, stateMachine);
 
@@ -113,36 +119,39 @@ namespace MPGame.Controller
 			animIdFreeFall = Animator.StringToHash("FreeFall");
 		}
 
-
 		private void Start()
 		{
-			stateMachine.Init(idleState);
-			SetMaxWalkSpeed();
+			stateMachine.Init(flyState);
 		}
 
 		public override void OnNetworkSpawn()
 		{
 			base.OnNetworkSpawn();
+
+			// TODO - Anim : basic anim
 			cameraTransform.gameObject.SetActive(IsOwner);
-			rigid.isKinematic = false;
-			rigid.useGravity = false;
-			ChangeAnimatorParam(animIDMotionSpeed, 1f);
 
 			if (IsOwner && IsHost)
 			{
 				PlayerSpawner.Instance.SpawnEnvironments();
+				PlayerSpawner.Instance.SpawnGalaxy();
+			}
+			else
+			{
+				FindPlanets();
 			}
 		}
 
 		private void Update()
 		{
 			if (!IsOwner) return;
+
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
 
 			if (!rigid.isKinematic)
-				UpdatePlayerPositionServerRPC(transform.position);
-			UpdatePlayerRotateServerRPC(transform.rotation, cameraTransform.localRotation);
+				UpdatePlayerPositionClientRPC(transform.position);
+			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		private void FixedUpdate()
@@ -150,248 +159,129 @@ namespace MPGame.Controller
 			if (!IsOwner) return;
 
 			stateMachine.CurState.PhysicsUpdate();
-
 		}
 
-		private void OnDrawGizmos()
-		{
-			Gizmos.color = Color.blue;
-			Gizmos.matrix = Matrix4x4.TRS(new Vector3(transform.position.x, transform.position.y - groundedOffset,
-				transform.position.z), transform.rotation, Vector3.one);
-			Gizmos.DrawWireCube(Vector3.zero, groundRectSize * 2);
-		}
+		#endregion
 
-		#region Transform Synchronization
-
-		[ServerRpc(RequireOwnership = false)]
-		public void UpdatePlayerPositionServerRPC(Vector3 playerPosition)
-		{
-			UpdatePlayerPositionClientRPC(playerPosition);
-		}
-
-		[ClientRpc]
-		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition, bool fromServer = false)
-		{
-			if (!fromServer && IsOwner) return;
-			transform.position = playerPosition;
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		private void UpdatePlayerRotateServerRPC(Quaternion playerQuat, Quaternion camQuat)
-		{
-			UpdatePlayerRotateClientRPC(playerQuat, camQuat);
-		}
-
-		[ClientRpc]
-		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat, bool fromServer = false)
-		{
-			if (!fromServer && IsOwner) return;
-			transform.rotation = playerQuat;
-			cameraTransform.localRotation = camQuat;
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void SetParentServerRPC(ulong parentId)
-		{
-			if(NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject)){
-				transform.parent = parentObject.transform;
-			}
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void SetParentServerRPC(ulong parentId, Vector3 localPos, Quaternion localRot)
-		{
-			if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject))
-			{
-				transform.parent = parentObject.transform;
-				transform.localPosition = localPos;
-				transform.localRotation = localRot;
-
-				UpdatePlayerPositionClientRPC(transform.position, true);
-				UpdatePlayerRotateClientRPC(transform.rotation, Quaternion.identity, true);
-			}
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void UnsetParentServerRPC()
-		{
-			transform.parent = null;
-		}
-
+		#region Player State Setters
 		public void SetKinematic(bool isKinematic)
 		{
 			rigid.isKinematic = isKinematic;
 			capsule.isTrigger = isKinematic;
 			SetKinematicServerRPC(isKinematic);
 		}
-
-		[ServerRpc (RequireOwnership = false)]
-		private void SetKinematicServerRPC(bool isKinematic)
+		public void SetFlyState()
 		{
-			SetKinematicClientRPC(isKinematic);
+			stateMachine.ChangeState(flyState);
 		}
-
-		[ClientRpc]
-		private void SetKinematicClientRPC(bool isKinematic)
+		public void SetFlightState(Chair chair, bool isDriver)
 		{
-			if (IsOwner) return;
-			rigid.isKinematic = isKinematic;
-			capsule.isTrigger = isKinematic;
+			flightState.SetParams(chair, isDriver);
+			stateMachine.ChangeState(flightState);
 		}
-
-
 		#endregion
 
-		#region Logic Control Funcs
-
-		public void DetectIsGround()
+		/// <summary>
+		/// Find Planets in current loaded scene.
+		/// This MUST BE called at the start of the game.
+		/// </summary>
+		public void FindPlanets()
 		{
-			if (isGrounded)
+			planets = FindObjectsByType<PlanetBody>(FindObjectsSortMode.None);
+			if (planets == null)
 			{
-				ChangeAnimatorParam(animIdGrounded, true);
-				stateMachine.ChangeState(idleState);
-			}
-		}
-		public void DetectIsFalling()
-		{
-			if (isGrounded) return;
-			DetectIsFallingWhileJump();
-		}
-		public void DetectIsFallingWhileJump()
-		{
-			Vector3 localVelocity = transform.InverseTransformDirection(rigid.linearVelocity);
-
-			if (localVelocity.y <= 0f) // 濡而 湲곗 y異(=履) 媛 0 댄대㈃ 媛 以
-			{
-				stateMachine.ChangeState(fallState);
+				Debug.LogError("Planets cannot be null.");
 			}
 		}
 
-		private bool isOnSlope = false;					// Check if ground is disable to walk
-		private bool isOnSlopeWhileFlying = false;		// Check if ground is disable to land
-		private float slopeAngle = 0f;					
-		private Vector3 normalVector = Vector3.zero;	// Slope angle (hit.normal)
-		public void SlopeCheck()
-		{
-			Debug.DrawRay(transform.position, -transform.up * slopeRayLength, Color.red);
-			if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, slopeRayLength))
-			{
-				normalVector = hit.normal;
-				slopeAngle = Vector3.Angle(hit.normal, -gravityDirection);
-
-				float landAngle = Vector3.Angle(hit.normal, transform.up);
-				isOnSlope = slopeAngle > slopeLimit;
-				isOnSlopeWhileFlying = slopeAngle > slopeLimit || landAngle > enableToLandAngle;
-			}
-		}
-		public bool OnSlope(bool isFlying = false)
-		{
-			return isFlying ? isOnSlopeWhileFlying : isOnSlope;
-		}
-		public void Jump(bool isJumpPressed)
-		{
-			if (!isJumpPressed) return;
-
-			rigid.AddForce(transform.up * jumpForce, ForceMode.Impulse);
-			stateMachine.ChangeState(jumpState);
-		}
-    
-		public bool IsEnoughVelocityToLand()
-		{
-			return rigid.linearVelocity.magnitude < velocityToLand;
-		}
-
-		#endregion
-
-		public void Vacuuming()
-		{
-			if (!StateBase.IsVacuumEnabled)
-			{
-                return;
-			}
-
-            if (!StateBase.IsVacuumPressed)
-			{
-                if (isVacuumingStarted)
-                {
-                    isVacuumingStarted = false;
-
-					foreach (var obj in prevDetected)
-					{
-						obj.VacuumEnd();
-                    }
-                    prevDetected.Clear();
-                }
-                return;
-			}
-
-            DetectVacuumingObjects();
-        }
-
-		Vector3 gravityDirection = Vector3.zero;
-		Collider[] hitObjects;
-		SpaceshipContoller spaceship = null;
-
-		public SpaceshipContoller Spaceship { get => spaceship; }
-		public void GroundedCheck()
-		{
-			Vector3 rectPosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
-				transform.position.z);
-			hitObjects = Physics.OverlapBox(rectPosition, groundRectSize, transform.rotation, Constants.LAYER_GROUND);
-			isGrounded = hitObjects.Length > 0;
-
-			if (!IsGrounded) return;
-
-			spaceship = hitObjects[0].transform.parent.GetComponent<SpaceshipContoller>();
-			SetParentServerRPC(hitObjects[0].transform.parent.GetComponent<NetworkObject>().NetworkObjectId);
-
-			GroundBase gb = hitObjects[0].GetComponentInParent<GroundBase>();
-			gravityType = gb.GravityType;
-			gravityVector = gb.GetGravityVector();
-
-		}
-
-		public void CalculateGravity()
-		{
-			switch (gravityType)
-			{
-				case GravityType.Point:
-					gravityDirection = Vector3.Normalize(gravityVector - transform.position);
-					break;
-				case GravityType.Direction:
-					gravityDirection = gravityVector;
-					break;
-			}
-		}
-
+		/// <summary>
+		/// Apply gravity to player from planets. (FindPlanets Func must be called.)
+		/// </summary>
 		public void ApplyGravity()
 		{
-			if (!useGravity) return;
-			
-			projectedForward = Vector3.ProjectOnPlane(transform.forward, gravityDirection).normalized;
-			Quaternion targetRotation = Quaternion.LookRotation(projectedForward, -gravityDirection);
+			if (planets == null) return;
 
-			rigid.MoveRotation(targetRotation);		// HACK - AddTorque濡 諛袁몃㈃ 醫
-			rigid.AddForce(gravityDirection * gravityForce, ForceMode.Acceleration);
+			float maxMag = 0f;
+			PlanetBody maxPlanet = null;
+
+			foreach (PlanetBody planet in planets)
+			{
+				Vector3 positionDiff = planet.Rigid.position - rigid.position;
+				float distanceSqr = positionDiff.sqrMagnitude;
+
+				Vector3 newtonForce = positionDiff.normalized * Constants.CONST_GRAV * planet.Rigid.mass * rigid.mass / distanceSqr;
+				newtonForce *= planet.GravityScale;
+				
+				newtonForce *= Time.fixedDeltaTime;
+				rigid.AddForce(newtonForce);
+
+				float mag = newtonForce.magnitude;
+				if (maxMag < mag)
+				{
+					maxMag = mag;
+					maxPlanet = planet;
+				}
+			}
+
+			// 가장 강한 중력을 가진 행성 처리
+			if (maxPlanet == null || maxPlanet.IsSun) return;
+
+			if ((maxPlanet.Rigid.position - rigid.position).magnitude > maxPlanet.GravityRadius)
+			{
+				isInGravity = false;
+				playerPlanet = null;
+				AlignToCamera();
+			}
+			else
+			{
+				isInGravity = true;
+				RotateTowardsPlanet(maxPlanet);
+				playerPlanet = maxPlanet;
+			}
 		}
 
-		public void WalkWithArrow(float vertInputRaw, float horzInputRaw, float diag)
+		/// <summary>
+		/// Rotate Body toward planet when player enters planet's gravity field.
+		/// </summary>
+		private void RotateTowardsPlanet(PlanetBody planet)
 		{
-			Vector3 moveDir = (transform.forward * horzInputRaw + transform.right * vertInputRaw) * diag * walkForce;
-			
-			currentSpeed = moveDir.magnitude;
-			rigid.AddForce(Vector3.ProjectOnPlane(moveDir, normalVector) * Time.fixedDeltaTime, ForceMode.VelocityChange);
-			ChangeAnimatorParam(animIDSpeed, currentSpeed);
+			Transform cachedTransform = transform;
+			Quaternion cachedTransformRotation = cachedTransform.rotation;
+
+			Vector3 cameraLookDirection = cameraTransform.forward;
+
+			Vector3 gravityForceDirection = (cachedTransform.position - planet.Rigid.position).normalized;
+			Vector3 playerUp = cachedTransform.up;
+			Quaternion neededRotation = Quaternion.FromToRotation(playerUp, gravityForceDirection) * cachedTransformRotation;
+
+			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.deltaTime);
+			cachedTransform.rotation = cachedTransformRotation;
+
+			cameraTransform.rotation = Quaternion.LookRotation(cameraLookDirection, cachedTransform.up);
 		}
-		public void RaycastInteractableObject()
+
+		/// <summary>
+		/// Rotate Body to align with the camera when player exits planet's gravity field.
+		/// </summary>
+		private void AlignToCamera()
+		{
+			Transform cachedTransform = transform;
+			Quaternion neededRotation = Quaternion.Inverse(cameraTransform.localRotation) * cachedTransform.rotation;
+			cachedTransform.rotation = Quaternion.Slerp(cachedTransform.rotation, neededRotation, Time.deltaTime);
+		}
+
+
+		/// <summary>
+		/// Shoot raycast from camera forward by interactRayLength
+		/// </summary>
+		public void RaycastToInteractableObject()
 		{
 			RaycastHit hit;
 			int targetLayer = Constants.LAYER_INTERACTABLE;
 
-			if (Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, rayLength, targetLayer))
+			if (UnityEngine.Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, interactRayLength, targetLayer))
 			{
 				isDetectInteractable = true;
-				Debug.Log(hit.transform.name);
 				recentlyDetectedProp = hit.transform.GetComponent<PropsBase>();
 			}
 			else
@@ -400,74 +290,88 @@ namespace MPGame.Controller
 				recentlyDetectedProp = null;
 			}
 
-			Debug.DrawRay(cameraTransform.position, cameraTransform.forward * rayLength, Color.red);
+			Debug.DrawRay(cameraTransform.position, cameraTransform.forward * interactRayLength, Color.red);
 		}
 
-		public void TurnIdlePM()
+		/// <summary>
+		/// Shoot raycast from zero to downward by groundRayLength
+		/// </summary>
+		public void RaycastToGround()
 		{
-			capsule.material = idlePM;
-		}
-		public void TurnPlayerPM()
-		{
-			capsule.material = playerPM;
-		}
-		public void TurnSlopePM()
-		{
-			capsule.material = slopePM;
-		}
-		public void TurnFlyPM()
-		{
-			capsule.material = flyPM;
-		}
-		public void SetMaxWalkSpeed()
-		{
-			rigid.maxLinearVelocity = maxWalkSpeed;
-		}
-		public void SetMaxFlySpeed()
-		{
-			rigid.maxLinearVelocity = maxFlySpeed;
-		}
+			RaycastHit hit;
+			int targetLayer = Constants.LAYER_GROUND;
 
-		public void TurnStateToIdleState()
-		{
-			stateMachine.ChangeState(idleState);
-		}
-		public void TurnStateToFlyState()
-		{
-			stateMachine.ChangeState(flyState);
-		}
-		public void TurnStateToFlightState(Chair chair, bool isDriver)
-		{
-			flightState.SetParams(chair, isDriver);
-			stateMachine.ChangeState(flightState);
+			if(UnityEngine.Physics.Raycast(transform.position, -transform.up, out hit, groundRayLength))
+			{
+				isGrounded = true;
+			}
+			else
+			{
+				isGrounded = false;
+			}
 		}
 
 
-		private float keyWeight = 0.2f;
-		public void Fly(float vert, float horz, float depth)
+		/// <summary>
+		/// Movement Func in general state.
+		/// Seperate fly and walk in this func.
+		/// </summary>
+		public void Move(float vert, float horz, float depth)
 		{
-			rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Force);
-			rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Force);
-			rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Force);
+			if (isInGravity)
+			{
+				Vector3 moveDirection = (transform.forward * vert) + (transform.right * horz);
+				moveDirection = moveDirection.normalized;
+
+				Vector3 planetToPlayer = transform.position - playerPlanet.Rigid.position;
+				Vector3 projectedMove = Vector3.ProjectOnPlane(moveDirection, planetToPlayer.normalized);
+
+				Vector3 targetVelocity = projectedMove * thrustPower + playerPlanet.Rigid.linearVelocity;
+				rigid.linearVelocity = Vector3.Lerp(rigid.linearVelocity, targetVelocity, Time.deltaTime);
+
+				rigid.AddForce(transform.up * depth * thrustPower * thrustWeight, ForceMode.Force);
+			}
+			else
+			{
+				rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Force);
+				rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Force);
+				rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Force);
+			}
 		}
+
+		/// <summary>
+		/// Rotation Func in general state.
+		/// </summary>
 		public void RotateBodyWithMouse(float mouseX, float mouseY, float roll)
 		{
-			cameraTransform.localRotation = Quaternion.Lerp(cameraTransform.localRotation, Quaternion.identity, 0.5f);
+			if (isInGravity != previousGravityState)
+			{
+				cameraTransform.localRotation = Quaternion.identity;
+				transform.rotation = Quaternion.Euler(cameraTransform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+				previousGravityState = isInGravity;
+			}
 
-			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
-			rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Force);
-			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Force);
+			if (isInGravity)		// TODO - erase local vars
+			{
+				Vector3 camRot = cameraTransform.localRotation.eulerAngles;
+				float tmpV = camRot.x - mouseY * rotationPower;
+				if (tmpV >= 180) tmpV -= 360;
+				float rotValue = Mathf.Clamp(tmpV, minVertRot, maxVertRot);
+				Quaternion targetRotation = Quaternion.Euler(rotValue, 0f, 0f);
+				cameraTransform.localRotation = Quaternion.Lerp(cameraTransform.localRotation, targetRotation, Time.deltaTime * 10f);
+			}
+			else
+			{
+				rigid.AddTorque(-transform.right * mouseY * rotationPower * camRotateSpeed, ForceMode.Acceleration);
+			}
+
+			transform.Rotate(mouseX * Vector3.up * rotationPower * Time.fixedDeltaTime * camRotateSpeed, Space.Self);
+			rigid.AddTorque(-transform.forward * roll * rotationPower * rotationKeyWeight, ForceMode.Acceleration);
 		}
 
-		private float vertRot = 0f;
-		public void RotateWithMouse(float mouseX, float mouseY)
-		{
-			vertRot -= mouseY * rotationPower;
-			vertRot = Mathf.Clamp(vertRot, minVertRot, maxVertRot);
-			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Force);
-			cameraTransform.localRotation = Quaternion.Euler(vertRot, 0f, 0f);
-		}
-
+		/// <summary>
+		/// Rotation Func while flight state (because flight state must be kinematic).
+		/// </summary>
 		public void RotateWithoutRigidbody(float mouseX, float mouseY)
 		{
 			vertRot -= mouseY * rotationPower;
@@ -480,7 +384,6 @@ namespace MPGame.Controller
 
 
 		#region Animation Synchronization
-
 		public void ChangeAnimatorParam(int id, bool param)
 		{
 			animator.SetBool(id, param);
@@ -490,30 +393,6 @@ namespace MPGame.Controller
 		{
 			animator.SetFloat(id, param);
 			ChangeAnimatorParamServerRPC(id, param);
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void ChangeAnimatorParamServerRPC(int id, bool param)
-		{
-			ChangeAnimatorParamClientRPC(id, param);
-		}
-		[ServerRpc(RequireOwnership = false)]
-		public void ChangeAnimatorParamServerRPC(int id, float param)
-		{
-			ChangeAnimatorParamClientRPC(id, param);
-		}
-
-		[ClientRpc]
-		public void ChangeAnimatorParamClientRPC(int id, bool param)
-		{
-			if (IsOwner) return;
-			animator.SetBool(id, param);
-		}
-		[ClientRpc]
-		public void ChangeAnimatorParamClientRPC(int id, float param)
-		{
-			if (IsOwner) return;
-			animator.SetFloat(id, param);
 		}
 		#endregion
 
@@ -526,117 +405,152 @@ namespace MPGame.Controller
 		{
 
 		}
-        #endregion
+		#endregion
 
-        #region Vacuum Funcs
+		#region Vacuum Funcs
 
-        [Header("Vacuum Settings")]
-        [SerializeField] private float vacuumDetectRadius;
-        [SerializeField] private float vacuumDetectLength;
-        [SerializeField] private float vacuumSpeed;
-        [SerializeField] private LayerMask vacuumableLayers;
-        private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //이전 프레임에 빨아들이고있던 물체들을	저장하는 HashSet
+		[Header("Vacuum Settings")]
+		[SerializeField] private float vacuumDetectRadius;
+		[SerializeField] private float vacuumDetectLength;
+		[SerializeField] private float vacuumSpeed;
+		[SerializeField] private LayerMask vacuumableLayers;
+		private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //이전 프레임에 빨아들이고있던 물체들을	저장하는 HashSet
+		private HashSet<VacuumableObject> currentDetected = new HashSet<VacuumableObject>();
 
-        [Header("Absorption Settings")]
-        private float absorbDistance = 1f;
+		[Header("Absorption Settings")]
+		private float absorbDistance = 1f;
 
-		private bool isVacuumingStarted = false;
+		private bool isFirstVacuumingStarted = false;
 
-        private Vector3 cameraPos;
-        private Vector3 cameraForward;
-        private Vector3 detectingVector;
-        private void DetectVacuumingObjects()
-        {
-			if (!isVacuumingStarted)
+		private Vector3 cameraPos;
+		private Vector3 cameraForward;
+		private Vector3 detectingVector;
+
+		public void Vacuuming()
+		{
+			if (!StateBase.IsVacuumEnabled)
 			{
-                isVacuumingStarted = true;
-            }
+				return;
+			}
 
+			if (!StateBase.IsVacuumPressed)
+			{
+				if (isFirstVacuumingStarted)
+				{
+					isFirstVacuumingStarted = false;
+
+					foreach (var obj in prevDetected)
+					{
+						obj.VacuumEnd();
+					}
+					prevDetected.Clear();
+				}
+				return;
+			}
+
+			DetectVacuumingObjects();
+		}
+
+		private void DetectVacuumingObjects()
+		{
 			Debug.Log("Detecting");
 
-            cameraPos = cameraTransform.position;
-            cameraForward = cameraTransform.forward;
+			cameraPos = cameraTransform.position;
+			cameraForward = cameraTransform.forward;
 			detectingVector = cameraPos + cameraForward * vacuumDetectLength;
 
-            Collider[] hitColliders = Physics.OverlapCapsule(cameraTransform.position, detectingVector, vacuumDetectRadius, vacuumableLayers);
-			
-			HashSet<VacuumableObject> currentDetected = new HashSet<VacuumableObject>();
+			Collider[] hitColliders = UnityEngine.Physics.OverlapCapsule(cameraTransform.position, detectingVector, vacuumDetectRadius, vacuumableLayers);
 
-            foreach (var hitCollider in hitColliders)
-            {
+			foreach (var hitCollider in hitColliders)
+			{
+				if (!NetworkManager.SpawnManager.SpawnedObjectsList.Contains(hitCollider.GetComponent<NetworkObject>()))
+					continue;
 				VacuumableObject cur = hitCollider.GetComponent<VacuumableObject>();
-                currentDetected.Add(cur);
-                cur.Init(cameraPos, cameraForward);
-            }
+				currentDetected.Add(cur);
+				cur.Init(GameManagerEx.Instance.MyClientId, cameraPos, cameraForward);
+			}
 
-			foreach (var cur in currentDetected)
+			if (!isFirstVacuumingStarted)
+			{
+				isFirstVacuumingStarted = true;
+				prevDetected = currentDetected;
+				currentDetected.Clear();
+				return;
+			}
+
+			foreach (VacuumableObject prev in prevDetected)
+			{
+				if (!currentDetected.Contains(prev)) // hitCollider에 있었다가 밖으로 나간 오브젝트들
+				{
+					prev.VacuumEnd();
+				}
+			}
+
+			foreach (var cur in currentDetected) // hitCollider에 없었다가 새로 들어온 오브젝트들
 			{
 				if (!prevDetected.Contains(cur))
-                {
-					// 새로 들어온 오브젝트들
-                }
-            }
+				{
+				}
+			}
 
-            foreach (VacuumableObject prev in prevDetected)
-            {
-                if (!currentDetected.Contains(prev))
-                {
-					prev.VacuumEnd();
-                }
-            }
+			prevDetected = new HashSet<VacuumableObject>(currentDetected);
+			currentDetected.Clear();
+		}
 
-            prevDetected = currentDetected;
-        }
+		public void RemoveVacuumingObjectsFromHashsets(VacuumableObject ob)
+		{
+			prevDetected.Remove(ob);
+		}
 
-        // 선택된 상태에서만 Scene 뷰에 그리기
-        private void OnDrawGizmosSelected()
-        {
-            if (cameraTransform == null)
-                return;
+		// 선택된 상태에서만 Scene 뷰에 그리기
+		private void OnDrawGizmosSelected()
+		{
+			if (cameraTransform == null)
+				return;
 
-            // 시작점과 끝점을 정의 (detectingVector가 월드 좌표라면 그대로, 로컬 좌표라면 변환 필요)
-            Vector3 startPoint = cameraTransform.position;
-            Vector3 endPoint = detectingVector;
+			// 시작점과 끝점을 정의 (detectingVector가 월드 좌표라면 그대로, 로컬 좌표라면 변환 필요)
+			Vector3 startPoint = cameraTransform.position;
+			Vector3 endPoint = detectingVector;
 
-            // Gizmos 색상 설정
-            Gizmos.color = Color.green;
-			#if UNITY_EDITOR
-            DrawWireCapsule(startPoint, endPoint, vacuumDetectRadius);
-			#endif
-        }
-        void DrawWireCapsule(Vector3 start, Vector3 end, float radius)
-        {
-            // 두 점 사이의 방향 및 거리 계산
-            Vector3 direction = end - start;
-            float height = direction.magnitude;
-            Vector3 up = direction.normalized;
+			// Gizmos 색상 설정
+			Gizmos.color = Color.green;
+#if UNITY_EDITOR
+			DrawWireCapsule(startPoint, endPoint, vacuumDetectRadius);
+#endif
+		}
+		void DrawWireCapsule(Vector3 start, Vector3 end, float radius)
+		{
+			// 두 점 사이의 방향 및 거리 계산
+			Vector3 direction = end - start;
+			float height = direction.magnitude;
+			Vector3 up = direction.normalized;
 
-            // 시작점과 끝점에 원을 그립니다.
-            Handles.DrawWireDisc(start, up, radius);
-            Handles.DrawWireDisc(end, up, radius);
+			// 시작점과 끝점에 원을 그립니다.
+			Handles.DrawWireDisc(start, up, radius);
+			Handles.DrawWireDisc(end, up, radius);
 
-            // 원을 연결할 때 사용할 두 축(수평 방향) 결정
-            Vector3 forward = Vector3.Cross(up, Vector3.right);
-            if (forward == Vector3.zero)
-            {
-                forward = Vector3.Cross(up, Vector3.forward);
-            }
-            forward.Normalize();
-            Vector3 right = Vector3.Cross(up, forward).normalized;
+			// 원을 연결할 때 사용할 두 축(수평 방향) 결정
+			Vector3 forward = Vector3.Cross(up, Vector3.right);
+			if (forward == Vector3.zero)
+			{
+				forward = Vector3.Cross(up, Vector3.forward);
+			}
+			forward.Normalize();
+			Vector3 right = Vector3.Cross(up, forward).normalized;
 
-            // 원 둘레의 네 방향(상, 하, 좌, 우)으로 오프셋 계산
-            Vector3 offset1 = forward * radius;
-            Vector3 offset2 = -forward * radius;
-            Vector3 offset3 = right * radius;
-            Vector3 offset4 = -right * radius;
+			// 원 둘레의 네 방향(상, 하, 좌, 우)으로 오프셋 계산
+			Vector3 offset1 = forward * radius;
+			Vector3 offset2 = -forward * radius;
+			Vector3 offset3 = right * radius;
+			Vector3 offset4 = -right * radius;
 
-            // 각 원의 네 점을 연결하는 선분을 그립니다.
-            Handles.DrawLine(start + offset1, end + offset1);
-            Handles.DrawLine(start + offset2, end + offset2);
-            Handles.DrawLine(start + offset3, end + offset3);
-            Handles.DrawLine(start + offset4, end + offset4);
-        }
+			// 각 원의 네 점을 연결하는 선분을 그립니다.
+			Handles.DrawLine(start + offset1, end + offset1);
+			Handles.DrawLine(start + offset2, end + offset2);
+			Handles.DrawLine(start + offset3, end + offset3);
+			Handles.DrawLine(start + offset4, end + offset4);
+		}
 
-        #endregion
-    }
+		#endregion
+	}
 }

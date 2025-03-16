@@ -1,4 +1,3 @@
-using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
 {
@@ -16,22 +15,12 @@ namespace MPGame.Controller.StateMachine
 			vertInputRaw = horzInputRaw = 0f;
             controller.Rigidbody.linearDamping = 0f;
 
-			controller.Rigidbody.constraints = RigidbodyConstraints.None;
-			controller.UseGravity = false;
-			controller.SetMaxFlySpeed();
-			controller.TurnFlyPM();
-            controller.UnsetParentServerRPC();       // ³¯±â ½ÃÀÛÇÏ¸é Parent ¾ø¾Ú
+            controller.UnsetParentServerRPC();       // ë‚ ê¸° ì‹œìž‘í•˜ë©´ Parent ì—†ì•°
         }
 
         public override void Exit()
         {
             base.Exit();
-            controller.Rigidbody.constraints = RigidbodyConstraints.FreezeRotationX
-                | RigidbodyConstraints.FreezeRotationZ;
-
-			controller.UseGravity = true;
-			controller.SetMaxWalkSpeed();
-			controller.TurnPlayerPM();
 		}
 
 
@@ -44,28 +33,30 @@ namespace MPGame.Controller.StateMachine
             GetMouseInput(out mouseX, out mouseY);
             GetRollInput(out roll);
             GetInteractableInput();
+            GetEnableVacuumInput();
+            GetVacuumInput(out isVacuumPressed);
 		}
 
         public override void LogicUpdate()
         {
             base.LogicUpdate();
 
-            if (!controller.OnSlope() && controller.IsEnoughVelocityToLand())
-            {
-                controller.DetectIsGround();
-            }
+            controller.Vacuuming();
 		}
 
         public override void PhysicsUpdate()
         {
             base.PhysicsUpdate();
-            controller.RaycastInteractableObject();
-			controller.RotateBodyWithMouse(mouseX, mouseY, roll);
+            controller.RaycastToInteractableObject();
 
-            float depth = 0;
-            if (isUpPressed == isDownPressed) depth = 0;
-            else depth = isUpPressed ? 1 : -1;
-            controller.Fly(vertInputRaw, horzInputRaw, depth);
+			float depth = 0;
+			if (isUpPressed == isDownPressed) depth = 0;
+			else depth = isUpPressed ? 1 : -1;
+
+            controller.Move(vertInputRaw, horzInputRaw, depth);
+            controller.RotateBodyWithMouse(mouseX, mouseY, roll);
+
+
 		}
     }
 }

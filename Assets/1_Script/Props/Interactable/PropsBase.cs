@@ -7,17 +7,18 @@ namespace MPGame.Props
     {
 
 		private NetworkVariable<ulong> ownerClientId = new NetworkVariable<ulong>(ulong.MaxValue);
+		public NetworkVariable<ulong> OwnerClientId { get => ownerClientId; }
 
-		/// <summary>
-		/// ¿ÜºÎ¿¡¼­ Interact ÇÒ ¶§ È£ÃâÇÏ´Â ÇÔ¼ö
-		/// </summary>
-		public void TryInteract()
+        /// <summary>
+        /// ì™¸ë¶€ì—ì„œ Interact í•  ë•Œ í˜¸ì¶œí•˜ëŠ” í•¨ìˆ˜
+        /// </summary>
+        public void TryInteract()
 		{
 			RequestOwnershipServerRpc(NetworkManager.Singleton.LocalClientId);
 		}
 
 		/// <summary>
-		/// ¿ÜºÎ¿¡¼­ Interact ³¡³¾ ¶§ È£ÃâÇÏ´Â ÇÔ¼ö
+		/// Â™ëªƒÂ€Â—ÂÂ„Âœ Interact ÂÂÂ‚ Â•ÂŒ Â˜ëª„ÂœÂ•Â˜ÂŠÂ” Â•â‘¥ÂˆÂ˜
 		/// </summary>
 		public void EndInteraction()
 		{
@@ -27,14 +28,13 @@ namespace MPGame.Props
 		[ServerRpc(RequireOwnership = false)]
 		private void RequestRemoveOwnershipServerRPC()
 		{
-			//NetworkObject.RemoveOwnership();
 			ownerClientId.Value = ulong.MaxValue;
-		}
+        }
 
-		[ServerRpc(RequireOwnership = false)]
+        [ServerRpc(RequireOwnership = false)]
 		private void RequestOwnershipServerRpc(ulong requestingClientId)
 		{
-			UnityEngine.Debug.Log(ownerClientId.Value + ", " + requestingClientId);
+			Debug.Log(ownerClientId.Value + ", " + requestingClientId);
 			if (ownerClientId.Value == ulong.MaxValue)
 			{
 				//NetworkObject.ChangeOwnership(requestingClientId);
@@ -43,7 +43,7 @@ namespace MPGame.Props
 			}
 			else
 			{
-				// TODO - ÀÌ¹Ì ÀÖ´Â °æ¿ì
+				// TODO - ÂëŒ€ï¿½ ÂÂˆÂŠÂ” å¯ƒìŒÂš
 			}
 		}
 

@@ -1,4 +1,4 @@
-﻿using MPGame.Props;
+using MPGame.Props;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -23,48 +23,50 @@ namespace MPGame.Controller.StateMachine
 		{
 		}
 
+		private bool isOutState = true;
+
 		public override void Enter()
 		{
 			base.Enter();
+			isOutState = false;
 			vertInputRaw = horzInputRaw = 0f;
+
 			spaceShip = spaceChair.GetComponentInParent<SpaceshipContoller>();
 			if (spaceShip == null)
 			{
-				controller.TurnStateToFlyState();
+				controller.SetFlyState();
 			}
 
-			controller.UseGravity = false;
 			controller.SetParentServerRPC(spaceShip.GetComponent<NetworkObject>().NetworkObjectId,
 				spaceChair.localEnterPosition,
 				spaceChair.transform.localRotation);
 
-			controller.ChangeAnimatorParam(controller.animIdFreeFall, true);	// TODO - 앉는 모션으로 바꿔야됨
-			controller.Capsule.isTrigger = true;
+			// TODO - Anim (sit)
 			controller.SetKinematic(true);
+	}
 
-			controller.Rigidbody.constraints = RigidbodyConstraints.None;
-		}
-
-		public override void Exit()
+	public override void Exit()
 		{
 			base.Exit();
+			isOutState = true;
 
-			controller.Capsule.isTrigger = false;
-			controller.UseGravity = true;
-			controller.SetKinematic(false);
 			controller.transform.localPosition = spaceChair.localExitPosition;
 			controller.transform.localRotation = spaceChair.transform.localRotation;
+			
+			controller.SetKinematic(false);
+			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
 
-			controller.Rigidbody.constraints = RigidbodyConstraints.None;
 			spaceChair.EndInteraction();
 		}
 
 		public override void HandleInput()
 		{
 			base.HandleInput();
-
+			if (isOutState) return;
+			
 			GetMouseInput(out mouseX, out mouseY);
 			GetESCInput(out isESCPressed);
+
 			if (isDriver)
 			{
 				GetRollInput(out roll);
@@ -75,13 +77,16 @@ namespace MPGame.Controller.StateMachine
 
 		public override void LogicUpdate()
 		{
+			if (isOutState) return;
+
 			if (isESCPressed)
 			{
-				controller.TurnStateToFlyState();
+				controller.SetFlyState();
 				isESCPressed = false;
 				return;
 			}
 
+			controller.UpdatePlayerLocalPositionServerRPC(spaceChair.localEnterPosition);
 			controller.transform.localPosition = spaceChair.localEnterPosition;
 			if (isDriver)
 			{
@@ -93,6 +98,7 @@ namespace MPGame.Controller.StateMachine
 		{
 			base.PhysicsUpdate();
 
+			if (isOutState) return;
 			if (spaceShip == null) return;
 
 			if (isDriver)

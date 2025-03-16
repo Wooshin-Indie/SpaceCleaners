@@ -1,6 +1,7 @@
+using MPGame.Controller;
+using MPGame.Physics;
 using System.Collections.Generic;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 namespace MPGame.Manager
@@ -25,8 +26,11 @@ namespace MPGame.Manager
 
 		[SerializeField] private GameObject playerPrefab;
 		private Dictionary<ulong, GameObject> players = new Dictionary<ulong, GameObject>();
+		public Dictionary<ulong, GameObject> Players { get => players; }
 
-		[SerializeField] private List<GameObject> environments =new List<GameObject>();
+        [SerializeField] private List<GameObject> environments =new List<GameObject>();
+
+		[SerializeField] private GameObject planetPrefab;
 
 		public void SpawnEnvironments()
 		{
@@ -36,6 +40,20 @@ namespace MPGame.Manager
 				NetworkObject no = go.GetComponent<NetworkObject>();
 				no?.Spawn();
 			}
+		}
+
+		public void SpawnGalaxy()
+		{
+			// HACK - 3개만 임시로 설치함
+			for (int i = 0; i < 3; i++)
+			{
+				GameObject go = Instantiate(planetPrefab);
+				go.GetComponent<PlanetBody>().SetPlanetSize(Random.Range(300, 500), 1000 * (i + 1), 30 * i);
+				NetworkObject no = go.GetComponent<NetworkObject>();
+				no?.Spawn();
+			}
+
+			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject().GetComponent<PlayerController>().FindPlanets();
 		}
 
 		[ServerRpc(RequireOwnership = false)]
@@ -70,6 +88,5 @@ namespace MPGame.Manager
 			go.GetComponent<NetworkObject>().Despawn();
 			Destroy(go);
 		}
-
 	}
 }

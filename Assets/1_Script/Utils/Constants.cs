@@ -14,5 +14,7 @@ namespace MPGame.Utils
 		public static readonly int LAYER_GROUND = 1 << 11;
 
 		public static readonly int MAX_PLAYERS = 4;
+
+		public static readonly float CONST_GRAV = 100f;	// Gravitational Constant
 	}
 }
