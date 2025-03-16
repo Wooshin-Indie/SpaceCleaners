@@ -53,12 +53,10 @@ namespace MPGame.Controller.StateMachine
 			if (isUpPressed == isDownPressed) depth = 0;
 			else depth = isUpPressed ? 1 : -1;
 
-			controller.RotateBodyWithMouse(mouseX, mouseY, roll);
-
-
 			if (controller.IsHost)
             {
 				controller.Move(vertInputRaw, horzInputRaw, depth);
+				controller.RotateBodyWithMouse(mouseX, mouseY, roll);
 			}
             else
             {
@@ -67,6 +65,7 @@ namespace MPGame.Controller.StateMachine
                     sequence = 0,
                     timestamp = 0,
                     moveDir = new UnityEngine.Vector3(vertInputRaw, horzInputRaw, depth),
+                    rotateDir = new UnityEngine.Vector3(mouseX, mouseY, roll)
                 });
             }
 

@@ -144,12 +144,17 @@ namespace MPGame.Controller
 
 		private void Update()
 		{
-			if (!IsOwner) return;
+			if (IsOwner)
+			{
+				stateMachine.CurState.HandleInput();
+				stateMachine.CurState.LogicUpdate();
+			}
 
-			stateMachine.CurState.HandleInput();
-			stateMachine.CurState.LogicUpdate();
-
-			OnUpdateSync();
+			if (IsHost)
+			{
+				UpdatePlayerPositionClientRPC(transform.position);
+				UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
+			}
 		}
 
 		private void FixedUpdate()

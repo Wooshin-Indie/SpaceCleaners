@@ -15,6 +15,7 @@ namespace MPGame.Controller
 		{
 			public int sequence;
 			public Vector3 moveDir;
+			public Vector3 rotateDir;
 			public float timestamp;
 
 			void INetworkSerializable.NetworkSerialize<T>(BufferSerializer<T> serializer)
@@ -22,6 +23,7 @@ namespace MPGame.Controller
 				serializer.SerializeValue(ref sequence);
 				serializer.SerializeValue(ref timestamp);
 				serializer.SerializeValue(ref moveDir);
+				serializer.SerializeValue(ref rotateDir);
 			}
 		}
 
@@ -53,13 +55,6 @@ namespace MPGame.Controller
 
 		}
 
-		private void OnUpdateSync()
-		{
-			if (!rigid.isKinematic)
-				UpdatePlayerPositionClientRPC(transform.position);
-			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
-		}
-
 		#region Input RPC
 
 		/// <summary>
@@ -81,6 +76,7 @@ namespace MPGame.Controller
 		private void SendInputServerRPC(ClientInput input)
 		{
 			Move(input.moveDir.x, input.moveDir.y, input.moveDir.z);
+			RotateBodyWithMouse(input.rotateDir.x, input.rotateDir.y, input.rotateDir.z);
 
 			// SendCorrectionClientRPC(rigid.position, input.sequence);
 		}
@@ -137,7 +133,7 @@ namespace MPGame.Controller
 		[ClientRpc]
 		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition, bool fromServer = false)
 		{
-			if (IsOwner) return;
+			if (IsHost) return;
 			rigid.MovePosition(playerPosition);
 		}
 
