@@ -148,11 +148,7 @@ namespace MPGame.Controller
 		{
 			if (IsHost) return;
 
-			if (IsOwner)
-			{
-				Debug.Log(playerQuat.eulerAngles);
-			}
-			transform.rotation = playerQuat;
+			rigid.MoveRotation(playerQuat);
 			cameraTransform.localRotation = camQuat;
 		}
 

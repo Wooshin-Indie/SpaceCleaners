@@ -371,7 +371,10 @@ namespace MPGame.Controller
 				rigid.AddTorque(-transform.right * mouseY * rotationPower * camRotateSpeed, ForceMode.Acceleration);
 			}
 
-			transform.Rotate(mouseX * Vector3.up * rotationPower * Time.fixedDeltaTime * camRotateSpeed, Space.Self);
+			float rotationInput = mouseX * rotationPower * camRotateSpeed * Time.fixedDeltaTime;
+			Quaternion deltaRotation = Quaternion.AngleAxis(rotationInput, Vector3.up);
+			rigid.MoveRotation(rigid.rotation * deltaRotation);
+			
 			rigid.AddTorque(-transform.forward * roll * rotationPower * rotationKeyWeight, ForceMode.Acceleration);
 		}
 
