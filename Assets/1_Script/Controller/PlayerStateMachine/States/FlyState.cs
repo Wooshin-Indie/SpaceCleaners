@@ -33,11 +33,15 @@ namespace MPGame.Controller.StateMachine
             GetMouseInput(out mouseX, out mouseY);
             GetRollInput(out roll);
             GetInteractableInput();
+            GetEnableVacuumInput();
+            GetVacuumInput(out isVacuumPressed);
 		}
 
         public override void LogicUpdate()
         {
             base.LogicUpdate();
+
+            controller.Vacuuming();
 		}
 
         public override void PhysicsUpdate()
