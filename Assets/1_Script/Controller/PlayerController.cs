@@ -131,9 +131,11 @@ namespace MPGame.Controller
 			Debug.Log("SPAWN");
 			base.OnNetworkSpawn();
 
+
 			// TODO - Anim : basic anim
 			cameraTransform.gameObject.SetActive(IsOwner);
-			
+			rigid.isKinematic = !IsHost;
+
 			if (IsOwner && IsHost)
 			{
 				PlayerSpawner.Instance.SpawnEnvironments();
@@ -147,19 +149,21 @@ namespace MPGame.Controller
 
 		private void Update()
 		{
+			OnUpdate();
 			if (!IsOwner) return;
 
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
+			
 		}
 
 		private void FixedUpdate()
 		{
+			OnFixedUpdateSync();
+
 			if (!IsOwner) return;
 
 			stateMachine.CurState.PhysicsUpdate();
-			
-			OnFixedUpdateSync();
 		}
 
 		#endregion
@@ -200,7 +204,7 @@ namespace MPGame.Controller
 		/// </summary>
 		public void ApplyGravity()
 		{
-			if (planets == null) return;
+			if (planets == null || !IsHost) return;
 
 			float maxMag = 0f;
 			PlanetBody maxPlanet = null;

@@ -42,6 +42,7 @@ namespace MPGame.Controller
 
 		private void OnFixedUpdateSync()
 		{
+			/*
 			if (IsHost)
 			{
 				networkPosition.Value = rigid.position;
@@ -50,8 +51,19 @@ namespace MPGame.Controller
 			else
 			{
 				rigid.position = networkPosition.Value;
-				rigid.rotation = networkRotation.Value;
+				rigid.rotation = networkRotation.Value.normalized;
 			}
+			*/
+			if (!IsHost) return;
+
+		}
+
+		private void OnUpdate()
+		{
+			UpdatePlayerPositionClientRPC(transform.position);
+			if (IsOwner)
+				Debug.Log("ONUPDATE");
+			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		#region Input RPC
@@ -74,12 +86,6 @@ namespace MPGame.Controller
 		[ServerRpc(RequireOwnership = false)]
 		private void SendInputServerRPC(ClientInput input)
 		{
-			if (!IsHost)
-			{
-				Debug.LogError("Process On Server Called in Client!");
-				return;
-			}
-
 			Move(input.moveDir.x, input.moveDir.y, input.moveDir.z);
 			RotateBodyWithMouse(input.rotateDir.x, input.rotateDir.y, input.rotateDir.z);
 
@@ -138,9 +144,7 @@ namespace MPGame.Controller
 		[ClientRpc]
 		private void UpdatePlayerPositionClientRPC(Vector3 playerPosition, bool fromServer = false)
 		{
-			if (!fromServer && IsOwner) return;
-
-			rigid.linearVelocity = Vector3.zero;
+			if (IsHost) return;
 			rigid.MovePosition(playerPosition);
 		}
 
@@ -153,7 +157,12 @@ namespace MPGame.Controller
 		[ClientRpc]
 		private void UpdatePlayerRotateClientRPC(Quaternion playerQuat, Quaternion camQuat, bool fromServer = false)
 		{
-			if (!fromServer && IsOwner) return;
+			if (IsHost) return;
+
+			if (IsOwner)
+			{
+				Debug.Log(playerQuat.eulerAngles);
+			}
 			transform.rotation = playerQuat;
 			cameraTransform.localRotation = camQuat;
 		}
