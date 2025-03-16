@@ -26,8 +26,9 @@ namespace MPGame.Manager
 
 		[SerializeField] private GameObject playerPrefab;
 		private Dictionary<ulong, GameObject> players = new Dictionary<ulong, GameObject>();
+		public Dictionary<ulong, GameObject> Players { get => players; }
 
-		[SerializeField] private List<GameObject> environments =new List<GameObject>();
+        [SerializeField] private List<GameObject> environments =new List<GameObject>();
 
 		[SerializeField] private GameObject planetPrefab;
 
@@ -87,6 +88,5 @@ namespace MPGame.Manager
 			go.GetComponent<NetworkObject>().Despawn();
 			Destroy(go);
 		}
-
 	}
 }
