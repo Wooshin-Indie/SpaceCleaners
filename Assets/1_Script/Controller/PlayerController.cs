@@ -312,9 +312,9 @@ namespace MPGame.Controller
 
             if (!StateBase.IsVacuumPressed)
 			{
-                if (isVacuumingStarted)
+                if (isFirstVacuumingStarted)
                 {
-                    isVacuumingStarted = false;
+                    isFirstVacuumingStarted = false;
 
 					foreach (var obj in prevDetected)
 					{
@@ -541,18 +541,13 @@ namespace MPGame.Controller
         [Header("Absorption Settings")]
         private float absorbDistance = 1f;
 
-		private bool isVacuumingStarted = false;
+		private bool isFirstVacuumingStarted = false;
 
         private Vector3 cameraPos;
         private Vector3 cameraForward;
         private Vector3 detectingVector;
         private void DetectVacuumingObjects()
         {
-			if (!isVacuumingStarted)
-			{
-                isVacuumingStarted = true;
-            }
-
 			Debug.Log("Detecting");
 
             cameraPos = cameraTransform.position;
@@ -563,35 +558,42 @@ namespace MPGame.Controller
 
             foreach (var hitCollider in hitColliders)
             {
+				if (!NetworkManager.SpawnManager.SpawnedObjectsList.Contains(hitCollider.GetComponent<NetworkObject>()))
+					continue;
 				VacuumableObject cur = hitCollider.GetComponent<VacuumableObject>();
                 currentDetected.Add(cur);
                 cur.Init(GameManagerEx.Instance.MyClientId, cameraPos, cameraForward);
             }
 
-			foreach (var cur in currentDetected)
+            if (!isFirstVacuumingStarted)
 			{
-				if (!prevDetected.Contains(cur))
-                {
-					// 새로 들어온 오브젝트들
-                }
+                isFirstVacuumingStarted = true;
+                prevDetected = currentDetected;
+                currentDetected.Clear();
+                return;
             }
 
             foreach (VacuumableObject prev in prevDetected)
             {
-                if (!currentDetected.Contains(prev))
+                if (!currentDetected.Contains(prev)) // hitCollider에 있었다가 밖으로 나간 오브젝트들
                 {
 					prev.VacuumEnd();
                 }
             }
 
-            prevDetected = currentDetected;
+            foreach (var cur in currentDetected) // hitCollider에 없었다가 새로 들어온 오브젝트들
+            {
+                if (!prevDetected.Contains(cur))
+                {
+                }
+            }
+
+			prevDetected = new HashSet<VacuumableObject>(currentDetected);
+			currentDetected.Clear();
         }
 
 		public void RemoveVacuumingObjectsFromHashsets(VacuumableObject ob)
 		{
-			currentDetected.Remove(ob);
-			prevDetected.Remove(ob);
-			Debug.Log("HashSet Removed");
         }
 
         // 선택된 상태에서만 Scene 뷰에 그리기

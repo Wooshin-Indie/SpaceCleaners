@@ -28,11 +28,17 @@ namespace MPGame.Props
 		[ServerRpc(RequireOwnership = false)]
 		private void RequestRemoveOwnershipServerRPC()
 		{
-			//NetworkObject.RemoveOwnership();
 			ownerClientId.Value = ulong.MaxValue;
-		}
+			RemoveOwnershipClientRPC();
+        }
 
-		[ServerRpc(RequireOwnership = false)]
+        [ClientRpc]
+        private void RemoveOwnershipClientRPC()
+        {
+            ownerClientId.Value = ulong.MaxValue;
+        }
+
+        [ServerRpc(RequireOwnership = false)]
 		private void RequestOwnershipServerRpc(ulong requestingClientId)
 		{
 			Debug.Log(ownerClientId.Value + ", " + requestingClientId);

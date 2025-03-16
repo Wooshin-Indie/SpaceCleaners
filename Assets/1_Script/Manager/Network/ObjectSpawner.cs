@@ -3,6 +3,9 @@ using Unity.Netcode;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using MPGame.Props;
+using UnityEditor.Build.Content;
+using UnityEngine.InputSystem;
+using Unity.VisualScripting;
 
 namespace MPGame.Manager
 {
@@ -32,37 +35,39 @@ namespace MPGame.Manager
                 SpawnVacuumableObjectServerRPC(pos);
             }
 
-            foreach (var ob in vacuumableObjects)
+
+            if (!NetworkManager.IsHost) return;
+            foreach (var obID in vacuumableObjects.Keys)
             {
-                ob.OnUpdate();
+                vacuumableObjects[obID].OnUpdate();
             }
         }
 
-        private List<VacuumableObject> vacuumableObjects = new List<VacuumableObject>();
+        private Dictionary<ulong, VacuumableObject> vacuumableObjects = new Dictionary<ulong, VacuumableObject>();
         [SerializeField] private GameObject tempObject;
 
         [ServerRpc(RequireOwnership = false)]
         public void SpawnVacuumableObjectServerRPC(Vector3 pos)
         {
-            GameObject ob = Instantiate(tempObject, pos, Quaternion.identity);
-            ob.GetComponent<NetworkObject>().Spawn();
-            vacuumableObjects.Add(ob.GetComponent<VacuumableObject>());
+            GameObject go = Instantiate(tempObject, pos, Quaternion.identity);
+            VacuumableObject vacuumOb = go.GetComponent<VacuumableObject>();
+            NetworkObject networkOb = go.GetComponent<NetworkObject>();
+            networkOb.Spawn();
+
+            ulong tmpKey = networkOb.NetworkObjectId;
+            vacuumableObjects.Add(tmpKey, vacuumOb);
         }
 
         [ServerRpc(RequireOwnership = false)]
-        public void DespawnVacuumableObjectServerRPC()
+        public void DespawnVacuumableObjectServerRPC(ulong obKey) //key는 NetworkObjectId
         {
-            vacuumableObjects.Remove(tmpOb);
-            tmpOb.GetComponent<NetworkObject>().Despawn();
-            Destroy(tmpOb.gameObject);
-            Debug.Log("Despawned!!");
-        }
+            vacuumableObjects.Remove(obKey);
 
-        private VacuumableObject tmpOb;
-        public void RequestDespawnVacuumableObjectToServer(VacuumableObject ob)
-        {
-            tmpOb = ob;
-            DespawnVacuumableObjectServerRPC();
+            NetworkObject no = NetworkObject.NetworkManager.SpawnManager.SpawnedObjects[obKey];
+            no.Despawn(); //NetworkObjectId로 디스폰
+            Destroy(no.gameObject);
+
+            Debug.Log("Despawned!!");
         }
     }
 }
