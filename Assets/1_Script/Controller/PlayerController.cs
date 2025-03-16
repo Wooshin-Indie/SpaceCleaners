@@ -131,10 +131,8 @@ namespace MPGame.Controller
 			Debug.Log("SPAWN");
 			base.OnNetworkSpawn();
 
-
 			// TODO - Anim : basic anim
 			cameraTransform.gameObject.SetActive(IsOwner);
-			rigid.isKinematic = !IsHost;
 
 			if (IsOwner && IsHost)
 			{
@@ -149,18 +147,18 @@ namespace MPGame.Controller
 
 		private void Update()
 		{
-			OnUpdate();
 			if (!IsOwner) return;
 
 			stateMachine.CurState.HandleInput();
 			stateMachine.CurState.LogicUpdate();
-			
+
+			if (!rigid.isKinematic)
+				UpdatePlayerPositionClientRPC(transform.position);
+			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		private void FixedUpdate()
 		{
-			OnFixedUpdateSync();
-
 			if (!IsOwner) return;
 
 			stateMachine.CurState.PhysicsUpdate();
@@ -204,7 +202,7 @@ namespace MPGame.Controller
 		/// </summary>
 		public void ApplyGravity()
 		{
-			if (planets == null || !IsHost) return;
+			if (planets == null) return;
 
 			float maxMag = 0f;
 			PlanetBody maxPlanet = null;

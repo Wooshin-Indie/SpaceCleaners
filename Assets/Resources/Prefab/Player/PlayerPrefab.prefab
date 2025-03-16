@@ -1617,7 +1617,7 @@ MonoBehaviour:
   rotationCameraWeight: 10
   maxVertRot: 90
   minVertRot: -90
-  interactRayLength: 0
+  interactRayLength: 10
   groundRayLength: 0
   cameraTransform: {fileID: 7723749655736798407}
   animIDSpeed: 0

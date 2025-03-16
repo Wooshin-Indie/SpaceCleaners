@@ -49,22 +49,8 @@ namespace MPGame.Controller.StateMachine
 			if (isUpPressed == isDownPressed) depth = 0;
 			else depth = isUpPressed ? 1 : -1;
 
-            if (controller.IsHost)
-			{
-				controller.Move(vertInputRaw, horzInputRaw, depth);
-				controller.RotateBodyWithMouse(mouseX, mouseY, roll);
-			}
-            else
-			{
-				// HACK - incorrect arguments
-				controller.InputForPrediction(new PlayerController.ClientInput
-				{
-					sequence = 0,
-					moveDir = new UnityEngine.Vector3(vertInputRaw, horzInputRaw, depth),
-					rotateDir = new UnityEngine.Vector3(mouseX, mouseY, roll),
-					timestamp = 0f
-				});
-			}
+            controller.Move(vertInputRaw, horzInputRaw, depth);
+            controller.RotateBodyWithMouse(mouseX, mouseY, roll);
 
 
 		}

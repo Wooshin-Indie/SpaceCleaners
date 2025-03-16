@@ -54,16 +54,14 @@ namespace MPGame.Controller
 				rigid.rotation = networkRotation.Value.normalized;
 			}
 			*/
-			if (!IsHost) return;
+			// if (!IsHost) return;
 
 		}
 
 		private void OnUpdate()
 		{
-			UpdatePlayerPositionClientRPC(transform.position);
-			if (IsOwner)
-				Debug.Log("ONUPDATE");
-			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
+			// UpdatePlayerPositionClientRPC(transform.position);
+			// UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		#region Input RPC
