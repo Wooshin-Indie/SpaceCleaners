@@ -1625,6 +1625,7 @@ MonoBehaviour:
   animIDMotionSpeed: 0
   animIdGrounded: 0
   animIdFreeFall: 0
+  planets: []
   vacuumDetectRadius: 3
   vacuumDetectLength: 10
   vacuumSpeed: 5

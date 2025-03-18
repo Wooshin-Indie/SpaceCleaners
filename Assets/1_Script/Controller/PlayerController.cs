@@ -3,11 +3,13 @@ using MPGame.Manager;
 using MPGame.Physics;
 using MPGame.Props;
 using MPGame.Utils;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
 
 
 namespace MPGame.Controller
@@ -93,6 +95,7 @@ namespace MPGame.Controller
 		private PropsBase recentlyDetectedProp = null;
 		public PropsBase RecentlyDetectedProp { get => recentlyDetectedProp; }
 
+		[SerializeField]
 		private PlanetBody[] planets = null;
 		private PlanetBody playerPlanet = null;
 
@@ -159,6 +162,12 @@ namespace MPGame.Controller
 
 		private void FixedUpdate()
 		{
+			if (IsHost)
+			{
+				RaycastToGround();
+				ApplyGravity();
+			}
+
 			if (!IsOwner) return;
 
 			stateMachine.CurState.PhysicsUpdate();
@@ -217,8 +226,7 @@ namespace MPGame.Controller
 				
 				newtonForce *= Time.fixedDeltaTime;
 
-				if (IsHost)
-					rigid.AddForce(newtonForce);
+				rigid.AddForce(newtonForce);
 
 				float mag = newtonForce.magnitude;
 				if (maxMag < mag)
@@ -231,7 +239,6 @@ namespace MPGame.Controller
 			// 가장 강한 중력을 가진 행성 처리
 			if (maxPlanet == null || maxPlanet.IsSun) return;
 
-			if (!IsOwner) return;
 			if ((maxPlanet.Rigid.position - rigid.position).magnitude > maxPlanet.GravityRadius)
 			{
 				isInGravity = false;
@@ -261,7 +268,7 @@ namespace MPGame.Controller
 			Quaternion neededRotation = Quaternion.FromToRotation(playerUp, gravityForceDirection) * cachedTransformRotation;
 
 			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.deltaTime);
-			cachedTransform.rotation = cachedTransformRotation;
+			rigid.MoveRotation(cachedTransformRotation);
 
 			cameraTransform.rotation = Quaternion.LookRotation(cameraLookDirection, cachedTransform.up);
 		}
