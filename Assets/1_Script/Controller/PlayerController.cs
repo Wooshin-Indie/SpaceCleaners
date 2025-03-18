@@ -131,13 +131,13 @@ namespace MPGame.Controller
 			// TODO - Anim : basic anim
 			cameraTransform.gameObject.SetActive(IsOwner);
 
-			if (IsOwner && IsHost)
+			if (IsHost)
 			{
-				PlayerSpawner.Instance.SpawnEnvironments();
-				PlayerSpawner.Instance.SpawnGalaxy();
-			}
-			else
-			{
+				if (IsOwner)
+				{
+					PlayerSpawner.Instance.SpawnEnvironments();
+					PlayerSpawner.Instance.SpawnGalaxy();
+				}
 				FindPlanets();
 			}
 		}
