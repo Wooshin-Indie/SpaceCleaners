@@ -34,7 +34,7 @@ namespace MPGame.Manager
             }
 
 
-            if (!NetworkManager.IsHost) return;
+            if (!NetworkManager.IsHost) return; //OnUpdate는 서버에서만 실행
             foreach (var obID in vacuumableObjects.Keys)
             {
                 vacuumableObjects[obID].OnUpdate();
@@ -42,8 +42,10 @@ namespace MPGame.Manager
             DespawnVacuumableObjects();
         }
 
+        // 스폰된 VacuumableObject들 관리하는 딕셔너리
         private Dictionary<ulong, VacuumableObject> vacuumableObjects = new Dictionary<ulong, VacuumableObject>();
-        [SerializeField] private GameObject tempObject;
+
+        [SerializeField] private GameObject tempObject; // 임시로 큐브모양 오브젝트 넣음
 
         [ServerRpc(RequireOwnership = false)]
         public void SpawnVacuumableObjectServerRPC(Vector3 pos)
@@ -57,14 +59,14 @@ namespace MPGame.Manager
             vacuumableObjects.Add(tmpKey, vacuumOb);
         }
 
-        public void DespawnVacuumableObjects() //key�� NetworkObjectId
+        public void DespawnVacuumableObjects() //key는 NetworkObjectId
         {
             foreach (var obKey in vacuumObjectDespawn)
             {
                 vacuumableObjects[obKey].VacuumEnd();
                 vacuumableObjects.Remove(obKey);
                 NetworkObject no = NetworkObject.NetworkManager.SpawnManager.SpawnedObjects[obKey];
-                no.Despawn(); //NetworkObjectId�� ����
+                no.Despawn(); //NetworkObjectId로 디스폰
                 Destroy(no.gameObject);
                 Debug.Log("Despawned!!");
             }
