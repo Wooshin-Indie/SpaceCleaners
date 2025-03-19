@@ -279,8 +279,12 @@ namespace MPGame.Controller
 		private void AlignToCamera()
 		{
 			Transform cachedTransform = transform;
-			Quaternion neededRotation = Quaternion.Inverse(cameraTransform.localRotation) * cachedTransform.rotation;
-			cachedTransform.rotation = Quaternion.Slerp(cachedTransform.rotation, neededRotation, Time.deltaTime);
+			Quaternion targetRotation = cameraTransform.rotation;
+
+			rigid.MoveRotation(Quaternion.Slerp(cachedTransform.rotation, targetRotation, Time.fixedDeltaTime));
+
+			Quaternion inverseRotation = Quaternion.Inverse(cachedTransform.rotation) * targetRotation;
+			cameraTransform.localRotation = Quaternion.Slerp(cameraTransform.localRotation, Quaternion.identity, Time.fixedDeltaTime * 5f);
 		}
 
 
@@ -357,12 +361,6 @@ namespace MPGame.Controller
 		/// </summary>
 		public void RotateBodyWithMouse(float mouseX, float mouseY, float roll)
 		{
-			if (isInGravity != previousGravityState)
-			{
-				cameraTransform.localRotation = Quaternion.identity;
-				transform.rotation = Quaternion.Euler(cameraTransform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
-				previousGravityState = isInGravity;
-			}
 
 			if (isInGravity)		// TODO - erase local vars
 			{
