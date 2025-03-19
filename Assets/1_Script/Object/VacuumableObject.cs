@@ -45,12 +45,13 @@ namespace MPGame.Props
             AddForceToTarget();
             if(DetectIsClosedToTarget())
             {
-                // 관련해서 오류나면 여기에 vacuumend를 넣어줘야될 수도?
+                // 여기에 vacuumend를 넣어줘야 오류가 안날라나?
 
                 RemoveVacuumingObjectsFromHashsetsClientRPC(NetworkObjectId);
                 // ownerClient의 PlayerController에서 Hashset에서 이 오브젝트를 삭제하라고 요청
 
                 ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
+                // TODO - NetworkObject 치면 GetComponent처럼 되는거 맞나?
                 Debug.Log("Test1!!");
             }
         }

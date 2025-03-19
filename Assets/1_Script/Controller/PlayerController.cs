@@ -3,11 +3,13 @@ using MPGame.Manager;
 using MPGame.Physics;
 using MPGame.Props;
 using MPGame.Utils;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
 
 
 namespace MPGame.Controller
@@ -93,6 +95,7 @@ namespace MPGame.Controller
 		private PropsBase recentlyDetectedProp = null;
 		public PropsBase RecentlyDetectedProp { get => recentlyDetectedProp; }
 
+		[SerializeField]
 		private PlanetBody[] planets = null;
 		private PlanetBody playerPlanet = null;
 
@@ -131,31 +134,40 @@ namespace MPGame.Controller
 			// TODO - Anim : basic anim
 			cameraTransform.gameObject.SetActive(IsOwner);
 
-			if (IsOwner && IsHost)
+			if (IsHost)
 			{
-				PlayerSpawner.Instance.SpawnEnvironments();
-				PlayerSpawner.Instance.SpawnGalaxy();
-			}
-			else
-			{
+				if (IsOwner)
+				{
+					PlayerSpawner.Instance.SpawnEnvironments();
+					PlayerSpawner.Instance.SpawnGalaxy();
+				}
 				FindPlanets();
 			}
 		}
 
 		private void Update()
 		{
-			if (!IsOwner) return;
+			if (IsOwner)
+			{
+				stateMachine.CurState.HandleInput();
+				stateMachine.CurState.LogicUpdate();
+			}
 
-			stateMachine.CurState.HandleInput();
-			stateMachine.CurState.LogicUpdate();
-
-			if (!rigid.isKinematic)
+			if (IsHost)
+			{
 				UpdatePlayerPositionClientRPC(transform.position);
-			UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
+				UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
+			}
 		}
 
 		private void FixedUpdate()
 		{
+			if (IsHost)
+			{
+				RaycastToGround();
+				ApplyGravity();
+			}
+
 			if (!IsOwner) return;
 
 			stateMachine.CurState.PhysicsUpdate();
@@ -213,6 +225,7 @@ namespace MPGame.Controller
 				newtonForce *= planet.GravityScale;
 				
 				newtonForce *= Time.fixedDeltaTime;
+
 				rigid.AddForce(newtonForce);
 
 				float mag = newtonForce.magnitude;
@@ -255,7 +268,7 @@ namespace MPGame.Controller
 			Quaternion neededRotation = Quaternion.FromToRotation(playerUp, gravityForceDirection) * cachedTransformRotation;
 
 			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.deltaTime);
-			cachedTransform.rotation = cachedTransformRotation;
+			rigid.MoveRotation(cachedTransformRotation);
 
 			cameraTransform.rotation = Quaternion.LookRotation(cameraLookDirection, cachedTransform.up);
 		}
@@ -266,8 +279,12 @@ namespace MPGame.Controller
 		private void AlignToCamera()
 		{
 			Transform cachedTransform = transform;
-			Quaternion neededRotation = Quaternion.Inverse(cameraTransform.localRotation) * cachedTransform.rotation;
-			cachedTransform.rotation = Quaternion.Slerp(cachedTransform.rotation, neededRotation, Time.deltaTime);
+			Quaternion targetRotation = cameraTransform.rotation;
+
+			rigid.MoveRotation(Quaternion.Slerp(cachedTransform.rotation, targetRotation, Time.fixedDeltaTime));
+
+			Quaternion inverseRotation = Quaternion.Inverse(cachedTransform.rotation) * targetRotation;
+			cameraTransform.localRotation = Quaternion.Slerp(cameraTransform.localRotation, Quaternion.identity, Time.fixedDeltaTime * 5f);
 		}
 
 
@@ -344,12 +361,6 @@ namespace MPGame.Controller
 		/// </summary>
 		public void RotateBodyWithMouse(float mouseX, float mouseY, float roll)
 		{
-			if (isInGravity != previousGravityState)
-			{
-				cameraTransform.localRotation = Quaternion.identity;
-				transform.rotation = Quaternion.Euler(cameraTransform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
-				previousGravityState = isInGravity;
-			}
 
 			if (isInGravity)		// TODO - erase local vars
 			{
@@ -365,7 +376,10 @@ namespace MPGame.Controller
 				rigid.AddTorque(-transform.right * mouseY * rotationPower * camRotateSpeed, ForceMode.Acceleration);
 			}
 
-			transform.Rotate(mouseX * Vector3.up * rotationPower * Time.fixedDeltaTime * camRotateSpeed, Space.Self);
+			float rotationInput = mouseX * rotationPower * camRotateSpeed * Time.fixedDeltaTime;
+			Quaternion deltaRotation = Quaternion.AngleAxis(rotationInput, Vector3.up);
+			rigid.MoveRotation(rigid.rotation * deltaRotation);
+			
 			rigid.AddTorque(-transform.forward * roll * rotationPower * rotationKeyWeight, ForceMode.Acceleration);
 		}
 

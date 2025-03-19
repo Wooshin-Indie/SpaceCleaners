@@ -40,8 +40,6 @@ namespace MPGame.Controller.StateMachine
 		}           
         public virtual void PhysicsUpdate()         // Only Physics Update
 		{
-			controller.RaycastToGround();
-			controller.ApplyGravity();
 		}     
         public virtual void Exit() { }              // Run once when Exit State
 

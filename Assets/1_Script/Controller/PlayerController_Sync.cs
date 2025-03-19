@@ -32,10 +32,7 @@ namespace MPGame.Controller
 		// Delay 가 있긴할텐데 그건 Prediction으로 처리해서 부드럽게 만들예정
 
 		private NetworkVariable<Vector3> networkPosition = new(writePerm: NetworkVariableWritePermission.Server);
-		private NetworkVariable<Quaternion> networkRotation = new(writePerm: NetworkVariableWritePermission.Server);
-
-		private NetworkVariable<Vector3> networkVelocity = new(writePerm: NetworkVariableWritePermission.Server);
-
+		
 		private int currentSequence = 0;
 		private float lastProcessedTime = 0f;
 		private Queue<ClientInput> inputQueue = new Queue<ClientInput>();
@@ -56,12 +53,6 @@ namespace MPGame.Controller
 			*/
 			// if (!IsHost) return;
 
-		}
-
-		private void OnUpdate()
-		{
-			// UpdatePlayerPositionClientRPC(transform.position);
-			// UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
 		}
 
 		#region Input RPC
@@ -157,11 +148,7 @@ namespace MPGame.Controller
 		{
 			if (IsHost) return;
 
-			if (IsOwner)
-			{
-				Debug.Log(playerQuat.eulerAngles);
-			}
-			transform.rotation = playerQuat;
+			rigid.MoveRotation(playerQuat);
 			cameraTransform.localRotation = camQuat;
 		}
 
