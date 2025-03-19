@@ -10,8 +10,12 @@ namespace MPGame.Props
     public class VacuumableObject : PropsBase
     {
         private Collider objectCollider;
-        [SerializeField] private float vacuumingForce;
-        [SerializeField] private float vacuumingForceToCenter;
+
+        [SerializeField, Tooltip("Force to Vaccumable Object")]
+        private float vacuumingForce;
+
+        [SerializeField, Tooltip("Force Vaccumable Object to Center of OverlapCapsule")]
+        private float vacuumingForceToCenter;
         public Collider ObjectCollider { get => objectCollider; set => objectCollider = value; }
         private Rigidbody objectRigidbody;
 
@@ -31,7 +35,7 @@ namespace MPGame.Props
             objectRigidbody = GetComponent<Rigidbody>();
         }
 
-        public void OnUpdate() // 서버에서만 실행됨
+        public void OnUpdate() // 서버에서만 실행됨 (싱크, AddForce, 오브젝트 가까워졌는지 감지)
         {
             UpdateObjectPositionServerRPC(transform.position);
             UpdateObjectRotateServerRPC(transform.rotation);
@@ -138,7 +142,7 @@ namespace MPGame.Props
         }
 
         [SerializeField] private float removeDistance;
-        private bool DetectIsClosedToTarget()
+        private bool DetectIsClosedToTarget() //플레이어와 물체가 가까워졌는지 감지
         {
             Debug.Log("OwnerClientId: " + OwnerClientId.Value);
             if (Vector3.Distance(transform.position, targetPoint) < removeDistance) return true;

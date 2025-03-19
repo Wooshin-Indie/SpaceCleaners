@@ -424,10 +424,12 @@ namespace MPGame.Controller
 		#region Vacuum Funcs
 
 		[Header("Vacuum Settings")]
-		[SerializeField] private float vacuumDetectRadius;
-		[SerializeField] private float vacuumDetectLength;
-		[SerializeField] private float vacuumSpeed;
-		[SerializeField] private LayerMask vacuumableLayers;
+		[SerializeField, Tooltip("Overlap Capsule Radius")]
+		private float vacuumDetectRadius;
+		[SerializeField, Tooltip("Overlap Capsule Length")]
+		private float vacuumDetectLength;
+		[SerializeField]
+		private LayerMask vacuumableLayers;
 		private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //이전 프레임에 빨아들이고있던 물체들을	저장하는 HashSet
 		private HashSet<VacuumableObject> currentDetected = new HashSet<VacuumableObject>();
 
