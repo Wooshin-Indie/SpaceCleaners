@@ -5,10 +5,10 @@ using UnityEngine;
 namespace MPGame.Props
 {
 	/// <summary>
-	/// ¿ìÁÖ¼± ÀÇÀÚ propÀÓ
-	/// local Àº ¿ìÁÖ¼± ±âÁØ À§Ä¡ÀÓ
+	/// ìš°ì£¼ì„  ì˜ì propì„
+	/// local ì€ ìš°ì£¼ì„  ê¸°ì¤€ ìœ„ì¹˜ì„
 	/// </summary>
-    public class Chair : PropsBase
+    public class Chair : OwnableProp
 	{
 		public Vector3 localEnterPosition;
 		public Vector3 localExitPosition;

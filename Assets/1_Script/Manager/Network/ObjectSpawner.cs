@@ -35,11 +35,11 @@ namespace MPGame.Manager
 
 
             if (!NetworkManager.IsHost) return; //OnUpdate는 서버에서만 실행
-            foreach (var obID in vacuumableObjects.Keys)
-            {
-                vacuumableObjects[obID].OnUpdate();
-            }
-            DespawnVacuumableObjects();
+            //foreach (var obID in vacuumableObjects.Keys)
+            //{
+             //   vacuumableObjects[obID].OnUpdate();
+            //}
+            //DespawnVacuumableObjects();
         }
 
         // 스폰된 VacuumableObject들 관리하는 딕셔너리

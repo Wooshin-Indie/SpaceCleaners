@@ -1,3 +1,4 @@
+using MPGame.Props;
 using UnityEngine;
 
 namespace MPGame.Controller.StateMachine
@@ -81,10 +82,16 @@ namespace MPGame.Controller.StateMachine
 
         protected void GetInteractableInput()
         {
+            if (!controller.IsDetectInteractable) return;   // TOOD - Interact 시 UI 띄워야됨
+
             if(Input.GetKeyDown(KeyCode.F) && controller.IsDetectInteractable)
             {
-                controller.RecentlyDetectedProp.TryInteract();
-            }
+                if (controller.RecentlyDetectedProp is OwnableProp)
+                    (controller.RecentlyDetectedProp as OwnableProp).TryInteract();
+
+                if (controller.RecentlyDetectedProp is SharableProp)
+					(controller.RecentlyDetectedProp as SharableProp).Interact(controller);
+			}
         }
 
         protected void GetESCInput(out bool isEscPressed)

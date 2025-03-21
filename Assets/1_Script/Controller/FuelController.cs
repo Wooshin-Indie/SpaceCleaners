@@ -5,8 +5,6 @@ namespace MPGame.Controller
 	public class FuelController : MonoBehaviour
 	{
 
-
-
 		public void OnStart()
 		{
 
