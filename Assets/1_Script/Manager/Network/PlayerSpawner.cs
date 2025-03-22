@@ -3,6 +3,7 @@ using MPGame.Physics;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 namespace MPGame.Manager
 {
@@ -29,8 +30,9 @@ namespace MPGame.Manager
 		public Dictionary<ulong, GameObject> Players { get => players; }
 
         [SerializeField] private List<GameObject> environments =new List<GameObject>();
+        [SerializeField] private GameObject spaceship;
 
-		[SerializeField] private GameObject planetPrefab;
+        [SerializeField] private GameObject planetPrefab;
 
 		public void SpawnEnvironments()
 		{
@@ -42,7 +44,16 @@ namespace MPGame.Manager
 			}
 		}
 
-		public void SpawnGalaxy()
+        private GameObject spaceshipOb;
+        public GameObject SpaceshipOb { get => spaceshipOb; }
+        public void SpawnSpaceship()
+        {
+            spaceshipOb = Instantiate(spaceship);
+            NetworkObject no = spaceshipOb.GetComponent<NetworkObject>();
+            no?.Spawn();
+        }
+
+        public void SpawnGalaxy()
 		{
 			// HACK - 3개만 임시로 설치함
 			for (int i = 0; i < 3; i++)
@@ -56,7 +67,9 @@ namespace MPGame.Manager
 			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject().GetComponent<PlayerController>().FindPlanets();
 		}
 
-		[ServerRpc(RequireOwnership = false)]
+		
+
+        [ServerRpc(RequireOwnership = false)]
 		public void SpawnPlayerServerRPC(ulong clientId)
 		{
 			GameObject go = Instantiate(playerPrefab, new Vector3(0, 1f, 0), Quaternion.identity);

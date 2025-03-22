@@ -10,9 +10,9 @@ namespace MPGame.Controller.StateMachine
 
 		private Chair spaceChair;
 		private SpaceshipContoller spaceShip;
-		bool isDriver = false;
+		bool isDriver = false;  // Cockpit = true, Passenger = false
 
-		public void SetParams(Chair chair, bool isDriver)
+        public void SetParams(Chair chair, bool isDriver)
 		{
 			spaceChair = chair;
 			this.isDriver = isDriver;
@@ -30,11 +30,12 @@ namespace MPGame.Controller.StateMachine
 			base.Enter();
 			isOutState = false;
 			vertInputRaw = horzInputRaw = 0f;
-
+			Debug.Log("Entered Flight");
 			spaceShip = spaceChair.GetComponentInParent<SpaceshipContoller>();
 			if (spaceShip == null)
-			{
-				controller.SetFlyState();
+            {
+                Debug.Log("Spaceship Null");
+                controller.SetFlyState();
 			}
 
 			controller.SetParentServerRPC(spaceShip.GetComponent<NetworkObject>().NetworkObjectId,
@@ -80,8 +81,9 @@ namespace MPGame.Controller.StateMachine
 			if (isOutState) return;
 
 			if (isESCPressed)
-			{
-				controller.SetFlyState();
+            {
+                Debug.Log("ESC Pressed while Flight");
+                controller.SetInShipState();
 				isESCPressed = false;
 				return;
 			}

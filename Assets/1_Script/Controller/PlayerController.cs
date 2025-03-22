@@ -81,6 +81,7 @@ namespace MPGame.Controller
 
 		public FlyState flyState;
 		public FlightState flightState;
+		public InShipState inShipState;
 
 		public PlayerStateMachine StateMachine { get => stateMachine; }
 
@@ -114,8 +115,9 @@ namespace MPGame.Controller
             stateMachine = new PlayerStateMachine();
 			flyState = new FlyState(this, stateMachine);
 			flightState = new FlightState(this, stateMachine);
+			inShipState = new InShipState(this, stateMachine);
 
-			animIDSpeed = Animator.StringToHash("Speed");
+            animIDSpeed = Animator.StringToHash("Speed");
 			animIDJump = Animator.StringToHash("Jump");
 			animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
 			animIdGrounded = Animator.StringToHash("Grounded");
@@ -138,8 +140,10 @@ namespace MPGame.Controller
 			{
 				if (IsOwner)
 				{
+					PlayerSpawner.Instance.SpawnSpaceship();
 					PlayerSpawner.Instance.SpawnEnvironments();
 					PlayerSpawner.Instance.SpawnGalaxy();
+					ObjectSpawner.Instance.SpawnTrashArea();
 				}
 				FindPlanets();
 			}
@@ -191,13 +195,17 @@ namespace MPGame.Controller
 			flightState.SetParams(chair, isDriver);
 			stateMachine.ChangeState(flightState);
 		}
-		#endregion
+        public void SetInShipState()
+        {
+            stateMachine.ChangeState(inShipState);
+        }
+        #endregion
 
-		/// <summary>
-		/// Find Planets in current loaded scene.
-		/// This MUST BE called at the start of the game.
-		/// </summary>
-		public void FindPlanets()
+        /// <summary>
+        /// Find Planets in current loaded scene.
+        /// This MUST BE called at the start of the game.
+        /// </summary>
+        public void FindPlanets()
 		{
 			planets = FindObjectsByType<PlanetBody>(FindObjectsSortMode.None);
 			if (planets == null)
@@ -356,10 +364,21 @@ namespace MPGame.Controller
 			}
 		}
 
+		private Vector3 shipVelocity;
+		private Vector3 inputVelocity;
+		[SerializeField] private float thrustPowerInShip;
+        public void MoveInShip(float vert, float horz, float depth) // Movement controll in spaceship
+		{
+            shipVelocity = PlayerSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
+			inputVelocity = (transform.forward * vert) + (transform.right * horz) + (transform.up * depth);
+
+			rigid.linearVelocity = shipVelocity + (thrustPowerInShip * inputVelocity);
+		}
+
 		/// <summary>
 		/// Rotation Func in general state.
 		/// </summary>
-		public void RotateBodyWithMouse(float mouseX, float mouseY, float roll)
+		public void RotateBodyWithMouse(float mouseX, float mouseY, float roll = 0)
 		{
 
 			if (isInGravity)		// TODO - erase local vars

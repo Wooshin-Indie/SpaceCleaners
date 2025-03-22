@@ -29,30 +29,38 @@ namespace MPGame.Controller
 
 		private List<PlayerController> insidePlayers = new List<PlayerController>();
 
-		[SerializeField] private float playerGravity = 1000f;
+		[SerializeField] private float playerGravity = 100f;
 
 		private void FixedUpdate()
 		{
 			for (int i = 0; i < insidePlayers.Count; i++)
 			{
-				insidePlayers[i].Rigidbody.AddForce(-transform.up * playerGravity);
-				rigid.AddForce(transform.up * playerGravity);
 			}
-		}
+        }
 
 
-		void OnTriggerEnter(Collider other)
+        void OnTriggerEnter(Collider other)
 		{
 			if (other.GetComponent<PlayerController>() == null) return;
 			if (!insidePlayers.Contains(other.GetComponent<PlayerController>()))
+			{
 				insidePlayers.Add(other.GetComponent<PlayerController>());
+				if (other.GetComponent<PlayerController>().StateMachine.CurState
+					== other.GetComponent<PlayerController>().flightState) return;
+				other.GetComponent<PlayerController>().SetInShipState();
+			}
 		}
 
 		void OnTriggerExit(Collider other)
 		{
 			if (other.GetComponent<PlayerController>() == null) return;
 			if (insidePlayers.Contains(other.GetComponent<PlayerController>()))
+			{
 				insidePlayers.Remove(other.GetComponent<PlayerController>());
+                if (other.GetComponent<PlayerController>().StateMachine.CurState
+                    == other.GetComponent<PlayerController>().flightState) return;
+                other.GetComponent<PlayerController>().SetFlyState();
+            }
 		}
 
 
