@@ -1626,9 +1626,9 @@ MonoBehaviour:
   animIdGrounded: 0
   animIdFreeFall: 0
   planets: []
+  thrustPowerInShip: 1
   vacuumDetectRadius: 3
   vacuumDetectLength: 10
-  vacuumSpeed: 5
   vacuumableLayers:
     serializedVersion: 2
     m_Bits: 4096

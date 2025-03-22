@@ -20,6 +20,7 @@ namespace MPGame.Props
 
 			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()
 				.GetComponent<PlayerController>().SetFlightState(this, isDriver);
+			Debug.Log("From InShipState to FlightState");
 			return true;
 		}
 	}
