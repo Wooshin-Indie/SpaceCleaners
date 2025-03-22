@@ -93,24 +93,19 @@ public class MeshDemolisher
 		{
 			StringBuilder sb = new StringBuilder();
 
-			// **Vertices**
 			foreach (Vector3 v in mesh.vertices)
 				sb.AppendLine($"v {v.x} {v.y} {v.z}");
 
-			// **Normals**
 			foreach (Vector3 n in mesh.normals)
 				sb.AppendLine($"vn {n.x} {n.y} {n.z}");
 
-			// **UVs**
 			foreach (Vector2 uv in mesh.uv)
 				sb.AppendLine($"vt {uv.x} {uv.y}");
 
-			// **Triangles**
 			for (int i = 0; i < mesh.triangles.Length; i += 3)
 				sb.AppendLine($"f {mesh.triangles[i] + 1} {mesh.triangles[i + 1] + 1} {mesh.triangles[i + 2] + 1}");
 
 			System.IO.File.WriteAllText(filePath, sb.ToString());
-			Debug.Log($"Mesh 저장 완료: {filePath}");
 		}
 
 		private List<GameObject> ConstructGameObjects(Mesh targetMesh, Material targetMeshMaterial, Material interiorMaterial)

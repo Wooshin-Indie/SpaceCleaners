@@ -50,6 +50,7 @@ namespace MPGame.Props
 				Transform part = Instantiate(partPrefabs[i], transform.position, transform.rotation).transform;
 
 				part.parent = null;
+				part.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
 				part.GetComponent<NetworkObject>().Spawn();
 			}
 

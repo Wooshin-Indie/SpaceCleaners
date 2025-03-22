@@ -136,8 +136,8 @@ namespace MPGame.Controller
 			{
 				if (IsOwner)
 				{
-					PlayerSpawner.Instance.SpawnEnvironments();
-					PlayerSpawner.Instance.SpawnGalaxy();
+					EnvironmentSpawner.Instance.SpawnEnvironments();
+					EnvironmentSpawner.Instance.SpawnGalaxy();
 				}
 				FindPlanets();
 			}
