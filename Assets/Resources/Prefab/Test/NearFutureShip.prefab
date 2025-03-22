@@ -2623,6 +2623,7 @@ GameObject:
   - component: {fileID: 7133835473742413623}
   - component: {fileID: 5918990439852801049}
   - component: {fileID: 848638632501991863}
+  - component: {fileID: -289877583506081587}
   m_Layer: 0
   m_Name: NearFutureShip
   m_TagString: Untagged
@@ -2771,6 +2772,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.8565357, y: 2.5284915, z: 11.0784645}
   m_Center: {x: -0.05243683, y: 1.1666441, z: 6.7282176}
+--- !u!114 &-289877583506081587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8644338739374899709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8770594113148295491
 GameObject:
   m_ObjectHideFlags: 0

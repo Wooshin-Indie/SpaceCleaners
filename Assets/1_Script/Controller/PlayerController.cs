@@ -3,13 +3,11 @@ using MPGame.Manager;
 using MPGame.Physics;
 using MPGame.Props;
 using MPGame.Utils;
-using Steamworks;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem.XR;
 
 
 namespace MPGame.Controller
@@ -92,8 +90,8 @@ namespace MPGame.Controller
 		public bool IsGrounded { get => isGrounded; }
 		public bool IsDetectInteractable { get => isDetectInteractable; }
 		
-		private PropsBase recentlyDetectedProp = null;
-		public PropsBase RecentlyDetectedProp { get => recentlyDetectedProp; }
+		private PropBase recentlyDetectedProp = null;
+		public PropBase RecentlyDetectedProp { get => recentlyDetectedProp; }
 
 		[SerializeField]
 		private PlanetBody[] planets = null;
@@ -138,8 +136,8 @@ namespace MPGame.Controller
 			{
 				if (IsOwner)
 				{
-					PlayerSpawner.Instance.SpawnEnvironments();
-					PlayerSpawner.Instance.SpawnGalaxy();
+					EnvironmentSpawner.Instance.SpawnEnvironments();
+					EnvironmentSpawner.Instance.SpawnGalaxy();
 				}
 				FindPlanets();
 			}
@@ -299,7 +297,7 @@ namespace MPGame.Controller
 			if (UnityEngine.Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, interactRayLength, targetLayer))
 			{
 				isDetectInteractable = true;
-				recentlyDetectedProp = hit.transform.GetComponent<PropsBase>();
+				recentlyDetectedProp = hit.transform.GetComponent<PropBase>();
 			}
 			else
 			{

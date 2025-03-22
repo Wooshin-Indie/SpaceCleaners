@@ -1,21 +1,20 @@
 using MPGame.Controller;
 using MPGame.Manager;
-using System.Runtime.ConstrainedExecution;
 using Unity.Netcode;
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.GraphView;
+using UnityEngine.InputSystem;
 
 namespace MPGame.Props
 {
-    public class VacuumableObject : PropsBase
+    public class VacuumableObject : OwnableProp
     {
         private Collider objectCollider;
 
         [SerializeField, Tooltip("Force to Vaccumable Object")]
-        private float vacuumingForce;
+        private float vacuumingForce = 1f;
 
         [SerializeField, Tooltip("Force Vaccumable Object to Center of OverlapCapsule")]
-        private float vacuumingForceToCenter;
+        private float vacuumingForceToCenter = 4f;
         public Collider ObjectCollider { get => objectCollider; set => objectCollider = value; }
         private Rigidbody objectRigidbody;
 
@@ -35,24 +34,28 @@ namespace MPGame.Props
             objectRigidbody = GetComponent<Rigidbody>();
         }
 
-        public void OnUpdate() // 서버에서만 실행됨 (싱크, AddForce, 오브젝트 가까워졌는지 감지)
-        {
-            UpdateObjectPositionServerRPC(transform.position);
-            UpdateObjectRotateServerRPC(transform.rotation);
+		private void Update()
+		{
+            OnUpdate();
+		}
 
+		public void OnUpdate() // 서버에서만 실행됨 (싱크, AddForce, 오브젝트 가까워졌는지 감지)
+        {
+            if (!IsHost) return;
             if (!isBeingVacuumed) return;
-            
+
             AddForceToTarget();
             if(DetectIsClosedToTarget())
             {
                 // 여기에 vacuumend를 넣어줘야 오류가 안날라나?
 
                 RemoveVacuumingObjectsFromHashsetsClientRPC(NetworkObjectId);
-                // ownerClient의 PlayerController에서 Hashset에서 이 오브젝트를 삭제하라고 요청
+				// ownerClient의 PlayerController에서 Hashset에서 이 오브젝트를 삭제하라고 요청
 
-                ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
-                // TODO - NetworkObject 치면 GetComponent처럼 되는거 맞나?
-                Debug.Log("Test1!!");
+
+				ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
+				GetComponent<NetworkObject>().Despawn(); //NetworkObjectId로 디스폰
+				Destroy(gameObject);
             }
         }
 
@@ -141,7 +144,7 @@ namespace MPGame.Props
 
         }
 
-        [SerializeField] private float removeDistance;
+        [SerializeField] private float removeDistance = 1f;
         private bool DetectIsClosedToTarget() //플레이어와 물체가 가까워졌는지 감지
         {
             Debug.Log("OwnerClientId: " + OwnerClientId.Value);

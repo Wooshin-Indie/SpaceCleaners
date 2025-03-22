@@ -1130,7 +1130,7 @@ GameObject:
   - component: {fileID: 597198074}
   - component: {fileID: 597198075}
   m_Layer: 0
-  m_Name: PlayerSpawner
+  m_Name: EnvironmentSpawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1184,9 +1184,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcaa0dcc2d7cbbd42988a1dc0a4303a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 8623662460009209830, guid: 79692268826e45c498e3074f37ab6f05, type: 3}
   environments:
   - {fileID: 8644338739374899709, guid: faa794838f4085547893903f00e98ea7, type: 3}
+  - {fileID: 7228840847767664663, guid: 21d5662250b6f844d816e3450667ead0, type: 3}
   planetPrefab: {fileID: 7005988799852390065, guid: f3eea6c36480bff4ab1acc42fd2f78ec, type: 3}
 --- !u!1 &640824888
 GameObject:
@@ -1474,7 +1474,7 @@ MonoBehaviour:
     PlayerPrefab: {fileID: 2123365057112069482, guid: d5d410aa2f3f5e54abfc37facdb8059a, type: 3}
     Prefabs:
       NetworkPrefabsLists:
-      - {fileID: 11400000, guid: ae69c224f7531094c8ce4eed3dc2749b, type: 2}
+      - {fileID: 11400000, guid: 02d4a394bcf139a48a3584fd1dc84ef9, type: 2}
     TickRate: 60
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 0
