@@ -346,7 +346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 185360711
+  GlobalObjectIdHash: 4232019159
   InScenePlacedSourceGlobalObjectIdHash: 3758491262
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -411,6 +411,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   meshParent: {fileID: 177088892002321796}
+  partPrefabs:
+  - {fileID: 3560435929630523625, guid: dbf7b6447bb1fdb469dfadb0023c7e24, type: 3}
+  - {fileID: 4394222479050933226, guid: c7d30a978addcd94b94c012f6599f7f1, type: 3}
+  - {fileID: 2307470471047983653, guid: 54d339868cdbe9249a5170952dc5a8ea, type: 3}
+  - {fileID: 5308545840502271637, guid: f586c340824979849916e519c380eafc, type: 3}
+  - {fileID: 3347238582213603909, guid: e2f93283257103f429728697a0d0df1c, type: 3}
 --- !u!114 &400487433152974979
 MonoBehaviour:
   m_ObjectHideFlags: 0

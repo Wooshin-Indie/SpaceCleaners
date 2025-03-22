@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System.Text;
 
 namespace Hanzzz.MeshDemolisher
 {
@@ -88,9 +89,34 @@ public class MeshDemolisher
         return ConstructGameObjects(targetMesh, targetMeshMaterial, interiorMaterial);
     }
 
-    private List<GameObject> ConstructGameObjects(Mesh targetMesh, Material targetMeshMaterial, Material interiorMaterial)
+		void SaveMeshAsOBJ(string filePath, Mesh mesh)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			// **Vertices**
+			foreach (Vector3 v in mesh.vertices)
+				sb.AppendLine($"v {v.x} {v.y} {v.z}");
+
+			// **Normals**
+			foreach (Vector3 n in mesh.normals)
+				sb.AppendLine($"vn {n.x} {n.y} {n.z}");
+
+			// **UVs**
+			foreach (Vector2 uv in mesh.uv)
+				sb.AppendLine($"vt {uv.x} {uv.y}");
+
+			// **Triangles**
+			for (int i = 0; i < mesh.triangles.Length; i += 3)
+				sb.AppendLine($"f {mesh.triangles[i] + 1} {mesh.triangles[i + 1] + 1} {mesh.triangles[i + 2] + 1}");
+
+			System.IO.File.WriteAllText(filePath, sb.ToString());
+			Debug.Log($"Mesh 저장 완료: {filePath}");
+		}
+
+		private List<GameObject> ConstructGameObjects(Mesh targetMesh, Material targetMeshMaterial, Material interiorMaterial)
     {
-        List<GameObject> res = new List<GameObject>();
+
+			List<GameObject> res = new List<GameObject>();
         Dictionary<VertexAttribute, List<FloatStruct>> originalVerticesAttributes = GetOriginalVerticesAttributes(targetMesh);
 
         List<IPointLocation> clipPoints = cv.clipPoints;
@@ -202,7 +228,12 @@ public class MeshDemolisher
             meshFilter.mesh = mesh;
             meshRenderer.materials = new Material[] {targetMeshMaterial, interiorMaterial};
 
-            res.Add(g);
+
+
+				string filePath = Application.persistentDataPath + $"/Demolished_{g.name}.obj";
+				SaveMeshAsOBJ(filePath, mesh);
+
+				res.Add(g);
         }    
 
         var voronoiPoints = cv.voronoiPoints;

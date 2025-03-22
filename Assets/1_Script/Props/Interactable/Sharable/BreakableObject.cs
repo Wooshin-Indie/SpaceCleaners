@@ -1,9 +1,6 @@
-using Hanzzz.MeshDemolisher;
 using MPGame.Controller;
-using MPGame.Utils;
+using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.Netcode.Components;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace MPGame.Props
@@ -12,6 +9,9 @@ namespace MPGame.Props
 	{
 		[SerializeField]
 		private Transform meshParent;
+
+		[SerializeField]
+		private List<GameObject> partPrefabs = new List<GameObject>();
 
 		private float objectHp = 100f;
 		private bool isDestroyed = false;
@@ -43,25 +43,14 @@ namespace MPGame.Props
 
 		public void OnMeshBreak()
 		{
-			GetComponent<MeshDemolisherExample>().Demolish();
+			// GetComponent<MeshDemolisherExample>().Demolish();
 
-			int count = meshParent.childCount;
-			for (int i = count-1; i >= 0; i--)
+			for (int i = 0; i < partPrefabs.Count; i++)
 			{
-				Transform child = meshParent.GetChild(i);
-				child.parent = null;
-				child.AddComponent<BoxCollider>();
-				child.AddComponent<Rigidbody>();
-				child.GetComponent<Rigidbody>().useGravity = false;
-				child.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
+				Transform part = Instantiate(partPrefabs[i], transform.position, transform.rotation).transform;
 
-				child.gameObject.layer = Constants.INT_VACUUMABLE;
-				child.AddComponent<VacuumableObject>();
-				child.AddComponent<NetworkObject>();
-				child.AddComponent<NetworkTransform>();
-				child.AddComponent<NetworkRigidbody>();
-
-				child.GetComponent<NetworkObject>().Spawn();
+				part.parent = null;
+				part.GetComponent<NetworkObject>().Spawn();
 			}
 
 			GetComponent<NetworkObject>().Despawn();
