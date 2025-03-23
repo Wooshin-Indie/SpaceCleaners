@@ -2,6 +2,7 @@ using MPGame.Structs;
 using MPGame.Utils;
 using System;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace MPGame.Manager
@@ -53,9 +54,30 @@ namespace MPGame.Manager
 			UIManager.Lobby.SendMessageToUI(name, text);
 		}
 
+		public void GameStarted()
+		{
+			Managers.Scene.ChangeScene(Utils.SceneEnum.Game);
+
+			if (NetworkManager.Singleton.IsHost)
+			{
+				EnvironmentSpawner.Instance.SpawnGameScene();
+			}
+		}
+
+		public void GameEnded()
+		{
+			Managers.Scene.ChangeScene(Utils.SceneEnum.Lobby);
+
+			if (NetworkManager.Singleton.IsHost)
+			{
+				EnvironmentSpawner.Instance.DespawnAll();
+			}
+		}
+
 		public void HostCreated()
 		{
 			Managers.Scene.ChangeScene(SceneEnum.Lobby);
+			EnvironmentSpawner.Instance.SpawnLobbyScene();
 			isHost = true;
 			isConnected = true;
 		}

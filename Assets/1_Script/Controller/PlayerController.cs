@@ -136,12 +136,6 @@ namespace MPGame.Controller
 
 			if (IsHost)
 			{
-				if (IsOwner)
-				{
-					EnvironmentSpawner.Instance.SpawnEnvironments();
-					EnvironmentSpawner.Instance.SpawnGalaxy();
-					ObjectSpawner.Instance.SpawnTrashArea();
-				}
 				FindPlanets();
 			}
 		}
@@ -366,7 +360,7 @@ namespace MPGame.Controller
 		[SerializeField] private float thrustPowerInShip;
         public void MoveInShip(float vert, float horz, float depth) // Movement controll in spaceship
 		{
-            shipVelocity = PlayerSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
+            // shipVelocity = PlayerSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
 			inputVelocity = (transform.forward * vert) + (transform.right * horz) + (transform.up * depth);
 
 			rigid.linearVelocity = shipVelocity + (thrustPowerInShip * inputVelocity);

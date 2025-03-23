@@ -151,6 +151,46 @@ namespace MPGame.Manager
 			}
 		}
 
+		public bool isInGame = false;
+
+		[ContextMenu("StartGame")]
+		public void StartGame()
+		{
+			if (!isInGame && IsAllReadyToStartGame())
+			{
+				LockLobby();
+				isInGame = true;
+				GameManagerEx.Instance.GameStarted();
+			}
+		}
+
+		private bool IsAllReadyToStartGame()
+		{
+			return true;
+		}
+
+		[ContextMenu("EndGame")]
+		public void EndGame()
+		{
+			if (isInGame)
+			{
+				UnlockLobby();
+				isInGame = false;
+				GameManagerEx.Instance.GameEnded();
+			}
+		}
+
+		private void LockLobby()
+		{
+			currentLobby.Value.SetJoinable(false);
+		}
+
+		private void UnlockLobby()
+		{
+			currentLobby.Value.SetJoinable(true);
+		}
+
+
 		public async void Disconnected()
 		{
 			// PlayerSpawner.Instance.DespawnPlayerServerRPC(NetworkManager.Singleton.LocalClientId);
