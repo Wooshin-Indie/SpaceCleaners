@@ -4,6 +4,7 @@ using Steamworks;
 using Steamworks.Data;
 using Netcode.Transports.Facepunch;
 using System.Threading.Tasks;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace MPGame.Manager
 {
@@ -153,10 +154,10 @@ namespace MPGame.Manager
 
 		public bool isInGame = false;
 
-		[ContextMenu("StartGame")]
-		public void StartGame()
+		[ServerRpc(RequireOwnership = false)]
+		public void StartGameServerRPC()
 		{
-			if (!isInGame && IsAllReadyToStartGame())
+			if (!isInGame && GameManagerEx.Instance.IsAllPlayerReady())
 			{
 				LockLobby();
 				isInGame = true;
@@ -164,13 +165,8 @@ namespace MPGame.Manager
 			}
 		}
 
-		private bool IsAllReadyToStartGame()
-		{
-			return true;
-		}
-
-		[ContextMenu("EndGame")]
-		public void EndGame()
+		[ServerRpc(RequireOwnership = false)]
+		public void EndGameServerRPC()
 		{
 			if (isInGame)
 			{

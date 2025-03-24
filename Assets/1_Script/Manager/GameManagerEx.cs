@@ -157,6 +157,20 @@ namespace MPGame.Manager
 			}
 		}
 
+		public bool IsAllPlayerReady()
+		{
+			bool isAllReady = false;
+			foreach (KeyValuePair<ulong, PlayerInfo> player in playerInfo)
+			{
+				if (player.Value.isReady)
+				{
+					isAllReady = true;
+				}
+			}
+
+			return isAllReady;
+		}
+
 		public void Quit()
 		{
 			Application.Quit();
