@@ -6,6 +6,7 @@ using MPGame.Utils;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -140,6 +141,7 @@ namespace MPGame.Controller
 				{
 					EnvironmentSpawner.Instance.SpawnEnvironments();
 					EnvironmentSpawner.Instance.SpawnGalaxy();
+					EnvironmentSpawner.Instance.SpawnSpaceship();
 					ObjectSpawner.Instance.SpawnTrashArea();
 				}
 				FindPlanets();
@@ -362,15 +364,23 @@ namespace MPGame.Controller
 		}
 
 		private Vector3 shipVelocity;
+		private Quaternion targetRotation;
+		private Vector3 shipEulerAngle;
 		private Vector3 inputVelocity;
 		[SerializeField] private float thrustPowerInShip;
         public void MoveInShip(float vert, float horz, float depth) // Movement controll in spaceship
 		{
-            shipVelocity = PlayerSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
-			inputVelocity = (transform.forward * vert) + (transform.right * horz) + (transform.up * depth);
-
+            shipVelocity = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
+            inputVelocity = (transform.forward * vert) + (transform.right * horz) + (transform.up * depth);
 			rigid.linearVelocity = shipVelocity + (thrustPowerInShip * inputVelocity);
-		}
+
+            shipEulerAngle = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().
+				rotation.eulerAngles;
+			targetRotation = Quaternion.Euler(shipEulerAngle.x, rigid.rotation.eulerAngles.y, 
+				shipEulerAngle.z);
+            rigid.MoveRotation(targetRotation);
+			// y축 방향으로만 플레이어가 회전하도록
+        }
 
 		/// <summary>
 		/// Rotation Func in general state.

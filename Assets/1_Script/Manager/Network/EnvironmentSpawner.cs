@@ -28,8 +28,10 @@ namespace MPGame.Manager
 
 		[SerializeField] 
 		private List<GameObject> environments = new List<GameObject>();
-		
-		[SerializeField] 
+        [SerializeField] 
+		private GameObject spaceship;
+
+        [SerializeField] 
 		private GameObject planetPrefab;
 
 		public void SpawnEnvironments()
@@ -42,7 +44,16 @@ namespace MPGame.Manager
 			}
 		}
 
-		public void SpawnGalaxy()
+        private GameObject spaceshipOb;
+        public GameObject SpaceshipOb { get => spaceshipOb; }
+        public void SpawnSpaceship()
+        {
+            spaceshipOb = Instantiate(spaceship);
+            NetworkObject no = spaceshipOb.GetComponent<NetworkObject>();
+            no?.Spawn();
+        }
+
+        public void SpawnGalaxy()
 		{
 			// HACK - 3개만 임시로 설치함
 			for (int i = 0; i < 3; i++)
