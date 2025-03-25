@@ -46,17 +46,7 @@ namespace MPGame.UI.LobbyScene
 
 			disconnectButton.onClick.AddListener(GameNetworkManager.Instance.Disconnected);
 			readyButton.onClick.AddListener(() => {
-				NetworkTransmission.instance.IsTheClientReadyServerRPC(true, GameManagerEx.Instance.MyClientId);
 			}); 
-
-			notreadyButton.onClick.AddListener(() => {
-				NetworkTransmission.instance.IsTheClientReadyServerRPC(false, GameManagerEx.Instance.MyClientId);
-			});
-
-			startButton.onClick.AddListener(() =>
-			{
-
-			});
 		}
 
 		private void OnDestroy()
