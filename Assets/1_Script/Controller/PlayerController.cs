@@ -165,7 +165,7 @@ namespace MPGame.Controller
 
 		private void FixedUpdate()
 		{
-			if (IsHost)
+			if (IsHost && stateMachine.)
 			{
 				RaycastToGround();
 				ApplyGravity();
@@ -378,7 +378,7 @@ namespace MPGame.Controller
 				rotation.eulerAngles;
 			targetRotation = Quaternion.Euler(shipEulerAngle.x, rigid.rotation.eulerAngles.y, 
 				shipEulerAngle.z);
-            rigid.MoveRotation(targetRotation);
+            //rigid.MoveRotation(targetRotation);
 			// y축 방향으로만 플레이어가 회전하도록
         }
 
@@ -421,6 +421,22 @@ namespace MPGame.Controller
 			Vector3 quat = transform.localRotation.eulerAngles;
 			transform.localRotation = Quaternion.Euler(quat.x, quat.y + mouseX * rotationPower, quat.z);
 		}
+
+        public void RotateBodyInShipState(float mouseX, float mouseY, float roll = 0)
+        {
+            Vector3 camRot = cameraTransform.localRotation.eulerAngles;
+            float tmpV = camRot.x - mouseY * rotationPower;
+            if (tmpV >= 180) tmpV -= 360;
+            float rotValue = Mathf.Clamp(tmpV, minVertRot, maxVertRot);
+            Quaternion targetRotation = Quaternion.Euler(rotValue, 0f, 0f);
+            cameraTransform.localRotation = Quaternion.Lerp(cameraTransform.localRotation, targetRotation, Time.deltaTime * 10f);
+
+            float rotationInput = mouseX * rotationPower * camRotateSpeed * Time.fixedDeltaTime;
+            Quaternion deltaRotation = Quaternion.AngleAxis(rotationInput, Vector3.up);
+            rigid.MoveRotation(rigid.rotation * deltaRotation);
+
+            rigid.AddTorque(-transform.forward * roll * rotationPower * rotationKeyWeight, ForceMode.Acceleration);
+        }
 
 
 		#region Animation Synchronization
