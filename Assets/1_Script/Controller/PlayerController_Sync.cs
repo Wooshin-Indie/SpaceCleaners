@@ -178,6 +178,7 @@ namespace MPGame.Controller
 		[ServerRpc(RequireOwnership = false)]
 		public void UnsetParentServerRPC()
 		{
+			Debug.Log("UNSET");
 			transform.parent = null;
 		}
 

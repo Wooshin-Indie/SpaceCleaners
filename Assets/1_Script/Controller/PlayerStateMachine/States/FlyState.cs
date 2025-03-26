@@ -14,8 +14,6 @@ namespace MPGame.Controller.StateMachine
             base.Enter();
 			vertInputRaw = horzInputRaw = 0f;
             controller.Rigidbody.linearDamping = 0f;
-
-            controller.UnsetParentServerRPC();       // 날기 시작하면 Parent 없앰
         }
 
         public override void Exit()

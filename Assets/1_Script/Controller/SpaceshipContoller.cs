@@ -16,6 +16,12 @@ namespace MPGame.Controller
 		[SerializeField] private float rotationPower;
 		[SerializeField] private float maxSpeed;
 
+		public override void OnNetworkSpawn()
+		{
+			base.OnNetworkSpawn();
+			Debug.Log("SPAWNED");
+		}
+
 		private void Start()
 		{
 			rigid = GetComponent<Rigidbody>();

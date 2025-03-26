@@ -122,7 +122,7 @@ namespace MPGame.Controller
 			animIdFreeFall = Animator.StringToHash("FreeFall");
 		}
 
-		private void Start()
+		public void Start()
 		{
 			stateMachine.Init(flyState);
 		}
@@ -133,6 +133,7 @@ namespace MPGame.Controller
 
 			// TODO - Anim : basic anim
 			cameraTransform.gameObject.SetActive(IsOwner);
+
 
 			if (IsHost)
 			{

@@ -62,6 +62,8 @@ namespace MPGame.Controller.StateMachine
 
 			spaceChair.EndInteraction(); 
 			NetworkTransmission.instance.IsTheClientReadyServerRPC(false, GameManagerEx.Instance.MyClientId);
+
+			controller.UnsetParentServerRPC();
 		}
 
 		public override void HandleInput()

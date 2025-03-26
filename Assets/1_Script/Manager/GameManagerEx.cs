@@ -3,6 +3,7 @@ using MPGame.Utils;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
+using UnityEditor.Build.Pipeline;
 using UnityEngine;
 
 namespace MPGame.Manager
@@ -159,16 +160,15 @@ namespace MPGame.Manager
 
 		public bool IsAllPlayerReady()
 		{
-			bool isAllReady = false;
 			foreach (KeyValuePair<ulong, PlayerInfo> player in playerInfo)
 			{
-				if (player.Value.isReady)
+				if (!player.Value.isReady)
 				{
-					isAllReady = true;
+					return false;
 				}
 			}
 
-			return isAllReady;
+			return true;
 		}
 
 		public void Quit()
