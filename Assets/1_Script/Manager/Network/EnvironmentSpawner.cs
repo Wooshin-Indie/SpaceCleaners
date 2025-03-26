@@ -26,11 +26,57 @@ namespace MPGame.Manager
 		}
 		#endregion
 
+		private GameObject currentSpaceship = null;
+
+		[Header("LobbyScene")]
+
+		[SerializeField]
+		private GameObject spaceshipPrefab;
+
+
+		[Header("GameScene")]
+
 		[SerializeField] 
 		private List<GameObject> environments = new List<GameObject>();
-		
-		[SerializeField] 
+        [SerializeField] 
+		private GameObject spaceship;
+
+        [SerializeField] 
 		private GameObject planetPrefab;
+
+		// LobbyScene 에서 필요한 NetworkObejct들 스폰하는 함수
+		// ex. 우주선
+		public void SpawnLobbyScene()
+		{
+			SpawnSpaceship();
+		}
+
+		private void SpawnSpaceship()
+		{
+			currentSpaceship = Instantiate(spaceshipPrefab);
+			NetworkObject no = currentSpaceship.GetComponent<NetworkObject>();
+			no?.Spawn();
+
+			currentSpaceship.GetComponent<Rigidbody>().isKinematic = true;
+			currentSpaceship.transform.position = new Vector3(-12.25f, -0.21f, -10.59f);
+			currentSpaceship.transform.rotation = Quaternion.Euler(0, -90, 0);
+		}
+
+		public void SpawnGameScene()
+		{
+			MoveSpaceship();
+			SpawnEnvironments();
+			SpawnGalaxy();
+		}
+
+		private void MoveSpaceship()
+		{
+			if (currentSpaceship == null) return;
+
+			currentSpaceship.GetComponent<Rigidbody>().isKinematic = false;
+			// TODO - 스폰 포인트 설정해야됨
+			currentSpaceship.transform.position = new Vector3(-12.25f, -0.21f, -10.59f);
+		}
 
 		public void SpawnEnvironments()
 		{
@@ -42,7 +88,16 @@ namespace MPGame.Manager
 			}
 		}
 
-		public void SpawnGalaxy()
+        private GameObject spaceshipOb;
+        public GameObject SpaceshipOb { get => spaceshipOb; }
+        public void SpawnSpaceship()
+        {
+            spaceshipOb = Instantiate(spaceship);
+            NetworkObject no = spaceshipOb.GetComponent<NetworkObject>();
+            no?.Spawn();
+        }
+
+        public void SpawnGalaxy()
 		{
 			// HACK - 3개만 임시로 설치함
 			for (int i = 0; i < 3; i++)
@@ -54,6 +109,11 @@ namespace MPGame.Manager
 			}
 
 			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject().GetComponent<PlayerController>().FindPlanets();
+		}
+
+		public void DespawnAll()
+		{
+
 		}
 
 	}

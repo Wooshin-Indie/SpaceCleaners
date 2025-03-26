@@ -608,7 +608,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4678685956778463519}
   - component: {fileID: 6439882964303812287}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Floor (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2091,7 +2091,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1689610631208188655}
   - component: {fileID: 1747857292828793702}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Floor (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2668,11 +2668,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1678556271
+  GlobalObjectIdHash: 68222519
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 0
-  ActiveSceneSynchronization: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 1
   SceneMigrationSynchronization: 1
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
@@ -2794,7 +2794,7 @@ GameObject:
   m_Component:
   - component: {fileID: 753167280871809477}
   - component: {fileID: 7999623877845582549}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}

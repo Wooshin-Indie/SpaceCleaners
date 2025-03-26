@@ -118,11 +118,19 @@ namespace MPGame.Manager
                     int attempts = 0;
                     while (count < adjustedNumberOfTrash && attempts < numberOfTrash * maxAttempts)
                     {
+                        //Vector3 randomPos = new Vector3(
+                        //    Random.Range(-aGroupArea.x / 2, aGroupArea.x / 2),
+                        //    Random.Range(-aGroupArea.y / 2, aGroupArea.y / 2),
+                        //    Random.Range(-aGroupArea.z / 2, aGroupArea.z / 2)
+                        //);
+
+                        Vector3 randSphere = Random.insideUnitSphere; // (1,1,1)구 내에서 랜덤지점 반환
+
                         Vector3 randomPos = new Vector3(
-                            Random.Range(-aGroupArea.x / 2, aGroupArea.x / 2),
-                            Random.Range(-aGroupArea.y / 2, aGroupArea.y / 2),
-                            Random.Range(-aGroupArea.z / 2, aGroupArea.z / 2)
-                        );
+                            randSphere.x * aGroupArea.x,
+                            randSphere.y * aGroupArea.y,
+                            randSphere.z * aGroupArea.z
+                            ); // 타원체 안 지점으로 보정
 
                         randomPos += spawnPoint; // 스폰중심 포인트 기준으로 생성위치 조정
 

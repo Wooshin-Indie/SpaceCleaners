@@ -1,3 +1,4 @@
+using MPGame.Manager;
 using MPGame.Props;
 using Unity.Netcode;
 using UnityEngine;
@@ -44,9 +45,11 @@ namespace MPGame.Controller.StateMachine
 
 			// TODO - Anim (sit)
 			controller.SetKinematic(true);
-	}
 
-	public override void Exit()
+			NetworkTransmission.instance.IsTheClientReadyServerRPC(true, GameManagerEx.Instance.MyClientId);
+		}
+
+		public override void Exit()
 		{
 			base.Exit();
 			isOutState = true;
@@ -57,7 +60,10 @@ namespace MPGame.Controller.StateMachine
 			controller.SetKinematic(false);
 			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
 
-			spaceChair.EndInteraction();
+			spaceChair.EndInteraction(); 
+			NetworkTransmission.instance.IsTheClientReadyServerRPC(false, GameManagerEx.Instance.MyClientId);
+
+			controller.UnsetParentServerRPC();
 		}
 
 		public override void HandleInput()
