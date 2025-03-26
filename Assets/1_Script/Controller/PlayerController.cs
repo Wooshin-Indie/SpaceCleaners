@@ -165,7 +165,7 @@ namespace MPGame.Controller
 
 		private void FixedUpdate()
 		{
-			if (IsHost && stateMachine.)
+			if (IsHost && stateMachine.CurState != inShipState)
 			{
 				RaycastToGround();
 				ApplyGravity();
@@ -367,19 +367,24 @@ namespace MPGame.Controller
 		private Quaternion targetRotation;
 		private Vector3 shipEulerAngle;
 		private Vector3 inputVelocity;
+		private Vector3 defaultDownVelocity;
 		[SerializeField] private float thrustPowerInShip;
         public void MoveInShip(float vert, float horz, float depth) // Movement controll in spaceship
 		{
             shipVelocity = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
-            inputVelocity = (transform.forward * vert) + (transform.right * horz) + (transform.up * depth);
-			rigid.linearVelocity = shipVelocity + (thrustPowerInShip * inputVelocity);
+            inputVelocity = ((transform.forward * vert) + (transform.right * horz)
+				+ (2 * transform.up * depth)) * thrustPowerInShip;
+			//defaultDownVelocity = Vector3.zero;
+            defaultDownVelocity = -EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Transform>().up * thrustPowerInShip;
+
+            rigid.linearVelocity = shipVelocity + inputVelocity + defaultDownVelocity;
 
             shipEulerAngle = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().
 				rotation.eulerAngles;
 			targetRotation = Quaternion.Euler(shipEulerAngle.x, rigid.rotation.eulerAngles.y, 
 				shipEulerAngle.z);
             //rigid.MoveRotation(targetRotation);
-			// y축 방향으로만 플레이어가 회전하도록
+            // y축 방향으로만 플레이어가 회전하도록
         }
 
 		/// <summary>
