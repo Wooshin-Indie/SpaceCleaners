@@ -165,10 +165,11 @@ namespace MPGame.Controller
 
 		private void FixedUpdate()
 		{
-			if (IsHost && stateMachine.CurState != inShipState)
+			if (IsHost)
 			{
 				RaycastToGround();
-				ApplyGravity();
+				if (stateMachine.CurState != inShipState)
+					ApplyGravity();
 			}
 
 			if (!IsOwner) return;
@@ -274,7 +275,7 @@ namespace MPGame.Controller
 			Vector3 playerUp = cachedTransform.up;
 			Quaternion neededRotation = Quaternion.FromToRotation(playerUp, gravityForceDirection) * cachedTransformRotation;
 
-			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.deltaTime);
+			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.fixedDeltaTime);
 			rigid.MoveRotation(cachedTransformRotation);
 
 			cameraTransform.rotation = Quaternion.LookRotation(cameraLookDirection, cachedTransform.up);
@@ -324,8 +325,11 @@ namespace MPGame.Controller
 		{
 			RaycastHit hit;
 			int targetLayer = Constants.LAYER_GROUND;
+			float center = capsule.center.y;
+			float height = capsule.height;
+			Debug.DrawRay(transform.position - transform.up * (height * (0.5f) - center), -transform.up * groundRayLength, Color.red);
 
-			if(UnityEngine.Physics.Raycast(transform.position, -transform.up, out hit, groundRayLength))
+			if (UnityEngine.Physics.Raycast(transform.position - transform.up * (height*(0.5f) - center), -transform.up, out hit, groundRayLength, targetLayer))
 			{
 				isGrounded = true;
 			}
@@ -369,13 +373,17 @@ namespace MPGame.Controller
 		private Vector3 inputVelocity;
 		private Vector3 defaultDownVelocity;
 		[SerializeField] private float thrustPowerInShip;
+		[SerializeField] private float SlerpWeight;
         public void MoveInShip(float vert, float horz, float depth) // Movement controll in spaceship
 		{
             shipVelocity = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
             inputVelocity = ((transform.forward * vert) + (transform.right * horz)
 				+ (2 * transform.up * depth)) * thrustPowerInShip;
-			//defaultDownVelocity = Vector3.zero;
-            defaultDownVelocity = -EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Transform>().up * thrustPowerInShip;
+
+            if (isGrounded)
+                defaultDownVelocity = Vector3.zero;
+			else
+				defaultDownVelocity = -EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Transform>().up * thrustPowerInShip;
 
             rigid.linearVelocity = shipVelocity + inputVelocity + defaultDownVelocity;
 
@@ -383,7 +391,7 @@ namespace MPGame.Controller
 				rotation.eulerAngles;
 			targetRotation = Quaternion.Euler(shipEulerAngle.x, rigid.rotation.eulerAngles.y, 
 				shipEulerAngle.z);
-            //rigid.MoveRotation(targetRotation);
+            rigid.MoveRotation(Quaternion.Slerp(rigid.rotation, targetRotation, SlerpWeight * Time.fixedDeltaTime));
             // y축 방향으로만 플레이어가 회전하도록
         }
 
