@@ -56,7 +56,7 @@ namespace MPGame.Controller.StateMachine
             if (controller.IsHost)
             {
                 controller.MoveInShip(vertInputRaw, horzInputRaw, depth);
-                controller.RotateBodyWithMouse(mouseX, mouseY);
+                controller.RotateBodyInShipState(mouseX, mouseY);
             }
             else
             {

@@ -6,6 +6,7 @@ using MPGame.Utils;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -137,6 +138,13 @@ namespace MPGame.Controller
 
 			if (IsHost)
 			{
+				if (IsOwner)
+				{
+					EnvironmentSpawner.Instance.SpawnEnvironments();
+					EnvironmentSpawner.Instance.SpawnGalaxy();
+					EnvironmentSpawner.Instance.SpawnSpaceship();
+					ObjectSpawner.Instance.SpawnTrashArea();
+				}
 				FindPlanets();
 			}
 		}
@@ -171,7 +179,8 @@ namespace MPGame.Controller
 			if (IsHost)
 			{
 				RaycastToGround();
-				ApplyGravity();
+				if (stateMachine.CurState != inShipState)
+					ApplyGravity();
 			}
 
 			if (!IsOwner) return;
@@ -277,7 +286,7 @@ namespace MPGame.Controller
 			Vector3 playerUp = cachedTransform.up;
 			Quaternion neededRotation = Quaternion.FromToRotation(playerUp, gravityForceDirection) * cachedTransformRotation;
 
-			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.deltaTime);
+			cachedTransformRotation = Quaternion.Slerp(cachedTransformRotation, neededRotation, Time.fixedDeltaTime);
 			rigid.MoveRotation(cachedTransformRotation);
 
 			cameraTransform.rotation = Quaternion.LookRotation(cameraLookDirection, cachedTransform.up);
@@ -327,8 +336,11 @@ namespace MPGame.Controller
 		{
 			RaycastHit hit;
 			int targetLayer = Constants.LAYER_GROUND;
+			float center = capsule.center.y;
+			float height = capsule.height;
+			Debug.DrawRay(transform.position - transform.up * (height * (0.5f) - center), -transform.up * groundRayLength, Color.red);
 
-			if(UnityEngine.Physics.Raycast(transform.position, -transform.up, out hit, groundRayLength))
+			if (UnityEngine.Physics.Raycast(transform.position - transform.up * (height*(0.5f) - center), -transform.up, out hit, groundRayLength, targetLayer))
 			{
 				isGrounded = true;
 			}
@@ -367,15 +379,32 @@ namespace MPGame.Controller
 		}
 
 		private Vector3 shipVelocity;
+		private Quaternion targetRotation;
+		private Vector3 shipEulerAngle;
 		private Vector3 inputVelocity;
+		private Vector3 defaultDownVelocity;
 		[SerializeField] private float thrustPowerInShip;
+		[SerializeField] private float SlerpWeight;
         public void MoveInShip(float vert, float horz, float depth) // Movement controll in spaceship
 		{
-            // shipVelocity = PlayerSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
-			inputVelocity = (transform.forward * vert) + (transform.right * horz) + (transform.up * depth);
+            shipVelocity = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
+            inputVelocity = ((transform.forward * vert) + (transform.right * horz)
+				+ (2 * transform.up * depth)) * thrustPowerInShip;
 
-			rigid.linearVelocity = shipVelocity + (thrustPowerInShip * inputVelocity);
-		}
+            if (isGrounded)
+                defaultDownVelocity = Vector3.zero;
+			else
+				defaultDownVelocity = -EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Transform>().up * thrustPowerInShip;
+
+            rigid.linearVelocity = shipVelocity + inputVelocity + defaultDownVelocity;
+
+            shipEulerAngle = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().
+				rotation.eulerAngles;
+			targetRotation = Quaternion.Euler(shipEulerAngle.x, rigid.rotation.eulerAngles.y, 
+				shipEulerAngle.z);
+            rigid.MoveRotation(Quaternion.Slerp(rigid.rotation, targetRotation, SlerpWeight * Time.fixedDeltaTime));
+            // y축 방향으로만 플레이어가 회전하도록
+        }
 
 		/// <summary>
 		/// Rotation Func in general state.
@@ -416,6 +445,22 @@ namespace MPGame.Controller
 			Vector3 quat = transform.localRotation.eulerAngles;
 			transform.localRotation = Quaternion.Euler(quat.x, quat.y + mouseX * rotationPower, quat.z);
 		}
+
+        public void RotateBodyInShipState(float mouseX, float mouseY, float roll = 0)
+        {
+            Vector3 camRot = cameraTransform.localRotation.eulerAngles;
+            float tmpV = camRot.x - mouseY * rotationPower;
+            if (tmpV >= 180) tmpV -= 360;
+            float rotValue = Mathf.Clamp(tmpV, minVertRot, maxVertRot);
+            Quaternion targetRotation = Quaternion.Euler(rotValue, 0f, 0f);
+            cameraTransform.localRotation = Quaternion.Lerp(cameraTransform.localRotation, targetRotation, Time.deltaTime * 10f);
+
+            float rotationInput = mouseX * rotationPower * camRotateSpeed * Time.fixedDeltaTime;
+            Quaternion deltaRotation = Quaternion.AngleAxis(rotationInput, Vector3.up);
+            rigid.MoveRotation(rigid.rotation * deltaRotation);
+
+            rigid.AddTorque(-transform.forward * roll * rotationPower * rotationKeyWeight, ForceMode.Acceleration);
+        }
 
 
 		#region Animation Synchronization

@@ -1618,7 +1618,7 @@ MonoBehaviour:
   maxVertRot: 90
   minVertRot: -90
   interactRayLength: 10
-  groundRayLength: 0
+  groundRayLength: 0.1
   cameraTransform: {fileID: 7723749655736798407}
   animIDSpeed: 0
   animIDJump: 0
@@ -1626,7 +1626,8 @@ MonoBehaviour:
   animIdGrounded: 0
   animIdFreeFall: 0
   planets: []
-  thrustPowerInShip: 1
+  thrustPowerInShip: 2
+  SlerpWeight: 1
   vacuumDetectRadius: 3
   vacuumDetectLength: 10
   vacuumableLayers:
@@ -1654,7 +1655,7 @@ CapsuleCollider:
   m_Radius: 1.27
   m_Height: 3.87
   m_Direction: 1
-  m_Center: {x: 0.059404373, y: 1.69, z: 0}
+  m_Center: {x: 0, y: 1.93, z: 0}
 --- !u!95 &3484147427680752873
 Animator:
   serializedVersion: 7

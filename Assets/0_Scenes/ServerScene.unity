@@ -1187,6 +1187,7 @@ MonoBehaviour:
   spaceshipPrefab: {fileID: 8644338739374899709, guid: faa794838f4085547893903f00e98ea7, type: 3}
   environments:
   - {fileID: 7228840847767664663, guid: 21d5662250b6f844d816e3450667ead0, type: 3}
+  spaceship: {fileID: 8644338739374899709, guid: faa794838f4085547893903f00e98ea7, type: 3}
   planetPrefab: {fileID: 7005988799852390065, guid: f3eea6c36480bff4ab1acc42fd2f78ec, type: 3}
 --- !u!1 &640824888
 GameObject:
