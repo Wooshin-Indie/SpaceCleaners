@@ -123,7 +123,7 @@ namespace MPGame.Controller
 			animIdFreeFall = Animator.StringToHash("FreeFall");
 		}
 
-		private void Start()
+		public void Start()
 		{
 			stateMachine.Init(flyState);
 		}
@@ -134,6 +134,7 @@ namespace MPGame.Controller
 
 			// TODO - Anim : basic anim
 			cameraTransform.gameObject.SetActive(IsOwner);
+
 
 			if (IsHost)
 			{
@@ -154,6 +155,16 @@ namespace MPGame.Controller
 			{
 				stateMachine.CurState.HandleInput();
 				stateMachine.CurState.LogicUpdate();
+
+				//HACK
+				if (Input.GetKeyDown(KeyCode.Alpha3))
+				{
+					GameNetworkManager.Instance.StartGameServerRPC();
+				}
+				else if (Input.GetKeyDown(KeyCode.Alpha4))
+				{
+					GameNetworkManager.Instance.EndGameServerRPC();
+				}
 			}
 
 			if (IsHost)

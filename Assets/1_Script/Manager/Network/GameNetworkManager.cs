@@ -4,6 +4,7 @@ using Steamworks;
 using Steamworks.Data;
 using Netcode.Transports.Facepunch;
 using System.Threading.Tasks;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace MPGame.Manager
 {
@@ -150,6 +151,41 @@ namespace MPGame.Manager
 				Debug.Log("Client has started");
 			}
 		}
+
+		public bool isInGame = false;
+
+		[ServerRpc(RequireOwnership = false)]
+		public void StartGameServerRPC()
+		{
+			if (!isInGame && GameManagerEx.Instance.IsAllPlayerReady())
+			{
+				LockLobby();
+				isInGame = true;
+				GameManagerEx.Instance.GameStarted();
+			}
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		public void EndGameServerRPC()
+		{
+			if (isInGame)
+			{
+				UnlockLobby();
+				isInGame = false;
+				GameManagerEx.Instance.GameEnded();
+			}
+		}
+
+		private void LockLobby()
+		{
+			currentLobby.Value.SetJoinable(false);
+		}
+
+		private void UnlockLobby()
+		{
+			currentLobby.Value.SetJoinable(true);
+		}
+
 
 		public async void Disconnected()
 		{

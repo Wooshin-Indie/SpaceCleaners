@@ -1184,6 +1184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcaa0dcc2d7cbbd42988a1dc0a4303a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  spaceshipPrefab: {fileID: 8644338739374899709, guid: faa794838f4085547893903f00e98ea7, type: 3}
   environments:
   - {fileID: 7228840847767664663, guid: 21d5662250b6f844d816e3450667ead0, type: 3}
   spaceship: {fileID: 8644338739374899709, guid: faa794838f4085547893903f00e98ea7, type: 3}
@@ -1456,6 +1457,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34fe157f29eb7df4a9e1628ff7697e10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isInGame: 0
 --- !u!114 &903436763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2701,7 +2703,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1624390104}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 903436762}
+        m_TargetAssemblyTypeName: MPGame.Manager.GameNetworkManager, Assembly-CSharp
+        m_MethodName: StartGame
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1624390104
 MonoBehaviour:
   m_ObjectHideFlags: 0

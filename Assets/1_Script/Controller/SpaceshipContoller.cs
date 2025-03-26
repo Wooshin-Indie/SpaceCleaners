@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
+using MPGame.Manager;
 
 namespace MPGame.Controller
 {
@@ -14,6 +15,12 @@ namespace MPGame.Controller
 		[SerializeField] private float thrustPower;
 		[SerializeField] private float rotationPower;
 		[SerializeField] private float maxSpeed;
+
+		public override void OnNetworkSpawn()
+		{
+			base.OnNetworkSpawn();
+			Debug.Log("SPAWNED");
+		}
 
 		private void Start()
 		{
@@ -33,9 +40,7 @@ namespace MPGame.Controller
 
 		private void FixedUpdate()
 		{
-			for (int i = 0; i < insidePlayers.Count; i++)
-			{
-			}
+
         }
 
 
@@ -71,6 +76,7 @@ namespace MPGame.Controller
 		[ServerRpc (RequireOwnership = false)]
 		public void FlyServerRPC(float vert, float horz, float depth)
 		{
+			if (Managers.Scene.CurrentScene.SceneEnum == Utils.SceneEnum.Lobby) return;
 			rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Acceleration);
 			rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Acceleration);
 			rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Acceleration);
@@ -79,6 +85,7 @@ namespace MPGame.Controller
 		[ServerRpc(RequireOwnership = false)]
 		public void RotateBodyWithMouseServerRPC(float mouseX, float mouseY, float roll)
 		{
+			if (Managers.Scene.CurrentScene.SceneEnum == Utils.SceneEnum.Lobby) return;
 			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Acceleration);
 			rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Acceleration);
 			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Acceleration);
