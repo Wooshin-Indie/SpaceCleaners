@@ -88,14 +88,7 @@ namespace MPGame.Manager
 			}
 		}
 
-        private GameObject spaceshipOb;
-        public GameObject SpaceshipOb { get => spaceshipOb; }
-        public void SpawnSpaceship()
-        {
-            spaceshipOb = Instantiate(spaceship);
-            NetworkObject no = spaceshipOb.GetComponent<NetworkObject>();
-            no?.Spawn();
-        }
+        public GameObject SpaceshipOb { get => currentSpaceship; }
 
         public void SpawnGalaxy()
 		{

@@ -142,7 +142,6 @@ namespace MPGame.Controller
 				{
 					EnvironmentSpawner.Instance.SpawnEnvironments();
 					EnvironmentSpawner.Instance.SpawnGalaxy();
-					EnvironmentSpawner.Instance.SpawnSpaceship();
 					ObjectSpawner.Instance.SpawnTrashArea();
 				}
 				FindPlanets();
