@@ -164,6 +164,7 @@ namespace MPGame.Controller
 			{
 				stateMachine.CurState.HandleInput();
 				stateMachine.CurState.LogicUpdate();
+				Debug.Log("CurState: " + stateMachine.CurState);
 
 				//HACK
 				if (Input.GetKeyDown(KeyCode.Alpha3))
