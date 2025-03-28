@@ -54,7 +54,8 @@ namespace MPGame.Controller
 				if (other.GetComponent<PlayerController>().StateMachine.CurState
 					== other.GetComponent<PlayerController>().flightState) return;
 				other.GetComponent<PlayerController>().SetInShipState();
-			}
+                Debug.Log("AfterSetInShipState");
+            }
 		}
 
 		void OnTriggerExit(Collider other)

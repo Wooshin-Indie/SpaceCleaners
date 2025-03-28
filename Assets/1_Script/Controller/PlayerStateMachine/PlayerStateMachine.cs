@@ -25,7 +25,7 @@ namespace MPGame.Controller.StateMachine
             curState.Exit();
 
             curState = newState;
-
+            Debug.Log("ChangeState: " + newState);
             curState.Enter();
         }
 
