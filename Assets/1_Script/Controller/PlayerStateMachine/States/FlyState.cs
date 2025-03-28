@@ -53,12 +53,11 @@ namespace MPGame.Controller.StateMachine
 
 			if (controller.IsHost)
             {
-				controller.Move(vertInputRaw, horzInputRaw, depth);
-				controller.RotateBodyWithMouse(mouseX, mouseY, roll);
-			}
+                controller.PhysicsForFly(vertInputRaw, horzInputRaw, depth, mouseX, mouseY, roll);
+            }
             else
             {
-                controller.InputForPrediction(new PlayerController.ClientInput
+                controller.InputForPredictionFly(new PlayerController.ClientInput
                 {
                     sequence = 0,
                     timestamp = 0,

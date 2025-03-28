@@ -360,6 +360,33 @@ namespace MPGame.Controller
 			}
 		}
 
+        /// <summary>
+        /// FlyState에서의 Move, Rotate 관리
+        /// </summary>
+        public void PhysicsForFly(float vert, float horz, float depth, float mouseX, float mouseY, float roll = 0)
+		{
+			Move(vert, horz, depth);
+			RotateBodyInShipState(mouseX, mouseY, roll);
+        }
+
+        /// <summary>
+        /// Input controll when isDriver is False.
+        /// When isDriver is True, it's controlled in SpaceshipController.
+		/// driver가 아닌 FlightState에서의 Move, Rotate 관리
+        /// </summary>
+        public void PhysicsForNoneDriverFlight(float mouseX, float mouseY)
+        {
+			RotateWithoutRigidbody(mouseX, mouseY);
+        }
+
+        /// <summary>
+        /// InShipState에서의 Move, Rotate 관리
+        /// </summary>
+        public void PhysicsForInShip(float vert, float horz, float depth, float mouseX, float mouseY)
+		{
+            MoveInShip(vert, horz, depth);
+            RotateBodyInShipState(mouseX, mouseY);
+        }
 
 		/// <summary>
 		/// Movement Func in general state.
@@ -456,6 +483,9 @@ namespace MPGame.Controller
 			transform.localRotation = Quaternion.Euler(quat.x, quat.y + mouseX * rotationPower, quat.z);
 		}
 
+        /// <summary>
+        /// Rotation Func while inShip state
+        /// </summary>
         public void RotateBodyInShipState(float mouseX, float mouseY, float roll = 0)
         {
             Vector3 camRot = cameraTransform.localRotation.eulerAngles;

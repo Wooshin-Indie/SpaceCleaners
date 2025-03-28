@@ -61,31 +61,62 @@ namespace MPGame.Controller
 		/// Func to receive input for client-side prediction.
 		/// It's for use in external classes.
 		/// </summary>
-		public void InputForPrediction(ClientInput input)
+		public void InputForPredictionFly(ClientInput input)
 		{
 			if (IsHost) return;
 
 			// inputQueue.Enqueue(input);
-			SendInputServerRPC(input);
+			SendInputFlyServerRPC(input);
 		}
 
-		/// <summary>
-		/// Send Input to Server.
-		/// </summary>
-		[ServerRpc(RequireOwnership = false)]
-		private void SendInputServerRPC(ClientInput input)
+        public void InputForPredictionFlight(ClientInput input)
+        {
+            if (IsHost) return;
+
+            // inputQueue.Enqueue(input);
+            SendInputFlightServerRPC(input);
+        }
+
+        public void InputForPredictionInShip(ClientInput input)
+        {
+            if (IsHost) return;
+
+            // inputQueue.Enqueue(input);
+            SendInputInShipServerRPC(input);
+        }
+
+        /// <summary>
+        /// Send Input to Server.
+        /// </summary>
+        [ServerRpc(RequireOwnership = false)]
+		private void SendInputFlyServerRPC(ClientInput input)
 		{
-			Move(input.moveDir.x, input.moveDir.y, input.moveDir.z);
-			RotateBodyWithMouse(input.rotateDir.x, input.rotateDir.y, input.rotateDir.z);
+			PhysicsForFly(input.moveDir.x, input.moveDir.y, input.moveDir.z, input.rotateDir.x, input.rotateDir.y, input.rotateDir.z);
 
-			// SendCorrectionClientRPC(rigid.position, input.sequence);
-		}
+            // SendCorrectionClientRPC(rigid.position, input.sequence);
+        }
 
-		/// <summary>
-		/// Send "REAL" game state to client.
-		/// Client need additional correction logics. (interpolate, reconciliation)
-		/// </summary>
-		[ClientRpc]
+        [ServerRpc(RequireOwnership = false)]
+        private void SendInputFlightServerRPC(ClientInput input)
+        {
+			PhysicsForNoneDriverFlight(input.rotateDir.x, input.rotateDir.y);
+
+            // SendCorrectionClientRPC(rigid.position, input.sequence);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void SendInputInShipServerRPC(ClientInput input)
+        {
+			PhysicsForInShip(input.moveDir.x, input.moveDir.y, input.moveDir.z, input.rotateDir.x, input.rotateDir.y);
+
+            // SendCorrectionClientRPC(rigid.position, input.sequence);
+        }
+
+        /// <summary>
+        /// Send "REAL" game state to client.
+        /// Client need additional correction logics. (interpolate, reconciliation)
+        /// </summary>
+        [ClientRpc]
 		private void SendCorrectionClientRPC(Vector3 correctedPos, int processedSequence)
 		{
 

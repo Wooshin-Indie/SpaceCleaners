@@ -55,12 +55,11 @@ namespace MPGame.Controller.StateMachine
 
             if (controller.IsHost)
             {
-                controller.MoveInShip(vertInputRaw, horzInputRaw, depth);
-                controller.RotateBodyInShipState(mouseX, mouseY);
+                controller.PhysicsForInShip(vertInputRaw, horzInputRaw, depth, mouseX, mouseY);
             }
             else
             {
-                controller.InputForPrediction(new PlayerController.ClientInput
+                controller.InputForPredictionInShip(new PlayerController.ClientInput
                 {
                     sequence = 0,
                     timestamp = 0,
