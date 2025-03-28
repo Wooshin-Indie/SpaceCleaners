@@ -112,7 +112,8 @@ namespace MPGame.Controller
 			capsule = GetComponent<CapsuleCollider>();
 
             stateMachine = new PlayerStateMachine();
-			flyState = new FlyState(this, stateMachine);
+			stateMachine.SetPlayerController(this);
+            flyState = new FlyState(this, stateMachine);
 			flightState = new FlightState(this, stateMachine);
 			inShipState = new InShipState(this, stateMachine);
 
