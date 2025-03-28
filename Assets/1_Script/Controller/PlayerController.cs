@@ -2,6 +2,7 @@ using MPGame.Controller.StateMachine;
 using MPGame.Manager;
 using MPGame.Physics;
 using MPGame.Props;
+using MPGame.UI.GameScene;
 using MPGame.Utils;
 using System;
 using System.Collections.Generic;
@@ -84,8 +85,12 @@ namespace MPGame.Controller
 
 		public PlayerStateMachine StateMachine { get => stateMachine; }
 
-		/** Player State Values **/
-		private bool isGrounded = true;
+		/** Radar HUD **/
+		private PlayerHUD playerHud;
+		private RadarHUD radar;
+
+        /** Player State Values **/
+        private bool isGrounded = true;
 		private bool isInGravity = false;
 		private bool isDetectInteractable = false;
 		
@@ -116,6 +121,10 @@ namespace MPGame.Controller
             flyState = new FlyState(this, stateMachine);
 			flightState = new FlightState(this, stateMachine);
 			inShipState = new InShipState(this, stateMachine);
+
+			playerHud = new PlayerHUD();
+            radar = new RadarHUD();
+			playerHud.SetPlayerCam(cameraTransform.GetComponent<Camera>());
 
             animIDSpeed = Animator.StringToHash("Speed");
 			animIDJump = Animator.StringToHash("Jump");

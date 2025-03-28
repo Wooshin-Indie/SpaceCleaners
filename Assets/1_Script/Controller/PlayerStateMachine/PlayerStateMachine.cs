@@ -25,8 +25,6 @@ namespace MPGame.Controller.StateMachine
             curState.Exit();
 
             curState = newState;
-            if(Player.IsHost)
-                UpdateCurStateServerRPC(newState);
 
             curState.Enter();
         }
