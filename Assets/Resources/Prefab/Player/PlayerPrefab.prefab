@@ -1620,6 +1620,7 @@ MonoBehaviour:
   interactRayLength: 10
   groundRayLength: 0.1
   cameraTransform: {fileID: 7723749655736798407}
+  mapCameraPrefab: {fileID: 5030060199469687730, guid: 07939faf8d82a414791fa7aa66fb07db, type: 3}
   animIDSpeed: 0
   animIDJump: 0
   animIDMotionSpeed: 0
@@ -1885,7 +1886,7 @@ MonoBehaviour:
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
-  m_Dithering: 0
+  m_Dithering: 1
   m_ClearDepth: 1
   m_AllowXRRendering: 1
   m_AllowHDROutput: 1

@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace MPGame.Physics
 {
@@ -8,6 +9,7 @@ namespace MPGame.Physics
     {
 		[Header("Planet")]
         [SerializeField] private bool isSun;            // true -> don't move
+		[SerializeField] private bool isStation;
         [SerializeField] private float gravityScale;
 		[SerializeField] private float gravityRadius;
 
@@ -30,10 +32,23 @@ namespace MPGame.Physics
 			rigid = GetComponent<Rigidbody>();
 		}
 
-		public void SetPlanetSize(float planetSize, float orbitRadius, float orbitAngle = 0f)
+		public void SetStation(bool isStation)
 		{
+			this.isStation = isStation;
+			GetComponent<Rigidbody>().isKinematic = isStation;
+		}
+
+		public void SetPlanetSize(float planetSize, float orbitRadius= 0f, float orbitAngle = 0f)
+		{
+			if (isStation)
+			{
+				transform.localScale = planetSize * Vector3.one;
+				gravityScale = 2 * Mathf.Sqrt(planetSize);
+				gravityRadius = planetSize * 1.2f;
+				return;
+			}
 			transform.localScale = planetSize * Vector3.one;
-			gravityScale = Mathf.Sqrt(planetSize);
+			gravityScale = 2 * Mathf.Sqrt(planetSize);
 			gravityRadius = planetSize * 1.2f;
 
 			this.orbitRadius = orbitRadius;
@@ -50,6 +65,7 @@ namespace MPGame.Physics
 		private void FixedUpdate()
 		{
 			if (isSun || !IsHost) return;
+			if (isStation) return;
 
 			currentAngle += orbitSpeed * Time.fixedDeltaTime;
 			currentAngle %= 360f;

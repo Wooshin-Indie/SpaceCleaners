@@ -174,12 +174,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isSun: 0
+  isStation: 0
   gravityScale: 50
   gravityRadius: 520
-  orbitSpeed: 0.5
+  orbitSpeed: 0
   startAngle: 0
-  orbitRadius: 2000
-  orbitAngle: 30
+  orbitRadius: 0
+  orbitAngle: 0
 --- !u!114 &-6609146874585444783
 MonoBehaviour:
   m_ObjectHideFlags: 0

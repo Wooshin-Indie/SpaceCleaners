@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using MPGame.Controller.StateMachine;
 using MPGame.Manager;
 using MPGame.Physics;
@@ -5,6 +6,8 @@ using MPGame.Props;
 using MPGame.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -57,6 +60,10 @@ namespace MPGame.Controller
 		[SerializeField, Tooltip("Player's camera for control view dir (in gravity).")]
 		public Transform cameraTransform;
 
+		[SerializeField]
+		private GameObject mapCameraPrefab;
+
+		private GameObject mapCamera;
 
 		/** Components **/
 		private Rigidbody rigid;
@@ -141,10 +148,15 @@ namespace MPGame.Controller
 				if (IsOwner)
 				{
 					EnvironmentSpawner.Instance.SpawnEnvironments();
-					EnvironmentSpawner.Instance.SpawnGalaxy();
+					//EnvironmentSpawner.Instance.SpawnGalaxy();
 					ObjectSpawner.Instance.SpawnTrashArea();
 				}
-				FindPlanets();
+			}
+
+			if (IsOwner)
+			{
+				mapCamera = GameObject.Instantiate(mapCameraPrefab);
+				mapCamera.gameObject.SetActive(false);
 			}
 		}
 
@@ -234,8 +246,15 @@ namespace MPGame.Controller
 			float maxMag = 0f;
 			PlanetBody maxPlanet = null;
 
+			bool nullExist = false;
 			foreach (PlanetBody planet in planets)
 			{
+				if (planet == null)
+				{
+					nullExist = true;
+					continue;
+				}
+
 				Vector3 positionDiff = planet.Rigid.position - rigid.position;
 				float distanceSqr = positionDiff.sqrMagnitude;
 
@@ -254,6 +273,11 @@ namespace MPGame.Controller
 				}
 			}
 
+			if (nullExist)
+			{
+				EraseNullInPlanets();
+			}
+
 			// 가장 강한 중력을 가진 행성 처리
 			if (maxPlanet == null || maxPlanet.IsSun) return;
 
@@ -268,6 +292,24 @@ namespace MPGame.Controller
 				isInGravity = true;
 				RotateTowardsPlanet(maxPlanet);
 				playerPlanet = maxPlanet;
+			}
+		}
+
+		private void EraseNullInPlanets()
+		{
+			if (planets != null)
+			{
+				List<PlanetBody> filteredPlanets = new List<PlanetBody>();
+
+				foreach (var planet in planets)
+				{
+					if (planet != null)
+					{
+						filteredPlanets.Add(planet);
+					}
+				}
+
+				planets = filteredPlanets.ToArray();
 			}
 		}
 
@@ -461,6 +503,35 @@ namespace MPGame.Controller
             rigid.AddTorque(-transform.forward * roll * rotationPower * rotationKeyWeight, ForceMode.Acceleration);
         }
 
+		private bool isMapping = false;
+		public bool IsMapping { get => isMapping; set => isMapping = value; }
+
+		public void ToggleMapCamera()
+		{
+			if (isMapping) ChangeRenderCameraToPlayer();
+			else ChangeRenderCameraToMap();
+		}
+
+		public void ChangeRenderCameraToPlayer()
+		{
+			cameraTransform.tag = "MainCamera";
+			mapCamera.tag = "Untagged";
+
+			cameraTransform.gameObject.SetActive(true);
+			mapCamera.gameObject.SetActive(false);
+			isMapping = false;
+		}
+
+		public void ChangeRenderCameraToMap()
+		{
+			cameraTransform.tag = "Untagged";
+			mapCamera.tag = "MainCamera";
+			
+			mapCamera.GetComponent<MapCameraController>().SetStartTransform(transform.position, transform.rotation);
+			cameraTransform.gameObject.SetActive(false);
+			mapCamera.gameObject.SetActive(true);
+			isMapping = true;
+		}
 
 		#region Animation Synchronization
 		public void ChangeAnimatorParam(int id, bool param)
