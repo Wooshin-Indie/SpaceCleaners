@@ -57,7 +57,8 @@ namespace MPGame.Controller.StateMachine
 			controller.transform.localPosition = spaceChair.localExitPosition;
 			controller.GetComponent<Rigidbody>().position = controller.transform.position;
 			controller.transform.localRotation = spaceChair.transform.localRotation;
-			
+			controller.GetComponent<Rigidbody>().rotation = controller.transform.rotation;
+
 			controller.SetKinematic(false);
 			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
 

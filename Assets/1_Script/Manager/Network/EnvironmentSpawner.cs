@@ -99,11 +99,11 @@ namespace MPGame.Manager
 		private void SpawnLobbyPlanet()
 		{
 			GameObject go = Instantiate(planetPrefab);
+			NetworkObject no = go.GetComponent<NetworkObject>();
+			no?.Spawn();
 			go.GetComponent<PlanetBody>().SetStation(true);
 			go.GetComponent<PlanetBody>().SetPlanetSize(1000f);
 			go.GetComponent<Rigidbody>().position = new Vector3(0f, -500f, 0f);
-			NetworkObject no = go.GetComponent<NetworkObject>();
-			no?.Spawn();
 
 			lobbySceneObjects.Add(go);
 		}
@@ -118,7 +118,7 @@ namespace MPGame.Manager
 			for (int i = 0; i < 3; i++)
 			{
 				go = Instantiate(planetPrefab);
-				go.GetComponent<PlanetBody>().SetPlanetSize(Random.Range(300, 500), 1000 * (i + 1), 30 * i);
+				go.GetComponent<PlanetBody>().SetPlanetSize(Random.Range(300, 500), 1000 * (i + 1), Random.Range(0f, 30f));
 				no = go.GetComponent<NetworkObject>();
 				no?.Spawn();
 				gameSceneObjects.Add(go);

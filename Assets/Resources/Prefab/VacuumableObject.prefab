@@ -122,8 +122,8 @@ Rigidbody:
   m_GameObject: {fileID: 5222184831321942631}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0.5
-  m_AngularDrag: 0.05
+  m_Drag: 2
+  m_AngularDrag: 0.3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -152,9 +152,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be5a82e4afcd3cb428383f3cbc87f16b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  vacuumingForce: 1
-  vacuumingForceToCenter: 4
-  removeDistance: 1
+  vacuumingForce: 20
+  vacuumingForceToCenter: 40
+  removeDistance: 2
 --- !u!65 &25157132417193402
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -398,7 +398,7 @@ namespace MPGame.Controller
 		/// </summary>
 		public void Move(float vert, float horz, float depth)
 		{
-			if (isInGravity)
+			if (isInGravity && playerPlanet != null)
 			{
 				Vector3 moveDirection = (transform.forward * vert) + (transform.right * horz);
 				moveDirection = moveDirection.normalized;

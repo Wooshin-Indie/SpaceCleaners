@@ -35,29 +35,27 @@ namespace MPGame.Physics
 		public void SetStation(bool isStation)
 		{
 			this.isStation = isStation;
-			GetComponent<Rigidbody>().isKinematic = isStation;
+			rigid.isKinematic = isStation;
 		}
 
-		public void SetPlanetSize(float planetSize, float orbitRadius= 0f, float orbitAngle = 0f)
+		public void SetPlanetSize(float planetSize, float orbitRadius = 0f, float orbitAngle = 0f)
 		{
-			if (isStation)
-			{
-				transform.localScale = planetSize * Vector3.one;
-				gravityScale = 2 * Mathf.Sqrt(planetSize);
-				gravityRadius = planetSize * 1.2f;
-				return;
-			}
 			transform.localScale = planetSize * Vector3.one;
 			gravityScale = 2 * Mathf.Sqrt(planetSize);
 			gravityRadius = planetSize * 1.2f;
+			if (isStation) return;
 
 			this.orbitRadius = orbitRadius;
-			orbitSpeed = 1000f / orbitRadius;
+			orbitSpeed = 2000f / orbitRadius;
 
 			this.orbitAngle = orbitAngle;
 
 			startAngle = Random.Range(0f, 360f);
 			currentAngle = startAngle;
+
+
+			if (!isSun)
+				GetComponent<OrbitRenderer>().DrawOrbit(200, orbitRadius, orbitAngle);
 		}
 
 		// TODO - Orbit Viewer 필요함
