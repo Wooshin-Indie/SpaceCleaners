@@ -1,9 +1,7 @@
 using MPGame.Structs;
 using MPGame.Utils;
-using System;
 using System.Collections.Generic;
 using Unity.Netcode;
-using UnityEditor.Build.Pipeline;
 using UnityEngine;
 
 namespace MPGame.Manager
@@ -68,10 +66,10 @@ namespace MPGame.Manager
 		public void GameEnded()
 		{
 			Managers.Scene.ChangeScene(Utils.SceneEnum.Lobby);
-
+			
 			if (NetworkManager.Singleton.IsHost)
 			{
-				EnvironmentSpawner.Instance.DespawnAll();
+				EnvironmentSpawner.Instance.SpawnLobbyScene();
 			}
 		}
 

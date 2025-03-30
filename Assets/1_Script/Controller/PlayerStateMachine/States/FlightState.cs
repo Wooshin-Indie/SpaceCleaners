@@ -55,8 +55,10 @@ namespace MPGame.Controller.StateMachine
 			isOutState = true;
 
 			controller.transform.localPosition = spaceChair.localExitPosition;
+			controller.GetComponent<Rigidbody>().position = controller.transform.position;
 			controller.transform.localRotation = spaceChair.transform.localRotation;
-			
+			controller.GetComponent<Rigidbody>().rotation = controller.transform.rotation;
+
 			controller.SetKinematic(false);
 			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
 
@@ -64,6 +66,11 @@ namespace MPGame.Controller.StateMachine
 			NetworkTransmission.instance.IsTheClientReadyServerRPC(false, GameManagerEx.Instance.MyClientId);
 
 			controller.UnsetParentServerRPC();
+
+			if (controller.IsMapping)
+			{
+				controller.ChangeRenderCameraToPlayer();
+			}
 		}
 
 		public override void HandleInput()
@@ -96,9 +103,15 @@ namespace MPGame.Controller.StateMachine
 
 			controller.UpdatePlayerLocalPositionServerRPC(spaceChair.localEnterPosition);
 			controller.transform.localPosition = spaceChair.localEnterPosition;
+
 			if (isDriver)
 			{
 				controller.transform.localRotation = fixedRotation;
+
+				if (Input.GetKeyDown(KeyCode.M))
+				{
+					controller.ToggleMapCamera();
+				}
 			}
 		}
 
