@@ -5,6 +5,7 @@ using MPGame.Props;
 using MPGame.UI.GameScene;
 using MPGame.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using Unity.VisualScripting;
@@ -86,8 +87,7 @@ namespace MPGame.Controller
 		public PlayerStateMachine StateMachine { get => stateMachine; }
 
 		/** Radar HUD **/
-		private PlayerHUD playerHud;
-		private RadarHUD radar;
+		private PlayerHUD playerHUD;
 
         /** Player State Values **/
         private bool isGrounded = true;
@@ -104,7 +104,10 @@ namespace MPGame.Controller
 		private PlanetBody[] planets = null;
 		private PlanetBody playerPlanet = null;
 
-		private float camRotateSpeed = 10f;
+        [SerializeField]
+        private Radarable[] radarables = null;
+
+        private float camRotateSpeed = 10f;
 		private bool previousGravityState = false;
 		private float vertRot = 0;
 
@@ -122,9 +125,8 @@ namespace MPGame.Controller
 			flightState = new FlightState(this, stateMachine);
 			inShipState = new InShipState(this, stateMachine);
 
-			playerHud = new PlayerHUD();
-            radar = new RadarHUD();
-			playerHud.SetPlayerCam(cameraTransform.GetComponent<Camera>());
+			playerHUD = GetComponent<PlayerHUD>();
+			playerHUD.SetPlayerCam(cameraTransform.GetComponent<Camera>());
 
             animIDSpeed = Animator.StringToHash("Speed");
 			animIDJump = Animator.StringToHash("Jump");
@@ -155,7 +157,8 @@ namespace MPGame.Controller
 					ObjectSpawner.Instance.SpawnTrashArea();
 				}
 				FindPlanets();
-			}
+				FindRadarables();
+            }
 		}
 
 		private void Update()
@@ -166,8 +169,10 @@ namespace MPGame.Controller
 				stateMachine.CurState.LogicUpdate();
 				Debug.Log("CurState: " + stateMachine.CurState);
 
-				//HACK
-				if (Input.GetKeyDown(KeyCode.Alpha3))
+				OnUpdateRadar(); // LogicUpdate로 빼야함
+
+                //HACK
+                if (Input.GetKeyDown(KeyCode.Alpha3))
 				{
 					GameNetworkManager.Instance.StartGameServerRPC();
 				}
@@ -235,10 +240,23 @@ namespace MPGame.Controller
 			}
 		}
 
-		/// <summary>
-		/// Apply gravity to player from planets. (FindPlanets Func must be called.)
-		/// </summary>
-		public void ApplyGravity()
+        /// <summary>
+        /// Find Radarables in current loaded scene.
+        /// This MUST BE called at the start of the game.
+        /// </summary>
+        public void FindRadarables()
+        {
+            radarables = FindObjectsByType<Radarable>(FindObjectsSortMode.None);
+            if (radarables == null)
+            {
+                Debug.LogError("Planets cannot be null.");
+            }
+        }
+
+        /// <summary>
+        /// Apply gravity to player from planets. (FindPlanets Func must be called.)
+        /// </summary>
+        public void ApplyGravity()
 		{
 			if (planets == null) return;
 
@@ -424,18 +442,18 @@ namespace MPGame.Controller
 		[SerializeField] private float SlerpWeight;
         public void MoveInShip(float vert, float horz, float depth) // Movement controll in spaceship
 		{
-            shipVelocity = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
+            shipVelocity = EnvironmentSpawner.Instance.CurrentSpaceship.GetComponent<Rigidbody>().linearVelocity;
             inputVelocity = ((transform.forward * vert) + (transform.right * horz)
 				+ (2 * transform.up * depth)) * thrustPowerInShip;
 
             if (isGrounded)
                 defaultDownVelocity = Vector3.zero;
 			else
-				defaultDownVelocity = -EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Transform>().up * thrustPowerInShip;
+				defaultDownVelocity = -EnvironmentSpawner.Instance.CurrentSpaceship.GetComponent<Transform>().up * thrustPowerInShip;
 
             rigid.linearVelocity = shipVelocity + inputVelocity + defaultDownVelocity;
 
-            shipEulerAngle = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().
+            shipEulerAngle = EnvironmentSpawner.Instance.CurrentSpaceship.GetComponent<Rigidbody>().
 				rotation.eulerAngles;
 			targetRotation = Quaternion.Euler(shipEulerAngle.x, rigid.rotation.eulerAngles.y, 
 				shipEulerAngle.z);
@@ -673,6 +691,40 @@ namespace MPGame.Controller
 			Handles.DrawLine(start + offset4, end + offset4);
 		}
 
-		#endregion
-	}
+        #endregion
+
+        #region Radar Funcs
+        [SerializeField] private float RadaringTime;
+        private bool isRadarActive = false;
+
+		public void OnUpdateRadar()
+		{
+			if (!isRadarActive) return;
+
+			playerHUD.OnUpdateRadarablesToScreen();
+        }
+
+        [ContextMenu("RadarSetUp")]
+        private void RadarSetUp() // 레이더 버튼 처음 눌렀을 때 실행
+        {
+			if(!IsHost)
+			{
+                FindRadarables();
+            }
+
+            isRadarActive = true;
+
+			playerHUD.ClearRadarablesOfHUD();
+            playerHUD.AddRadarablesToHUD(radarables); // PlayerHUD에 전달
+            // StartCoroutine(SetRadarTimer());
+        }
+
+        IEnumerator SetRadarTimer()
+        {
+            yield return new WaitForSeconds(RadaringTime);
+
+            isRadarActive = false;
+        }
+        #endregion
+    }
 }

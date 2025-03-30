@@ -116,6 +116,7 @@ namespace MPGame.Controller.StateMachine
                 else depth = isUpPressed ? 1 : -1;
                 spaceShip.FlyServerRPC(vertInputRaw, horzInputRaw, depth);
                 spaceShip.RotateBodyWithMouseServerRPC(mouseX, mouseY, roll); //isHost에서도 serverRPC로 실행됨
+				Debug.Log("Outside Of ServerRPC");
             }
 			else
 			{

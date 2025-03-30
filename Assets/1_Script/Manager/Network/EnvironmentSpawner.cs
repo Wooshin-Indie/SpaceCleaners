@@ -1,5 +1,6 @@
 using MPGame.Controller;
 using MPGame.Physics;
+using NUnit.Framework;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -88,8 +89,12 @@ namespace MPGame.Manager
 			}
 		}
 
-        public GameObject SpaceshipOb { get => currentSpaceship; }
+        public GameObject CurrentSpaceship { get => currentSpaceship; }
 
+        // host에는 스폰된 planet networkId이 저장됨client는 server로부터 여기에 id 받아서 씀
+        private List<ulong> planetIDs = new List<ulong>(); 
+		public List<ulong> PlanetIDs { get => planetIDs; }
+		public List<GameObject> tmpPlanets = new List<GameObject>();
         public void SpawnGalaxy()
 		{
 			// HACK - 3개만 임시로 설치함
@@ -99,12 +104,12 @@ namespace MPGame.Manager
 				go.GetComponent<PlanetBody>().SetPlanetSize(Random.Range(300, 500), 1000 * (i + 1), 30 * i);
 				NetworkObject no = go.GetComponent<NetworkObject>();
 				no?.Spawn();
-			}
+            }
 
 			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject().GetComponent<PlayerController>().FindPlanets();
 		}
 
-		public void DespawnAll()
+        public void DespawnAll()
 		{
 
 		}
