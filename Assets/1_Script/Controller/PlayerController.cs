@@ -3,8 +3,10 @@ using MPGame.Controller.StateMachine;
 using MPGame.Manager;
 using MPGame.Physics;
 using MPGame.Props;
+using MPGame.UI.GameScene;
 using MPGame.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -91,8 +93,11 @@ namespace MPGame.Controller
 
 		public PlayerStateMachine StateMachine { get => stateMachine; }
 
-		/** Player State Values **/
-		private bool isGrounded = true;
+		/** Radar HUD **/
+		private PlayerHUD playerHUD;
+
+        /** Player State Values **/
+        private bool isGrounded = true;
 		private bool isInGravity = false;
 		private bool isDetectInteractable = false;
 		
@@ -106,7 +111,10 @@ namespace MPGame.Controller
 		private PlanetBody[] planets = null;
 		private PlanetBody playerPlanet = null;
 
-		private float camRotateSpeed = 10f;
+        [SerializeField]
+        private Radarable[] radarables = null;
+
+        private float camRotateSpeed = 10f;
 		private bool previousGravityState = false;
 		private float vertRot = 0;
 
@@ -119,9 +127,13 @@ namespace MPGame.Controller
 			capsule = GetComponent<CapsuleCollider>();
 
             stateMachine = new PlayerStateMachine();
-			flyState = new FlyState(this, stateMachine);
+			stateMachine.SetPlayerController(this);
+            flyState = new FlyState(this, stateMachine);
 			flightState = new FlightState(this, stateMachine);
 			inShipState = new InShipState(this, stateMachine);
+
+			playerHUD = GetComponent<PlayerHUD>();
+			playerHUD.SetPlayerCam(cameraTransform.GetComponent<Camera>());
 
             animIDSpeed = Animator.StringToHash("Speed");
 			animIDJump = Animator.StringToHash("Jump");
@@ -151,8 +163,11 @@ namespace MPGame.Controller
 					//EnvironmentSpawner.Instance.SpawnGalaxy();
 					ObjectSpawner.Instance.SpawnTrashArea();
 				}
-			}
 
+				FindPlanets();
+				FindRadarables();
+      }
+            
 			if (IsOwner)
 			{
 				mapCamera = GameObject.Instantiate(mapCameraPrefab);
@@ -166,9 +181,12 @@ namespace MPGame.Controller
 			{
 				stateMachine.CurState.HandleInput();
 				stateMachine.CurState.LogicUpdate();
+				Debug.Log("CurState: " + stateMachine.CurState);
 
-				//HACK
-				if (Input.GetKeyDown(KeyCode.Alpha3))
+				OnUpdateRadar(); // LogicUpdate로 빼야함
+
+                //HACK
+                if (Input.GetKeyDown(KeyCode.Alpha3))
 				{
 					GameNetworkManager.Instance.StartGameServerRPC();
 				}
@@ -236,10 +254,23 @@ namespace MPGame.Controller
 			}
 		}
 
-		/// <summary>
-		/// Apply gravity to player from planets. (FindPlanets Func must be called.)
-		/// </summary>
-		public void ApplyGravity()
+        /// <summary>
+        /// Find Radarables in current loaded scene.
+        /// This MUST BE called at the start of the game.
+        /// </summary>
+        public void FindRadarables()
+        {
+            radarables = FindObjectsByType<Radarable>(FindObjectsSortMode.None);
+            if (radarables == null)
+            {
+                Debug.LogError("Planets cannot be null.");
+            }
+        }
+
+        /// <summary>
+        /// Apply gravity to player from planets. (FindPlanets Func must be called.)
+        /// </summary>
+        public void ApplyGravity()
 		{
 			if (planets == null) return;
 
@@ -391,6 +422,33 @@ namespace MPGame.Controller
 			}
 		}
 
+        /// <summary>
+        /// FlyState에서의 Move, Rotate 관리
+        /// </summary>
+        public void PhysicsForFly(float vert, float horz, float depth, float mouseX, float mouseY, float roll = 0)
+		{
+			Move(vert, horz, depth);
+			RotateBodyInShipState(mouseX, mouseY, roll);
+        }
+
+        /// <summary>
+        /// Input controll when isDriver is False.
+        /// When isDriver is True, it's controlled in SpaceshipController.
+		/// driver가 아닌 FlightState에서의 Move, Rotate 관리
+        /// </summary>
+        public void PhysicsForNoneDriverFlight(float mouseX, float mouseY)
+        {
+			RotateWithoutRigidbody(mouseX, mouseY);
+        }
+
+        /// <summary>
+        /// InShipState에서의 Move, Rotate 관리
+        /// </summary>
+        public void PhysicsForInShip(float vert, float horz, float depth, float mouseX, float mouseY)
+		{
+            MoveInShip(vert, horz, depth);
+            RotateBodyInShipState(mouseX, mouseY);
+        }
 
 		/// <summary>
 		/// Movement Func in general state.
@@ -428,18 +486,18 @@ namespace MPGame.Controller
 		[SerializeField] private float SlerpWeight;
         public void MoveInShip(float vert, float horz, float depth) // Movement controll in spaceship
 		{
-            shipVelocity = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().linearVelocity;
+            shipVelocity = EnvironmentSpawner.Instance.CurrentSpaceship.GetComponent<Rigidbody>().linearVelocity;
             inputVelocity = ((transform.forward * vert) + (transform.right * horz)
 				+ (2 * transform.up * depth)) * thrustPowerInShip;
 
             if (isGrounded)
                 defaultDownVelocity = Vector3.zero;
 			else
-				defaultDownVelocity = -EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Transform>().up * thrustPowerInShip;
+				defaultDownVelocity = -EnvironmentSpawner.Instance.CurrentSpaceship.GetComponent<Transform>().up * thrustPowerInShip;
 
             rigid.linearVelocity = shipVelocity + inputVelocity + defaultDownVelocity;
 
-            shipEulerAngle = EnvironmentSpawner.Instance.SpaceshipOb.GetComponent<Rigidbody>().
+            shipEulerAngle = EnvironmentSpawner.Instance.CurrentSpaceship.GetComponent<Rigidbody>().
 				rotation.eulerAngles;
 			targetRotation = Quaternion.Euler(shipEulerAngle.x, rigid.rotation.eulerAngles.y, 
 				shipEulerAngle.z);
@@ -487,6 +545,9 @@ namespace MPGame.Controller
 			transform.localRotation = Quaternion.Euler(quat.x, quat.y + mouseX * rotationPower, quat.z);
 		}
 
+        /// <summary>
+        /// Rotation Func while inShip state
+        /// </summary>
         public void RotateBodyInShipState(float mouseX, float mouseY, float roll = 0)
         {
             Vector3 camRot = cameraTransform.localRotation.eulerAngles;
@@ -703,6 +764,40 @@ namespace MPGame.Controller
 			Handles.DrawLine(start + offset4, end + offset4);
 		}
 
-		#endregion
-	}
+        #endregion
+
+        #region Radar Funcs
+        [SerializeField] private float RadaringTime;
+        private bool isRadarActive = false;
+
+		public void OnUpdateRadar()
+		{
+			if (!isRadarActive) return;
+
+			playerHUD.OnUpdateRadarablesToScreen();
+        }
+
+        [ContextMenu("RadarSetUp")]
+        private void RadarSetUp() // 레이더 버튼 처음 눌렀을 때 실행
+        {
+			if(!IsHost)
+			{
+                FindRadarables();
+            }
+
+            isRadarActive = true;
+
+			playerHUD.ClearRadarablesOfHUD();
+            playerHUD.AddRadarablesToHUD(radarables); // PlayerHUD에 전달
+            // StartCoroutine(SetRadarTimer());
+        }
+
+        IEnumerator SetRadarTimer()
+        {
+            yield return new WaitForSeconds(RadaringTime);
+
+            isRadarActive = false;
+        }
+        #endregion
+    }
 }

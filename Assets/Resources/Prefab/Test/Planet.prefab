@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: -6609146874585444783}
   - component: {fileID: 4870064687809990835}
   - component: {fileID: 4084261475014855744}
-  - component: {fileID: -8769676348231174725}
+  - component: {fileID: -5476357573548116920}
   m_Layer: 0
   m_Name: Planet
   m_TagString: Untagged
@@ -333,7 +333,7 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
---- !u!114 &-8769676348231174725
+--- !u!114 &-5476357573548116920
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -342,6 +342,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7005988799852390065}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41c97fd0fa018c94dbd6d49a3ded5530, type: 3}
+  m_Script: {fileID: 11500000, guid: b150ab75cd40ab84c94c1244561cd079, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

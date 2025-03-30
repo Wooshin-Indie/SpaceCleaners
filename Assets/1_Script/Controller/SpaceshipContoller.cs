@@ -50,10 +50,11 @@ namespace MPGame.Controller
 			if (!insidePlayers.Contains(other.GetComponent<PlayerController>()))
 			{
 				insidePlayers.Add(other.GetComponent<PlayerController>());
+				Debug.Log("insidePlayer added: " + other.GetComponent<NetworkBehaviour>().NetworkObjectId);
 				if (other.GetComponent<PlayerController>().StateMachine.CurState
 					== other.GetComponent<PlayerController>().flightState) return;
 				other.GetComponent<PlayerController>().SetInShipState();
-			}
+            }
 		}
 
 		void OnTriggerExit(Collider other)

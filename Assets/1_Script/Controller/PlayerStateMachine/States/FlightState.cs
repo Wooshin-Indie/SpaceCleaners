@@ -123,17 +123,31 @@ namespace MPGame.Controller.StateMachine
 			if (spaceShip == null) return;
 
 			if (isDriver)
-			{
-				float depth = 0;
-				if (isUpPressed == isDownPressed) depth = 0;
-				else depth = isUpPressed ? 1 : -1;
-				spaceShip.FlyServerRPC(vertInputRaw, horzInputRaw, depth);
-				spaceShip.RotateBodyWithMouseServerRPC(mouseX, mouseY, roll);
-			}
+            {
+                float depth = 0;
+                if (isUpPressed == isDownPressed) depth = 0;
+                else depth = isUpPressed ? 1 : -1;
+                spaceShip.FlyServerRPC(vertInputRaw, horzInputRaw, depth);
+                spaceShip.RotateBodyWithMouseServerRPC(mouseX, mouseY, roll); //isHost에서도 serverRPC로 실행됨
+				Debug.Log("Outside Of ServerRPC");
+            }
 			else
 			{
-				controller.RotateWithoutRigidbody(mouseX, mouseY);
+				if (controller.IsHost)
+				{
+					controller.PhysicsForNoneDriverFlight(mouseX, mouseY);
+				}
+				else
+				{
+                    controller.InputForPredictionFlight(new PlayerController.ClientInput
+                    {
+                        sequence = 0,
+                        timestamp = 0,
+                        moveDir = Vector3.zero,
+                        rotateDir = new UnityEngine.Vector3(mouseX, mouseY, roll = 0)
+                    });
+                }
 			}
-		}
+        }
 	}
 }
