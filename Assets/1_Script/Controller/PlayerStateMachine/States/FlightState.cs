@@ -55,8 +55,10 @@ namespace MPGame.Controller.StateMachine
 			isOutState = true;
 
 			controller.transform.localPosition = spaceChair.localExitPosition;
+			controller.GetComponent<Rigidbody>().position = controller.transform.position;
 			controller.transform.localRotation = spaceChair.transform.localRotation;
-			
+			controller.GetComponent<Rigidbody>().rotation = controller.transform.rotation;
+
 			controller.SetKinematic(false);
 			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
 
@@ -64,6 +66,11 @@ namespace MPGame.Controller.StateMachine
 			NetworkTransmission.instance.IsTheClientReadyServerRPC(false, GameManagerEx.Instance.MyClientId);
 
 			controller.UnsetParentServerRPC();
+
+			if (controller.IsMapping)
+			{
+				controller.ChangeRenderCameraToPlayer();
+			}
 		}
 
 		public override void HandleInput()
@@ -96,9 +103,15 @@ namespace MPGame.Controller.StateMachine
 
 			controller.UpdatePlayerLocalPositionServerRPC(spaceChair.localEnterPosition);
 			controller.transform.localPosition = spaceChair.localEnterPosition;
+
 			if (isDriver)
 			{
 				controller.transform.localRotation = fixedRotation;
+
+				if (Input.GetKeyDown(KeyCode.M))
+				{
+					controller.ToggleMapCamera();
+				}
 			}
 		}
 
@@ -110,17 +123,31 @@ namespace MPGame.Controller.StateMachine
 			if (spaceShip == null) return;
 
 			if (isDriver)
-			{
-				float depth = 0;
-				if (isUpPressed == isDownPressed) depth = 0;
-				else depth = isUpPressed ? 1 : -1;
-				spaceShip.FlyServerRPC(vertInputRaw, horzInputRaw, depth);
-				spaceShip.RotateBodyWithMouseServerRPC(mouseX, mouseY, roll);
-			}
+            {
+                float depth = 0;
+                if (isUpPressed == isDownPressed) depth = 0;
+                else depth = isUpPressed ? 1 : -1;
+                spaceShip.FlyServerRPC(vertInputRaw, horzInputRaw, depth);
+                spaceShip.RotateBodyWithMouseServerRPC(mouseX, mouseY, roll); //isHost에서도 serverRPC로 실행됨
+				Debug.Log("Outside Of ServerRPC");
+            }
 			else
 			{
-				controller.RotateWithoutRigidbody(mouseX, mouseY);
+				if (controller.IsHost)
+				{
+					controller.PhysicsForNoneDriverFlight(mouseX, mouseY);
+				}
+				else
+				{
+                    controller.InputForPredictionFlight(new PlayerController.ClientInput
+                    {
+                        sequence = 0,
+                        timestamp = 0,
+                        moveDir = Vector3.zero,
+                        rotateDir = new UnityEngine.Vector3(mouseX, mouseY, roll = 0)
+                    });
+                }
 			}
-		}
+        }
 	}
 }

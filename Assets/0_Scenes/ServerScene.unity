@@ -1189,6 +1189,8 @@ MonoBehaviour:
   - {fileID: 7228840847767664663, guid: 21d5662250b6f844d816e3450667ead0, type: 3}
   spaceship: {fileID: 8644338739374899709, guid: faa794838f4085547893903f00e98ea7, type: 3}
   planetPrefab: {fileID: 7005988799852390065, guid: f3eea6c36480bff4ab1acc42fd2f78ec, type: 3}
+  sunPrefab: {fileID: 1439935177108538161, guid: 14e437a69288fcd4bb88813e34bf7fe3, type: 3}
+  tmpPlanets: []
 --- !u!1 &640824888
 GameObject:
   m_ObjectHideFlags: 0
@@ -1477,7 +1479,7 @@ MonoBehaviour:
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: 02d4a394bcf139a48a3584fd1dc84ef9, type: 2}
-    TickRate: 60
+    TickRate: 30
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 0
     ConnectionData: 
@@ -3308,6 +3310,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e152fd9245838042aa3cb2d16b00074, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  HUDCanvas: {fileID: 0}
+  radarCirclePrefab: {fileID: 0}
 --- !u!1 &1790753426
 GameObject:
   m_ObjectHideFlags: 0

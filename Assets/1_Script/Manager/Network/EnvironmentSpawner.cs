@@ -1,12 +1,13 @@
 using MPGame.Controller;
 using MPGame.Physics;
+using NUnit.Framework;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 namespace MPGame.Manager
 {
-    public class EnvironmentSpawner : NetworkBehaviour
+	public class EnvironmentSpawner : NetworkBehaviour
 	{
 		#region Singleton
 		private static EnvironmentSpawner instance;
@@ -43,12 +44,19 @@ namespace MPGame.Manager
 
         [SerializeField] 
 		private GameObject planetPrefab;
+		[SerializeField]
+		private GameObject sunPrefab;
 
-		// LobbyScene 에서 필요한 NetworkObejct들 스폰하는 함수
-		// ex. 우주선
+
+		private List<GameObject> lobbySceneObjects = new List<GameObject>();
+		private List<GameObject> gameSceneObjects = new List<GameObject>();
+
 		public void SpawnLobbyScene()
 		{
+			DespawnGameSceneObjects();
 			SpawnSpaceship();
+			SpawnLobbyPlanet();
+			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject().GetComponent<PlayerController>().FindPlanets();
 		}
 
 		private void SpawnSpaceship()
@@ -64,6 +72,7 @@ namespace MPGame.Manager
 
 		public void SpawnGameScene()
 		{
+			DespawnLobbySceneObjects();
 			MoveSpaceship();
 			SpawnEnvironments();
 			SpawnGalaxy();
@@ -74,8 +83,7 @@ namespace MPGame.Manager
 			if (currentSpaceship == null) return;
 
 			currentSpaceship.GetComponent<Rigidbody>().isKinematic = false;
-			// TODO - 스폰 포인트 설정해야됨
-			currentSpaceship.transform.position = new Vector3(-12.25f, -0.21f, -10.59f);
+			currentSpaceship.GetComponent<Rigidbody>().MovePosition(new Vector3(300f, 300f, 300f));
 		}
 
 		public void SpawnEnvironments()
@@ -85,28 +93,69 @@ namespace MPGame.Manager
 				GameObject go = Instantiate(environments[i]);
 				NetworkObject no = go.GetComponent<NetworkObject>();
 				no?.Spawn();
+				gameSceneObjects.Add(go);
 			}
 		}
 
-        public GameObject SpaceshipOb { get => currentSpaceship; }
+		private void SpawnLobbyPlanet()
+		{
+			GameObject go = Instantiate(planetPrefab);
+			NetworkObject no = go.GetComponent<NetworkObject>();
+			no?.Spawn();
+			go.GetComponent<PlanetBody>().SetStation(true);
+			go.GetComponent<PlanetBody>().SetPlanetSize(1000f);
+			go.GetComponent<Rigidbody>().position = new Vector3(0f, -500f, 0f);
 
+			lobbySceneObjects.Add(go);
+		}
+
+        public GameObject CurrentSpaceship { get => currentSpaceship; }
+
+        // host에는 스폰된 planet networkId이 저장됨client는 server로부터 여기에 id 받아서 씀
+        private List<ulong> planetIDs = new List<ulong>(); 
+		public List<ulong> PlanetIDs { get => planetIDs; }
+		public List<GameObject> tmpPlanets = new List<GameObject>();
         public void SpawnGalaxy()
 		{
+			GameObject go;
+			NetworkObject no;
 			// HACK - 3개만 임시로 설치함
 			for (int i = 0; i < 3; i++)
 			{
-				GameObject go = Instantiate(planetPrefab);
-				go.GetComponent<PlanetBody>().SetPlanetSize(Random.Range(300, 500), 1000 * (i + 1), 30 * i);
-				NetworkObject no = go.GetComponent<NetworkObject>();
+				go = Instantiate(planetPrefab);
+				go.GetComponent<PlanetBody>().SetPlanetSize(Random.Range(300, 500), 1000 * (i + 1), Random.Range(0f, 30f));
+				no = go.GetComponent<NetworkObject>();
 				no?.Spawn();
+				gameSceneObjects.Add(go);
 			}
+
+			go = Instantiate(sunPrefab);
+			go.transform.position = new Vector3(0f, 0f, 0f);
+			no = go.GetComponent<NetworkObject>();
+			no?.Spawn();
+			gameSceneObjects.Add(go);
 
 			NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject().GetComponent<PlayerController>().FindPlanets();
 		}
 
-		public void DespawnAll()
+		public void DespawnLobbySceneObjects()
 		{
+			for (int i = 0; i < lobbySceneObjects.Count; i++)
+			{
+				lobbySceneObjects[i].GetComponent<NetworkObject>().Despawn();
+				GameObject.Destroy(lobbySceneObjects[i]);
+			}
+			lobbySceneObjects.Clear();
+		}
 
+		public void DespawnGameSceneObjects()
+		{
+			for(int i=0; i<gameSceneObjects.Count; i++)
+			{
+				gameSceneObjects[i].GetComponent<NetworkObject>().Despawn();
+				GameObject.Destroy(gameSceneObjects[i]);
+			}
+			gameSceneObjects.Clear();
 		}
 
 	}

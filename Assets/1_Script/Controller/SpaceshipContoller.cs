@@ -50,10 +50,11 @@ namespace MPGame.Controller
 			if (!insidePlayers.Contains(other.GetComponent<PlayerController>()))
 			{
 				insidePlayers.Add(other.GetComponent<PlayerController>());
+				Debug.Log("insidePlayer added: " + other.GetComponent<NetworkBehaviour>().NetworkObjectId);
 				if (other.GetComponent<PlayerController>().StateMachine.CurState
 					== other.GetComponent<PlayerController>().flightState) return;
 				other.GetComponent<PlayerController>().SetInShipState();
-			}
+            }
 		}
 
 		void OnTriggerExit(Collider other)
@@ -76,7 +77,7 @@ namespace MPGame.Controller
 		[ServerRpc (RequireOwnership = false)]
 		public void FlyServerRPC(float vert, float horz, float depth)
 		{
-			if (Managers.Scene.CurrentScene.SceneEnum == Utils.SceneEnum.Lobby) return;
+			if (Managers.Scene.CurrentScene?.SceneEnum == Utils.SceneEnum.Lobby) return;
 			rigid.AddForce(transform.forward * vert * thrustPower, ForceMode.Acceleration);
 			rigid.AddForce(transform.right * horz * thrustPower, ForceMode.Acceleration);
 			rigid.AddForce(transform.up * depth * thrustPower, ForceMode.Acceleration);
@@ -85,7 +86,7 @@ namespace MPGame.Controller
 		[ServerRpc(RequireOwnership = false)]
 		public void RotateBodyWithMouseServerRPC(float mouseX, float mouseY, float roll)
 		{
-			if (Managers.Scene.CurrentScene.SceneEnum == Utils.SceneEnum.Lobby) return;
+			if (Managers.Scene.CurrentScene?.SceneEnum == Utils.SceneEnum.Lobby) return;
 			rigid.AddTorque(transform.up * mouseX * rotationPower, ForceMode.Acceleration);
 			rigid.AddTorque(-transform.right * mouseY * rotationPower, ForceMode.Acceleration);
 			rigid.AddTorque(-transform.forward * roll * rotationPower * keyWeight, ForceMode.Acceleration);
