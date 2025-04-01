@@ -47,9 +47,10 @@ namespace MPGame.Props
             {
                 // 여기에 vacuumend를 넣어줘야 오류가 안날라나?
 
+                Debug.Log("Remove test 1");
                 RemoveVacuumingObjectsFromHashsetsClientRPC(NetworkObjectId);
                 // ownerClient의 PlayerController에서 Hashset에서 이 오브젝트를 삭제하라고 요청
-
+                Debug.Log("Remove test 2");
                 StartCoroutine(DestroyCoroutine());
             }
         }
@@ -160,7 +161,13 @@ namespace MPGame.Props
         private float destroyTime = 1f;
         IEnumerator DestroyCoroutine()
         {
+            Debug.Log("Remove test 3");
             GetComponent<Collider>().enabled = false;
+
+            Vector3 playerPos = NetworkManager.SpawnManager.GetPlayerNetworkObject(OwnerClientId.Value).
+                transform.position; // or localPosition?
+            targetPoint = playerPos + new Vector3(0, 2, 0); 
+            // 가운데로 빨려들어가게 보정 (serialize 해야될라나?)
 
             Vector3 initialScale = transform.localScale;
             Vector3 targetScale = initialScale / 3;
@@ -175,7 +182,8 @@ namespace MPGame.Props
                 // 선형 보간으로 스케일 변경
                 transform.localScale = Vector3.Lerp(initialScale, targetScale, t);
 
-                //이동도 넣어야됨
+                transform.position = Vector3.Lerp(transform.position, targetPoint, elapsedTime);
+                //이동도 넣어야됨 targetpoint를 transform으로 업데이트해주기? + (0, 2, 0)
 
                 yield return null;
             }

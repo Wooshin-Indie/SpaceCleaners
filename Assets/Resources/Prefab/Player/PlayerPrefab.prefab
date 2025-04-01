@@ -1664,7 +1664,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2397546253
+  GlobalObjectIdHash: 254742088
   InScenePlacedSourceGlobalObjectIdHash: 2397546253
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -1730,10 +1730,14 @@ MonoBehaviour:
   animIdGrounded: 0
   animIdFreeFall: 0
   planets: []
+  radarables: []
   thrustPowerInShip: 2
   SlerpWeight: 1
   vacuumDetectRadius: 4
   vacuumDetectLength: 20
+  vacuumingForce: 2
+  vacuumingForceToCenter: 4
+  removeDistance: 2
   vacuumableLayers:
     serializedVersion: 2
     m_Bits: 4096
