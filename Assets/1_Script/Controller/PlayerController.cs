@@ -184,11 +184,11 @@ namespace MPGame.Controller
                 //HACK
                 if (Input.GetKeyDown(KeyCode.Alpha3))
 				{
-					GameNetworkManager.Instance.StartGameServerRPC();
+					NetworkTransmission.instance.StartGameServerRPC();
 				}
 				else if (Input.GetKeyDown(KeyCode.Alpha4))
 				{
-					GameNetworkManager.Instance.EndGameServerRPC();
+					NetworkTransmission.instance.EndGameServerRPC();
 				}
 			}
 
