@@ -160,9 +160,14 @@ namespace MPGame.Manager
 			if (!isInGame && GameManagerEx.Instance.IsAllPlayerReady())
 			{
 				LockLobby();
-				isInGame = true;
-				GameManagerEx.Instance.GameStarted();
 			}
+		}
+
+		[ClientRpc]
+		public void StartGameClientRPC()
+		{
+			isInGame = true;
+			GameManagerEx.Instance.GameStarted();
 		}
 
 		[ServerRpc(RequireOwnership = false)]
@@ -170,10 +175,16 @@ namespace MPGame.Manager
 		{
 			if (isInGame)
 			{
-				UnlockLobby();
-				isInGame = false;
-				GameManagerEx.Instance.GameEnded();
+				UnlockLobby(); 
+				EndGameClientRPC();
 			}
+		}
+
+		[ClientRpc]
+		public void EndGameClientRPC()
+		{
+			isInGame = false;
+			GameManagerEx.Instance.GameEnded();
 		}
 
 		private void LockLobby()

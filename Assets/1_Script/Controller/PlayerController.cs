@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using MPGame.Controller.StateMachine;
 using MPGame.Manager;
 using MPGame.Physics;
@@ -8,10 +7,7 @@ using MPGame.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -226,6 +222,7 @@ namespace MPGame.Controller
 			capsule.isTrigger = isKinematic;
 			SetKinematicServerRPC(isKinematic);
 		}
+
 		public void SetFlyState()
 		{
 			stateMachine.ChangeState(flyState);

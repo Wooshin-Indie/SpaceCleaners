@@ -1,9 +1,6 @@
 using MPGame.Controller;
-using MPGame.Manager;
 using System.Collections.Generic;
-using Unity.Netcode;
 using UnityEngine;
-using static UnityEngine.Rendering.DebugUI;
 
 namespace MPGame.UI.GameScene
 {

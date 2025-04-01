@@ -3555,7 +3555,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tempObject: {fileID: 5222184831321942631, guid: 112e1b897ced2804aa1c6beb142981ee, type: 3}
   trashPrefab: {fileID: 5222184831321942631, guid: 112e1b897ced2804aa1c6beb142981ee, type: 3}
-  numberOfTrash: 30
+  numberOfTrash: 20
   numberOfGroup: 10
   minGroupArea: {x: 10, y: 10, z: 10}
   maxGroupArea: {x: 30, y: 30, z: 30}

@@ -101,7 +101,6 @@ namespace MPGame.Controller.StateMachine
 				return;
 			}
 
-			controller.UpdatePlayerLocalPositionServerRPC(spaceChair.localEnterPosition);
 			controller.transform.localPosition = spaceChair.localEnterPosition;
 
 			if (isDriver)
