@@ -47,10 +47,9 @@ namespace MPGame.Props
             {
                 // 여기에 vacuumend를 넣어줘야 오류가 안날라나?
 
-                Debug.Log("Remove test 1");
                 RemoveVacuumingObjectsFromHashsetsClientRPC(NetworkObjectId);
                 // ownerClient의 PlayerController에서 Hashset에서 이 오브젝트를 삭제하라고 요청
-                Debug.Log("Remove test 2");
+                
                 StartCoroutine(DestroyCoroutine());
             }
         }
@@ -159,30 +158,31 @@ namespace MPGame.Props
         }
 
         private float destroyTime = 1f;
-        IEnumerator DestroyCoroutine()
+        // destroy 될 때 플레이어에게 쭉 빨려들어가게 하는 코루틴
+        IEnumerator DestroyCoroutine() 
         {
-            Debug.Log("Remove test 3");
-            GetComponent<Collider>().enabled = false;
+            GetComponent<Collider>().enabled = false; // 충돌 안되게
 
             Vector3 playerPos = NetworkManager.SpawnManager.GetPlayerNetworkObject(OwnerClientId.Value).
                 transform.position; // or localPosition?
-            targetPoint = playerPos + new Vector3(0, 2, 0); 
+            targetPoint = playerPos + new Vector3(0, 2, 0);
             // 가운데로 빨려들어가게 보정 (serialize 해야될라나?)
 
             Vector3 initialScale = transform.localScale;
-            Vector3 targetScale = initialScale / 3;
+            Vector3 targetScale = initialScale / 10;
             float elapsedTime = 0f;
             float t = 0f;
 
             while (elapsedTime < destroyTime)
             {
                 elapsedTime += Time.deltaTime;
-                // 경과 시간에 따른 비율 계산
+                // 0 < t < 1
                 t = elapsedTime / destroyTime;
+
                 // 선형 보간으로 스케일 변경
                 transform.localScale = Vector3.Lerp(initialScale, targetScale, t);
 
-                transform.position = Vector3.Lerp(transform.position, targetPoint, elapsedTime);
+                transform.position = Vector3.Lerp(transform.position, targetPoint, t);
                 //이동도 넣어야됨 targetpoint를 transform으로 업데이트해주기? + (0, 2, 0)
 
                 yield return null;
