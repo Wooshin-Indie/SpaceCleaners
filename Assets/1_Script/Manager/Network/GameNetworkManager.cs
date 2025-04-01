@@ -160,6 +160,7 @@ namespace MPGame.Manager
 			if (!isInGame && GameManagerEx.Instance.IsAllPlayerReady())
 			{
 				LockLobby();
+				StartGameClientRPC();
 			}
 		}
 
