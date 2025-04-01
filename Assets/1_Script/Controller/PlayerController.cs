@@ -194,8 +194,8 @@ namespace MPGame.Controller
 
 			if (IsHost)
 			{
-				UpdatePlayerPositionClientRPC(transform.position);
-				UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
+				// UpdatePlayerPositionClientRPC(transform.position);
+				// UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
 			}
 		}
 

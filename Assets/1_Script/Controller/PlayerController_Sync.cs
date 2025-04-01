@@ -201,8 +201,8 @@ namespace MPGame.Controller
 				transform.localPosition = localPos;
 				transform.localRotation = localRot;
 
-				UpdatePlayerPositionClientRPC(transform.position, true);
-				UpdatePlayerRotateClientRPC(transform.rotation, Quaternion.identity, true);
+				rigid.position = transform.position;
+				rigid.rotation = transform.rotation;
 			}
 		}
 
