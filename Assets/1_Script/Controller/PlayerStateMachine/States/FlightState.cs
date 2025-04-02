@@ -55,9 +55,11 @@ namespace MPGame.Controller.StateMachine
 			isOutState = true;
 
 			controller.transform.localPosition = spaceChair.localExitPosition;
-			controller.GetComponent<Rigidbody>().position = controller.transform.position;
+			controller.GetComponent<Rigidbody>().MovePosition(controller.transform.position);
 			controller.transform.localRotation = spaceChair.transform.localRotation;
 			controller.GetComponent<Rigidbody>().rotation = controller.transform.rotation;
+
+			controller.UnsetParentServerRPC();
 
 			controller.SetKinematic(false);
 			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
@@ -65,7 +67,6 @@ namespace MPGame.Controller.StateMachine
 			spaceChair.EndInteraction(); 
 			NetworkTransmission.instance.IsTheClientReadyServerRPC(false, GameManagerEx.Instance.MyClientId);
 
-			controller.UnsetParentServerRPC();
 
 			if (controller.IsMapping)
 			{
@@ -101,7 +102,6 @@ namespace MPGame.Controller.StateMachine
 				return;
 			}
 
-			controller.UpdatePlayerLocalPositionServerRPC(spaceChair.localEnterPosition);
 			controller.transform.localPosition = spaceChair.localEnterPosition;
 
 			if (isDriver)

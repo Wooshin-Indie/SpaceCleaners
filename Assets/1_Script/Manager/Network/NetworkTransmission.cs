@@ -81,5 +81,44 @@ namespace MPGame.Manager
 			GameNetworkManager.Instance.Disconnected();
 		}
 
+
+
+		public bool isInGame = false;
+
+		[ServerRpc(RequireOwnership = false)]
+		public void StartGameServerRPC()
+		{
+			if (!isInGame && GameManagerEx.Instance.IsAllPlayerReady())
+			{
+				isInGame = true;
+				GameNetworkManager.Instance.LockLobby();
+				StartGameClientRPC();
+			}
+		}
+
+		[ClientRpc]
+		public void StartGameClientRPC()
+		{
+			isInGame = true;
+			GameManagerEx.Instance.GameStarted();
+		}
+
+		[ServerRpc(RequireOwnership = false)]
+		public void EndGameServerRPC()
+		{
+			if (isInGame)
+			{
+				GameNetworkManager.Instance.UnlockLobby();
+				EndGameClientRPC();
+			}
+		}
+
+		[ClientRpc]
+		public void EndGameClientRPC()
+		{
+			isInGame = false;
+			GameManagerEx.Instance.GameEnded();
+		}
+
 	}
 }

@@ -1459,7 +1459,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34fe157f29eb7df4a9e1628ff7697e10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isInGame: 0
 --- !u!114 &903436763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1542,6 +1541,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60d588c77918dc04f941f7c2da43bdb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isInGame: 0
 --- !u!114 &957287511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3554,7 +3554,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   trashPrefab: {fileID: 5222184831321942631, guid: 112e1b897ced2804aa1c6beb142981ee, type: 3}
-  numberOfTrash: 30
+  numberOfTrash: 20
   numberOfGroup: 10
   minGroupArea: {x: 10, y: 10, z: 10}
   maxGroupArea: {x: 30, y: 30, z: 30}

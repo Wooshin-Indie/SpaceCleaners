@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using MPGame.Controller.StateMachine;
 using MPGame.Manager;
 using MPGame.Physics;
@@ -8,10 +7,7 @@ using MPGame.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -188,18 +184,19 @@ namespace MPGame.Controller
                 //HACK
                 if (Input.GetKeyDown(KeyCode.Alpha3))
 				{
-					GameNetworkManager.Instance.StartGameServerRPC();
+					NetworkTransmission.instance.StartGameServerRPC();
 				}
 				else if (Input.GetKeyDown(KeyCode.Alpha4))
 				{
-					GameNetworkManager.Instance.EndGameServerRPC();
+					NetworkTransmission.instance.EndGameServerRPC();
 				}
 			}
 
 			if (IsHost)
 			{
-				UpdatePlayerPositionClientRPC(transform.position);
-				UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
+				UpdatePlayerCamRotateServerRPC(cameraTransform.localRotation);
+				// UpdatePlayerPositionClientRPC(transform.position);
+				// UpdatePlayerRotateClientRPC(transform.rotation, cameraTransform.localRotation);
 			}
 		}
 
@@ -226,6 +223,7 @@ namespace MPGame.Controller
 			capsule.isTrigger = isKinematic;
 			SetKinematicServerRPC(isKinematic);
 		}
+
 		public void SetFlyState()
 		{
 			stateMachine.ChangeState(flyState);
