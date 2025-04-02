@@ -184,6 +184,20 @@ namespace MPGame.Controller
 		}
 
 		[ServerRpc(RequireOwnership = false)]
+		private void UpdatePlayerCamRotateServerRPC(Quaternion camQuat)
+		{
+			UpdatePlayerCamRotateClientRPC(camQuat);
+		}
+
+		[ClientRpc]
+		private void UpdatePlayerCamRotateClientRPC(Quaternion camQuat)
+		{
+			if (IsHost) return;
+
+			cameraTransform.localRotation = camQuat;
+		}
+
+		[ServerRpc(RequireOwnership = false)]
 		public void SetParentServerRPC(ulong parentId)
 		{
 			if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(parentId, out NetworkObject parentObject))
