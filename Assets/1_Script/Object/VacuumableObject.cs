@@ -14,6 +14,7 @@ namespace MPGame.Props
 
         private float vacuumingForce;
         private float vacuumingForceToCenter;
+        private float removeDistance;
         public Collider ObjectCollider { get => objectCollider; set => objectCollider = value; }
         private Rigidbody objectRigidbody;
 
@@ -31,7 +32,10 @@ namespace MPGame.Props
         {
             objectCollider = GetComponent<Collider>();
             objectRigidbody = GetComponent<Rigidbody>();
-
+            PlayerController playerPre = playerPrefab.GetComponent<PlayerController>();
+            vacuumingForce = playerPre.VacuumingForce;
+            vacuumingForceToCenter = playerPre.VacuumingForceToCenter;
+            removeDistance = playerPre.RemoveDistance;
         }
 
         private void Update()
@@ -56,13 +60,12 @@ namespace MPGame.Props
             }
         }
 
-        public void Init(ulong playerID, Vector3 target, Vector3 camDirection, float vacForce, float vacForceToCenter, float removeDistance)
+        public void Init(ulong playerID, Vector3 target, Vector3 camDirection)
         {
             //OwnerClientId가 설정이 안돼있으면 서버에 권한 요청
             if (OwnerClientId.Value == ulong.MaxValue)
             {
                 TryInteract(); //serverRPC로 오브젝트 권한 요청 후 clientRPC로 바뀐 권한 뿌림
-                InitVacValuesServerRPC(vacForce, vacForceToCenter, removeDistance);
             }
 
             if (Interaction(OwnerClientId.Value)) //ownerClientID가 '나'면 접근
@@ -71,14 +74,6 @@ namespace MPGame.Props
                 SetTargetServerRPC(target, camDirection);
                 GetComponent<Renderer>().material.color = Color.green;
             }
-        }
-
-        [ServerRpc(RequireOwnership = false)]
-        private void InitVacValuesServerRPC(float vacForce, float vacForceToCenter, float removeDist)
-        {
-            vacuumingForce = vacForce;
-            vacuumingForceToCenter = vacForceToCenter;
-            removeDistance = removeDist;
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -151,7 +146,6 @@ namespace MPGame.Props
             objectRigidbody.AddForce((proj - toObject).normalized * vacuumingForceToCenter, ForceMode.Acceleration);
         }
 
-        private float removeDistance;
         private bool DetectIsClosedToTarget() //플레이어와 물체가 가까워졌는지 감지
         {
             Debug.Log("OwnerClientId: " + OwnerClientId.Value);
@@ -166,14 +160,10 @@ namespace MPGame.Props
         {
             GetComponent<Collider>().enabled = false; // 충돌 안되게
 
-            Vector3 playerPos = NetworkManager.SpawnManager.GetPlayerNetworkObject(OwnerClientId.Value).
-                transform.position;
-            Vector3 initialPos = transform.position;
-            targetPoint = playerPos + new Vector3(0, 2, 0);
-            // 가운데로 빨려들어가게 보정 (serialize 해야될라나?)
+            GameObject player = NetworkManager.SpawnManager.GetPlayerNetworkObject(OwnerClientId.Value).gameObject;
 
             Vector3 initialScale = transform.localScale;
-            Vector3 targetScale = initialScale / 10;
+            Vector3 targetScale = initialScale / 20;
             float elapsedTime = 0f;
             float t = 0f;
 
@@ -183,8 +173,12 @@ namespace MPGame.Props
                 
                 t = elapsedTime / destroyTime;
 
-                transform.localScale = Vector3.Lerp(transform.localScale, targetScale, t);
 
+                transform.localScale = Vector3.Lerp(transform.localScale, targetScale, t >= 0.33f ? 1 : 3*t);
+
+
+                targetPoint = player.transform.position + new Vector3(0, 1, 0);
+                // 가운데로 빨려들어가게 보정 (serialize 해야될라나?)
                 transform.position = Vector3.Lerp(transform.position, targetPoint, t);
                 //이동도 넣어야됨 targetpoint를 transform으로 업데이트해주기? + (0, 2, 0)
                 Debug.Log("time: " + t);
@@ -192,9 +186,9 @@ namespace MPGame.Props
                 yield return null;
             }
 
-            Debug.Log("Destroyed!!!!!!!1");
+
             // 삭제 진행
-            ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
+            //ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
             GetComponent<NetworkObject>().Despawn(); //NetworkObjectId로 디스폰
             Destroy(gameObject);
         }

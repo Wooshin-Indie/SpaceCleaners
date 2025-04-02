@@ -35,7 +35,7 @@ namespace MPGame.Manager
             if (!NetworkManager.IsHost) return; //OnUpdate는 서버에서만 실행
             //foreach (var obID in vacuumableObjects.Keys)
             //{
-             //   vacuumableObjects[obID].OnUpdate();
+            //    vacuumableObjects[obID].OnUpdate();
             //}
             //DespawnVacuumableObjects();
         }
@@ -59,7 +59,7 @@ namespace MPGame.Manager
         {
             foreach (var obKey in vacuumObjectDespawn)
             {
-                vacuumableObjects[obKey].VacuumEnd();
+                //vacuumableObjects[obKey].VacuumEnd();
                 vacuumableObjects.Remove(obKey);
                 NetworkObject no = NetworkObject.NetworkManager.SpawnManager.SpawnedObjects[obKey];
                 no.Despawn(); //NetworkObjectId로 디스폰
@@ -117,12 +117,6 @@ namespace MPGame.Manager
                     int attempts = 0;
                     while (count < adjustedNumberOfTrash && attempts < numberOfTrash * maxAttempts)
                     {
-                        //Vector3 randomPos = new Vector3(
-                        //    Random.Range(-aGroupArea.x / 2, aGroupArea.x / 2),
-                        //    Random.Range(-aGroupArea.y / 2, aGroupArea.y / 2),
-                        //    Random.Range(-aGroupArea.z / 2, aGroupArea.z / 2)
-                        //);
-
                         Vector3 randSphere = Random.insideUnitSphere; // (1,1,1)구 내에서 랜덤지점 반환
 
                         Vector3 randomPos = new Vector3(

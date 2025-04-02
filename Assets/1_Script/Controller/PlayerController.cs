@@ -627,10 +627,13 @@ namespace MPGame.Controller
         private float vacuumDetectLength;
 		[SerializeField, Tooltip("Force to Vaccumable Object")]
 		private float vacuumingForce;
+		public float VacuumingForce { get => vacuumingForce; }
         [SerializeField, Tooltip("Force Vaccumable Object to Center of OverlapCapsule")]
         private float vacuumingForceToCenter;
-		[SerializeField, Tooltip("Go Destroy Process when Distance to Object gets Closer than This Value")]
+        public float VacuumingForceToCenter { get => vacuumingForceToCenter; }
+        [SerializeField, Tooltip("Go Destroy Process when Distance to Object gets Closer than This Value")]
 		private float removeDistance;
+        public float RemoveDistance { get => removeDistance; }
         [SerializeField]
         private LayerMask vacuumableLayers;
         private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //이전 프레임에 빨아들이고있던 물체들을	저장하는 HashSet
@@ -643,6 +646,7 @@ namespace MPGame.Controller
 
         private Vector3 cameraPos;
         private Vector3 cameraForward;
+		public Vector3 CameraForward { get => cameraForward; }
         private Vector3 detectingVector;
 
         public void Vacuuming()
@@ -686,7 +690,7 @@ namespace MPGame.Controller
                     continue;
                 VacuumableObject cur = hitCollider.GetComponent<VacuumableObject>();
                 currentDetected.Add(cur);
-                cur.Init(GameManagerEx.Instance.MyClientId, cameraPos, cameraForward, vacuumingForce, vacuumingForceToCenter, removeDistance);
+                cur.Init(GameManagerEx.Instance.MyClientId, cameraPos, cameraForward);
             }
 
             if (!isFirstVacuumingStarted)
