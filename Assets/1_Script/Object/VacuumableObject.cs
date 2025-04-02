@@ -21,6 +21,7 @@ namespace MPGame.Props
         private Vector3 targetPoint;
         private Vector3 cameraDirection;
         private bool isBeingVacuumed = false;
+        private bool isDestroying = false;
 
         protected override bool Interaction(ulong newOwnerClientId)
         {
@@ -48,10 +49,13 @@ namespace MPGame.Props
             if (!IsHost) return;
             if (!isBeingVacuumed) return;
 
+            if (isDestroying) return;
+
             AddForceToTarget();
+            
             if (DetectIsClosedToTarget())
             {
-                // 여기에 vacuumend를 넣어줘야 오류가 안날라나?
+                isDestroying = true; // 코루틴 여러번 실행 안되게
 
                 RemoveVacuumingObjectsFromHashsetsClientRPC(NetworkObjectId);
                 // ownerClient의 PlayerController에서 Hashset에서 이 오브젝트를 삭제하라고 요청
@@ -173,14 +177,11 @@ namespace MPGame.Props
                 
                 t = elapsedTime / destroyTime;
 
-
                 transform.localScale = Vector3.Lerp(transform.localScale, targetScale, t >= 0.33f ? 1 : 3*t);
 
-
-                targetPoint = player.transform.position + new Vector3(0, 1, 0);
+                targetPoint = player.transform.position + player.transform.up + player.transform.forward * 0.5f;
                 // 가운데로 빨려들어가게 보정 (serialize 해야될라나?)
                 transform.position = Vector3.Lerp(transform.position, targetPoint, t);
-                //이동도 넣어야됨 targetpoint를 transform으로 업데이트해주기? + (0, 2, 0)
                 Debug.Log("time: " + t);
 
                 yield return null;
@@ -188,7 +189,6 @@ namespace MPGame.Props
 
 
             // 삭제 진행
-            //ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
             GetComponent<NetworkObject>().Despawn(); //NetworkObjectId로 디스폰
             Destroy(gameObject);
         }
