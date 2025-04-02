@@ -59,13 +59,14 @@ namespace MPGame.Controller.StateMachine
 			controller.transform.localRotation = spaceChair.transform.localRotation;
 			controller.GetComponent<Rigidbody>().rotation = controller.transform.rotation;
 
+			controller.UnsetParentServerRPC();
+
 			controller.SetKinematic(false);
 			controller.Rigidbody.linearVelocity = spaceShip.Rigidbody.linearVelocity;
 
 			spaceChair.EndInteraction(); 
 			NetworkTransmission.instance.IsTheClientReadyServerRPC(false, GameManagerEx.Instance.MyClientId);
 
-			controller.UnsetParentServerRPC();
 
 			if (controller.IsMapping)
 			{
