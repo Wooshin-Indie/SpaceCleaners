@@ -15,6 +15,7 @@ namespace MPGame.Manager
 		}
 		public void ChangeScene(SceneEnum sceneEnum)
 		{
+			Debug.Log("CHANGE SCENE");
 			UnloadCurrentScene();
 			LoadScene(sceneEnum);
 			UIManager.Instance.OnSceneChanged(sceneEnum);

@@ -152,40 +152,15 @@ namespace MPGame.Manager
 			}
 		}
 
-		public bool isInGame = false;
-
-		[ServerRpc(RequireOwnership = false)]
-		public void StartGameServerRPC()
-		{
-			if (!isInGame && GameManagerEx.Instance.IsAllPlayerReady())
-			{
-				LockLobby();
-				isInGame = true;
-				GameManagerEx.Instance.GameStarted();
-			}
-		}
-
-		[ServerRpc(RequireOwnership = false)]
-		public void EndGameServerRPC()
-		{
-			if (isInGame)
-			{
-				UnlockLobby();
-				isInGame = false;
-				GameManagerEx.Instance.GameEnded();
-			}
-		}
-
-		private void LockLobby()
+		public void LockLobby()
 		{
 			currentLobby.Value.SetJoinable(false);
 		}
 
-		private void UnlockLobby()
+		public void UnlockLobby()
 		{
 			currentLobby.Value.SetJoinable(true);
 		}
-
 
 		public async void Disconnected()
 		{
