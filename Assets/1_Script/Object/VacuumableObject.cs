@@ -9,6 +9,7 @@ namespace MPGame.Props
 {
     public class VacuumableObject : OwnableProp
     {
+        [SerializeField] GameObject playerPrefab;
         private Collider objectCollider;
 
         private float vacuumingForce;
@@ -30,6 +31,7 @@ namespace MPGame.Props
         {
             objectCollider = GetComponent<Collider>();
             objectRigidbody = GetComponent<Rigidbody>();
+
         }
 
         private void Update()
@@ -157,14 +159,16 @@ namespace MPGame.Props
             else return false;
         }
 
-        private float destroyTime = 1f;
+        
+        [SerializeField] private float destroyTime;
         // destroy 될 때 플레이어에게 쭉 빨려들어가게 하는 코루틴
         IEnumerator DestroyCoroutine() 
         {
             GetComponent<Collider>().enabled = false; // 충돌 안되게
 
             Vector3 playerPos = NetworkManager.SpawnManager.GetPlayerNetworkObject(OwnerClientId.Value).
-                transform.position; // or localPosition?
+                transform.position;
+            Vector3 initialPos = transform.position;
             targetPoint = playerPos + new Vector3(0, 2, 0);
             // 가운데로 빨려들어가게 보정 (serialize 해야될라나?)
 
@@ -176,18 +180,19 @@ namespace MPGame.Props
             while (elapsedTime < destroyTime)
             {
                 elapsedTime += Time.deltaTime;
-                // 0 < t < 1
+                
                 t = elapsedTime / destroyTime;
 
-                // 선형 보간으로 스케일 변경
-                transform.localScale = Vector3.Lerp(initialScale, targetScale, t);
+                transform.localScale = Vector3.Lerp(transform.localScale, targetScale, t);
 
                 transform.position = Vector3.Lerp(transform.position, targetPoint, t);
                 //이동도 넣어야됨 targetpoint를 transform으로 업데이트해주기? + (0, 2, 0)
+                Debug.Log("time: " + t);
 
                 yield return null;
             }
 
+            Debug.Log("Destroyed!!!!!!!1");
             // 삭제 진행
             ObjectSpawner.Instance.AddVacuumableObjectToDespawnListServerRPC(NetworkObject.NetworkObjectId);
             GetComponent<NetworkObject>().Despawn(); //NetworkObjectId로 디스폰

@@ -625,12 +625,12 @@ namespace MPGame.Controller
         private float vacuumDetectRadius;
         [SerializeField, Tooltip("Overlap Capsule Length")]
         private float vacuumDetectLength;
-        [SerializeField, Tooltip("Force to Vaccumable Object")]
-        private float vacuumingForce = 1f;
+		[SerializeField, Tooltip("Force to Vaccumable Object")]
+		private float vacuumingForce;
         [SerializeField, Tooltip("Force Vaccumable Object to Center of OverlapCapsule")]
-        private float vacuumingForceToCenter = 4f;
-        [SerializeField, Tooltip("Go Destroy Process when Distance to Object gets Closer than This Value")]
-        private float removeDistance = 1f;
+        private float vacuumingForceToCenter;
+		[SerializeField, Tooltip("Go Destroy Process when Distance to Object gets Closer than This Value")]
+		private float removeDistance;
         [SerializeField]
         private LayerMask vacuumableLayers;
         private HashSet<VacuumableObject> prevDetected = new HashSet<VacuumableObject>(); //이전 프레임에 빨아들이고있던 물체들을	저장하는 HashSet

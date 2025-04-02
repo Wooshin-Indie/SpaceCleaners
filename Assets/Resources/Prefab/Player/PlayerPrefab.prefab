@@ -1735,7 +1735,7 @@ MonoBehaviour:
   SlerpWeight: 1
   vacuumDetectRadius: 4
   vacuumDetectLength: 20
-  vacuumingForce: 2
+  vacuumingForce: 10
   vacuumingForceToCenter: 4
   removeDistance: 2
   vacuumableLayers:
