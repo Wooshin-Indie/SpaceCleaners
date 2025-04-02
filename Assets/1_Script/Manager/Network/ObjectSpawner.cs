@@ -35,15 +35,13 @@ namespace MPGame.Manager
             if (!NetworkManager.IsHost) return; //OnUpdate는 서버에서만 실행
             //foreach (var obID in vacuumableObjects.Keys)
             //{
-             //   vacuumableObjects[obID].OnUpdate();
+            //    vacuumableObjects[obID].OnUpdate();
             //}
             //DespawnVacuumableObjects();
         }
 
         // 스폰된 VacuumableObject들 관리하는 딕셔너리
         private Dictionary<ulong, VacuumableObject> vacuumableObjects = new Dictionary<ulong, VacuumableObject>();
-
-        [SerializeField] private GameObject tempObject; // 임시로 큐브모양 오브젝트 넣음
 
         [ServerRpc(RequireOwnership = false)]
         public void SpawnVacuumableObjectServerRPC(Vector3 pos)
@@ -61,7 +59,7 @@ namespace MPGame.Manager
         {
             foreach (var obKey in vacuumObjectDespawn)
             {
-                vacuumableObjects[obKey].VacuumEnd();
+                //vacuumableObjects[obKey].VacuumEnd();
                 vacuumableObjects.Remove(obKey);
                 NetworkObject no = NetworkObject.NetworkManager.SpawnManager.SpawnedObjects[obKey];
                 no.Despawn(); //NetworkObjectId로 디스폰
@@ -90,6 +88,7 @@ namespace MPGame.Manager
         [SerializeField] private Vector3 centerPoint;	// "쓰레기무리들"의 생성 중심 (지금은 태양)
         private Vector3 spawnPoint;	// "쓰레기무리하나"가 생성되는 포인트의 중심
         [SerializeField] private float objectRadius;	// 오브젝트의 충돌 검사에 사용할 반지름
+        // 이거 쓰레기 프리팹 scale 받아서 해야 할 듯
         [SerializeField] private int maxAttempts;	// 각 오브젝트마다 시도할 최대 횟수
 
         public void SpawnTrashArea() // 우주에 떠다니는 쓰레기 더미 생성하는 함수
@@ -118,12 +117,6 @@ namespace MPGame.Manager
                     int attempts = 0;
                     while (count < adjustedNumberOfTrash && attempts < numberOfTrash * maxAttempts)
                     {
-                        //Vector3 randomPos = new Vector3(
-                        //    Random.Range(-aGroupArea.x / 2, aGroupArea.x / 2),
-                        //    Random.Range(-aGroupArea.y / 2, aGroupArea.y / 2),
-                        //    Random.Range(-aGroupArea.z / 2, aGroupArea.z / 2)
-                        //);
-
                         Vector3 randSphere = Random.insideUnitSphere; // (1,1,1)구 내에서 랜덤지점 반환
 
                         Vector3 randomPos = new Vector3(

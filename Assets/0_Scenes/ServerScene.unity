@@ -3553,7 +3553,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74321262b328c054db4eb8b27cf3260b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tempObject: {fileID: 5222184831321942631, guid: 112e1b897ced2804aa1c6beb142981ee, type: 3}
   trashPrefab: {fileID: 5222184831321942631, guid: 112e1b897ced2804aa1c6beb142981ee, type: 3}
   numberOfTrash: 20
   numberOfGroup: 10
@@ -3561,7 +3560,7 @@ MonoBehaviour:
   maxGroupArea: {x: 30, y: 30, z: 30}
   spawnRange: {x: 1000, y: 1000, z: 1000}
   centerPoint: {x: 0, y: 0, z: 0}
-  objectRadius: 0.5
+  objectRadius: 1
   maxAttempts: 50
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
