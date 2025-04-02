@@ -55,7 +55,7 @@ namespace MPGame.Controller.StateMachine
 			isOutState = true;
 
 			controller.transform.localPosition = spaceChair.localExitPosition;
-			controller.GetComponent<Rigidbody>().position = controller.transform.position;
+			controller.GetComponent<Rigidbody>().MovePosition(controller.transform.position);
 			controller.transform.localRotation = spaceChair.transform.localRotation;
 			controller.GetComponent<Rigidbody>().rotation = controller.transform.rotation;
 

@@ -215,7 +215,7 @@ namespace MPGame.Controller
 				transform.localPosition = localPos;
 				transform.localRotation = localRot;
 
-				rigid.position = transform.position;
+				rigid.MovePosition(transform.position);
 				rigid.rotation = transform.rotation;
 			}
 		}
